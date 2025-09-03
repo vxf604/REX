@@ -17,7 +17,7 @@ while True:
     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
     leftspeed += 5
     sleep(1)
-    if leftSpeed >= 100:
+    if leftSpeed <= 100:
         break
     
    
