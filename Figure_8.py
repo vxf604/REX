@@ -11,7 +11,7 @@ print("Running ...")
 
 
 print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
-sleep(7)
+sleep(6.5)
 # print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
 # sleep(4)
 
