@@ -11,9 +11,9 @@ print("Running ...")
 loops = 0
 while loops < 3:
     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
-    sleep(7.5)
+    sleep(7.45)
     print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
-    sleep(7.8)
+    sleep(8.5)
     loops += 1
 
 # 2m = 4,9 seconds
