@@ -18,7 +18,7 @@ print("Running ...")
 #     sleep(0.73)
 
 print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
-sleep(0.7)
+sleep(0.71)
     
     
 # 3.61 - 6.86 = 3.25
