@@ -11,7 +11,7 @@ print("Running ...")
 loops = 0
 while loops < 3:
     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
-    sleep(6.5)
+    sleep(7)
     print(arlo.go_diff(rightSpeed, leftSpeed - 3, 1, 1))
     sleep(7)
     loops += 1
