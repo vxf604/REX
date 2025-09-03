@@ -11,9 +11,9 @@ print("Running ...")
 
 
 print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
-sleep(4)
-print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
-sleep(4)
+sleep(20)
+# print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
+# sleep(4)
 
 # 2m = 4,9 seconds
 # 1m = 2,45 seconds
