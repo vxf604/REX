@@ -4,15 +4,15 @@ import robot
 
 # Create a robot object and initialize
 arlo = robot.Robot()
-leftSpeed = 35
-rightSpeed = 70
+leftSpeed = 40
+rightSpeed = 90
 
 print("Running ...")
 
 
 print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
 sleep(5)
-print(arlo.go_diff(70, 35, 1, 1))
+print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
 
 
 # 2m = 4,9 seconds
