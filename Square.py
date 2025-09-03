@@ -12,19 +12,18 @@ rightSpeed = 64
 
 
 print("Running ...")
-# for i in range (4):
-#     print(arlo.drive_forward_meter(1))
-#     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
-#     sleep(0.5)
+for i in range (4):
+    print(arlo.drive_forward_meter(1))
+    print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
+    sleep(0.8125)
 
     
     
-    
-    
+# 3.61 - 6.86 = 3.25
+# 90 degree = 0.8125
 
 
-while True:
-    print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))    
+ 
 
 # 2m = 4,9 seconds
 # 1m = 2,45 seconds
