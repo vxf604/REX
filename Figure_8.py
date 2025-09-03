@@ -11,8 +11,8 @@ print("Running ...")
 
 
 print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
-sleep(2)
-
+sleep(3)
+print(arlo.go_diff(leftSpeed, rightSpeed, 0, 0))
 # while True:
 #     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
 #     leftspeed += 5
