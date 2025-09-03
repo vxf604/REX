@@ -4,7 +4,7 @@ import robot
 
 # Create a robot object and initialize
 arlo = robot.Robot()
-leftSpeed = 67
+leftSpeed = 68
 rightSpeed = 64
 
 
@@ -12,11 +12,13 @@ rightSpeed = 64
 
 
 print("Running ...")
-for i in range (4):
-    print(arlo.drive_forward_meter(1, leftSpeed, rightSpeed))
-    print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
-    sleep(0.73)
+# for i in range (4):
+#     print(arlo.drive_forward_meter(1, leftSpeed, rightSpeed))
+#     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
+#     sleep(0.73)
 
+print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
+sleep(0.73)
     
     
 # 3.61 - 6.86 = 3.25
