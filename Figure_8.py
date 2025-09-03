@@ -4,21 +4,21 @@ import robot
 
 # Create a robot object and initialize
 arlo = robot.Robot()
-leftSpeed = 67
-rightSpeed = 64
+leftSpeed = 100
+rightSpeed = 50
 
 print("Running ...")
 
 
-# print(arlo.go_diff(leftSpeed, rightSpeed, 0, 0))
+print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
 # sleep(2)
 
-while True:
-    print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
-    leftspeed += 5
-    sleep(1)
-    if leftSpeed >= 100:
-        break
+# while True:
+#     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
+#     leftspeed += 5
+#     sleep(1)
+#     if leftSpeed >= 100:
+#         break
     
    
     
