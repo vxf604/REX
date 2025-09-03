@@ -10,7 +10,7 @@ rightSpeed = 64
 print("Running ...")
 
 
-print(arlo.go_diff(leftSpeed, rightSpeed, 0.5, 0.5))
+print(arlo.go_diff(leftSpeed, rightSpeed, -0.5, 0.5))
 sleep(2)
 
 
