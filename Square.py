@@ -12,7 +12,7 @@ for i in range (4):
     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
     sleep(2.45)
     print(arlo.stop())
-    print(arlo.go_diff(leftSpeed, rightSpeed, 0.8, 1))
+    print(arlo.go_diff(leftSpeed, rightSpeed, -1, 1))
     sleep(0.5)
 
     
