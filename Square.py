@@ -5,7 +5,7 @@ import robot
 # Create a robot object and initialize
 arlo = robot.Robot()
 leftSpeed = 65
-rightSpeed = 60
+rightSpeed = 59
 
 
 
