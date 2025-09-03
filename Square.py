@@ -12,7 +12,10 @@ for i in range (4):
     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
     sleep(2.45)
     print(arlo.stop())
+    sleep(1)
     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
+    sleep(1)
+
     
 
 # 2m = 4,9 seconds
