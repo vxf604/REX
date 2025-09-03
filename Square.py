@@ -12,10 +12,12 @@ rightSpeed = 64
 
 
 print("Running ...")
-for i in range (4):
-    print(arlo.drive_forward_meter(1, leftSpeed, rightSpeed))
-    print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
-    sleep(0.8125)
+# for i in range (4):
+#     print(arlo.drive_forward_meter(1, leftSpeed, rightSpeed))
+#     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
+#     sleep(0.8125)
+print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
+sleep(0.8125)
 
     
     
