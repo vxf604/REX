@@ -12,7 +12,7 @@ rightSpeed = 64
 distance = 200
 
 while distance > 100:
-    distance = arlo.read_front_ping_sensor
+    distance = arlo.read_front_ping_sensor()
     print("Distance: ", distance)
 
     
