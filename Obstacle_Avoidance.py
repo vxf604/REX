@@ -43,14 +43,17 @@ while driving:
 
     if frontSensor < 300 or rightSensor < 150 or leftSensor < 150:
         if rightSensor > leftSensor:
-            leftSpeed += 5
-            rightSpeed -= 5
+            leftSpeed += 10
+            rightSpeed -= 10
+            print("Turning left")
         elif leftSensor > rightSensor:
-            rightSpeed += 5
-            leftSpeed -= 5
+            rightSpeed += 10
+            leftSpeed -= 10
+            print("Turning right")
         else:
             rightSpeed += 5
             leftSpeed -= 5
+            print("Obstacle in front, Turning right")
     sleep(0.1)
 
 
