@@ -4,18 +4,18 @@ import robot
 
 # Create a robot object and initialize
 arlo = robot.Robot()
-leftSpeed = 100
-rightSpeed = 50
+leftSpeed = 43
+rightSpeed = 90
 
 print("Running ...")
 
 
-print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
-sleep(5)
-print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
-print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
-sleep(8)
-print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
+# print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
+# sleep(5)
+# print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
+# print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
+# sleep(8)
+# print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
 # while True:
 #     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
 #     leftspeed += 5
@@ -28,6 +28,13 @@ print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
 
 
 
+loops = 0
+while loops < 3:
+    print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
+    sleep(7.48)
+    print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
+    sleep(8.55)
+    loops += 1
 
 # 2m = 4,9 seconds
 # 1m = 2,45 seconds
