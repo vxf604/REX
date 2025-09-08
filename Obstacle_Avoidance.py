@@ -16,7 +16,9 @@ while driving:
     distance = arlo.read_front_ping_sensor()
     print("Distance: ", distance)
     if distance < 500:
+        print(arlo.stop())
         driving = False
+        
 
     
 
