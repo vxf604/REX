@@ -9,9 +9,9 @@ print("Running ...")
 # send a go_diff command to drive forward
 leftSpeed = 67
 rightSpeed = 64
-distance = 200
+distance = 500
 
-while distance > 500:
+while distance > 100:
     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
     distance = arlo.read_front_ping_sensor()
     print("Distance: ", distance)
