@@ -19,11 +19,11 @@ while driving:
     print("Right Sensor: ", rightSensor)
     distance = arlo.read_front_ping_sensor()
     if leftSensor > rightSensor:
-        leftSpeed += 2
-        rightSpeed -= 2
+        leftSpeed += 1
+        rightSpeed -= 1
     elif rightSensor > leftSensor:
-        leftSpeed -= 2
-        rightSpeed += 2
+        leftSpeed -= 1
+        rightSpeed += 1
 
 
 print("Finished")
