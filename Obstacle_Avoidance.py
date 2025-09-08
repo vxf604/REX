@@ -26,14 +26,17 @@ while driving:
         if rightSensor > leftSensor:
             print(arlo.go_diff(leftSpeed, rightSpeed, 1, 0))
             while frontSensor < 50:
+                frontSensor = arlo.read_front_ping_sensor()
                 print("turning left until path clear")
         elif leftSensor > rightSensor:
             print(arlo.go_diff(rightSpeed, leftSpeed, 0, 1))
             while frontSensor < 50:
+                frontSensor = arlo.read_front_ping_sensor()
                 print("turning right until path clear")
         else:
             print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
             while frontSensor < 50:
+                frontSensor = arlo.read_front_ping_sensor()
                 print("turning left until path clear")
         sleep(0.4)
         print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
