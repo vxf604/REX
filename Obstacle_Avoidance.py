@@ -42,11 +42,11 @@ while driving:
     print("Left Sensor: ", leftSensor)
 
     if frontSensor < 300 or rightSensor < 150 or leftSensor < 150:
-        if rightSensor > leftSensor:
+        if rightSensor < leftSensor:
             leftSpeed += 10
             rightSpeed -= 10
             print("Turning left")
-        elif leftSensor > rightSensor:
+        elif leftSensor < rightSensor:
             rightSpeed += 10
             leftSpeed -= 10
             print("Turning right")
