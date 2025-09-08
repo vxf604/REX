@@ -46,7 +46,7 @@ while driving:
             print(arlo.go_diff(rightSpeed, leftSpeed, 0, 1))
         else:
             print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
-        sleep(0.711)
+        sleep(0.4)
         print(arlo.go_diff(rightSpeed, leftSpeed, 1, 1))
 
 
