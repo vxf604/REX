@@ -21,7 +21,7 @@ while driving:
     print("Right Sensor: ", rightSensor)
     print("Left Sensor: ", leftSensor)
 
-    if frontSensor < 300 or rightSensor < 100 or leftSensor < 100:
+    if frontSensor < 100 or rightSensor < 50 or leftSensor < 50:
         print(arlo.stop())
         if rightSensor > leftSensor:
             print(arlo.go_diff(leftSpeed, rightSpeed, 1, 0))
