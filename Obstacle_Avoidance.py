@@ -11,7 +11,7 @@ leftSpeed = 67
 rightSpeed = 64
 distance = 200
 
-while distance > 100:
+while distance > 500:
     print(arlo.go_diff(leftSpeed, rightSpeed, 1, 1))
     distance = arlo.read_front_ping_sensor()
     print("Distance: ", distance)
