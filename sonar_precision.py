@@ -1,9 +1,6 @@
-from time import sleep
-import robot
+import numpy as np
+import matplotlib.pyplot as plt
 
-arlo = robot.Robot()
-
-while True:
-    frontSensor = arlo.read_front_ping_sensor()
-    print("Front Sensor: ", frontSensor)
-    sleep(0.5)
+distances = np.array([30, 60, 90, 120, 150, 300])
+sensor_values = np.array([307, 625, 953, 1251, 1573, 3106])
+errors = sensor_values - distances
