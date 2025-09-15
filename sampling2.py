@@ -73,5 +73,5 @@ plot[2].set_xlabel("x")
 plot[2].set_ylabel("Probability Density")
 plot[2].legend()
 
-fig.suptitle("Proposal distribution q(x) = N(5, 4)$")
+fig.suptitle("Proposal distribution q(x) = N(5, 4)")
 plt.show()
