@@ -63,6 +63,7 @@ def measureFocal(Z, X):
         print(f"[{i+1}] f = Focal length (pixels):", (pixel_width * Z) / X)
 
         time.sleep(2)
+    cam.stop()
 
 
 if __name__ == "__main__":
