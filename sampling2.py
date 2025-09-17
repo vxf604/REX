@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-
 def N(x, my, std):
     return 1 / (math.sqrt(2 * math.pi) * std) * math.exp(-0.5 * ((x - my) / std) ** 2)
 
@@ -14,14 +13,17 @@ def pdf(x):
 
 
 def sampling(k):
-    return [random.gauss(5,2) for _ in range(k)]
+    samples = []
+    for i in range(k):
+        samples.append(random.gauss(5, 4))
+    return samples
 
 
-def importance_weighting(samples):   
+def importance_weighting(samples):
     weights = []
     normalized_weights = []
     for sample in samples:
-        weight = pdf(sample) / N(sample, 5.0, 2.0)
+        weight = pdf(sample) / N(sample, 5, 4)
         weights.append(weight)
 
     for weight in weights:
@@ -66,10 +68,10 @@ plot[1].legend()
 
 plot[2].hist(k1000, bins=50, range=(0, 15), density=True, label="k=1000")
 plot[2].plot(points, pdf_points, label="pdf")
-plot[2].set_title("k=1000)")
+plot[2].set_title("k=1000")
 plot[2].set_xlabel("x")
 plot[2].set_ylabel("Probability Density")
 plot[2].legend()
 
-fig.suptitle(r"Proposal distribution $q(x) = Uniform[0, 15]$")
+fig.suptitle("Proposal distribution q(x) = N(5, 4)")
 plt.show()
