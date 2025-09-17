@@ -39,27 +39,30 @@ def measureFocal(Z, X):
     pprint(cam.camera_configuration())  # Print the camera configuration in use
     time.sleep(1)  # wait for camera to setup
 
-    image = cam.capture_array("main")
-    os.makedirs("images", exist_ok=True)
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    image_path = os.path.join("image", f"captured_image_{timestamp}.png")
-    cv2.imwrite(image_path, image)
+    for i in range(5):
+        image = cam.capture_array("main")
+        os.makedirs("images", exist_ok=True)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        image_path = os.path.join("images", f"captured_image_{timestamp}_{i+1}.png")
+        cv2.imwrite(image_path, image)
 
-    aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
-    parameters = aruco.DetectorParameters_create()
-    corners, ids, rejected = aruco.detectMarkers(
-        image, aruco_dict, parameters=parameters
-    )
-    if ids is None:
-        print("No marker detected!")
-        return
+        aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
+        parameters = aruco.DetectorParameters_create()
+        corners, ids, rejected = aruco.detectMarkers(
+            image, aruco_dict, parameters=parameters
+        )
+        if ids is None:
+            print(f"[{i+1}] No marker detected!")
+            continue
 
-    c = corners[0][0]  # first marker detected
-    pixel_width = int(cv2.norm(c[0] - c[1]))
-    print("Z = Distance to marker (mm):", Z)
-    print("X = Landmark width (mm):", X)
-    print("x = Marker pixel width:", pixel_width)
-    print("f = Focal length (pixels):", (pixel_width * Z) / X)
+        c = corners[0][0]  # first marker detected
+        pixel_width = int(cv2.norm(c[0] - c[1]))
+        print(f"[{i+1}] Z = Distance to marker (mm):", Z)
+        print(f"[{i+1}] X = Landmark width (mm):", X)
+        print(f"[{i+1}] x = Marker pixel width:", pixel_width)
+        print(f"[{i+1}] f = Focal length (pixels):", (pixel_width * Z) / X)
+
+        time.sleep(2)
 
 
 if __name__ == "__main__":
