@@ -2,6 +2,14 @@ import cv2
 import time
 from pprint import *
 
+try:
+    import picamera2
+    print("Camera.py: Using picamera2 module")
+except ImportError:
+    print("Camera.py: picamera2 module not available")
+    exit(-1)
+
+
 imageSize = (1640, 1232)
 FPS = 30
 cam = picamera2.Picamera2()
