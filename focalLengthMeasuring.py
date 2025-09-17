@@ -38,10 +38,10 @@ def measureFocal(Z, X):
 
     # pprint(cam.camera_configuration())  # Print the camera configuration in use
     time.sleep(1)  # wait for camera to setup
+    os.makedirs("images", exist_ok=True)
 
     for i in range(5):
         image = cam.capture_array("main")
-        os.makedirs("images", exist_ok=True)
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         image_path = os.path.join("images", f"captured_image_{timestamp}_{i+1}.png")
         cv2.imwrite(image_path, image)
