@@ -63,7 +63,7 @@ def measureFocal(Z, X):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 2:
         print("Provide the distance from camera to marker Z (mm)")
         exit(1)
     Z = float(sys.argv[1])
