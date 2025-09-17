@@ -36,7 +36,7 @@ def measureFocal(Z, X):
     cam.configure(picam2_config)  # Not really necessary
     cam.start(show_preview=False)
 
-    pprint(cam.camera_configuration())  # Print the camera configuration in use
+    # pprint(cam.camera_configuration())  # Print the camera configuration in use
     time.sleep(1)  # wait for camera to setup
 
     for i in range(5):
