@@ -68,22 +68,18 @@ def measureFocal(Z, X):
         time.sleep(2)
     cam.stop()
 
+def go_around ():
+    arlo = Robot()
+    leftSpeed = 80
+    rightSpeed = 80
 
-
- 
-arlo = Robot()
-leftSpeed = 80
-rightSpeed = 80
-
- 
-while True:
-    print (arlo.go_diff(leftSpeed, rightSpeed, 1, 0))
-    time.sleep(0.1)
+    
+    while True:
+        print (arlo.go_diff(leftSpeed, rightSpeed, 1, 0))
+        time.sleep(0.1)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Provide the distance from camera to marker Z (mm)")
-        exit(1)
-    Z = float(sys.argv[1])
-    X = 145
-    measureFocal(Z, X)
+    go_around()
+
+    
+    
