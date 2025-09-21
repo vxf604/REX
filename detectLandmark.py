@@ -17,8 +17,8 @@ except ImportError:
     exit(-1)
 
 arlo = robot.Robot()
-leftSpeed = 67 / 2
-rightSpeed = 64 / 2
+leftSpeed = int(67 / 2)
+rightSpeed = int(64 / 2)
 f = 1226.11  # pixels
 X = 145  # mm
 
