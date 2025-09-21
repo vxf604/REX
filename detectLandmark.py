@@ -110,6 +110,6 @@ while running:
         print(f"Turn {angle_deg:.2f} degrees to face the marker.")
         safe_distance = 200
         drive_distance = max (z - safe_distance)
-        arlo.go_straight(drive_distance, speed)
+        arlo.drive_forward_meter(drive_distance, leftSpeed, rightSpeed)
         print ("Finished moving to marker.")
         running = False
