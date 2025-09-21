@@ -17,8 +17,8 @@ except ImportError:
     exit(-1)
 
 arlo = robot.Robot()
-leftSpeed = 67
-rightSpeed = 64
+leftSpeed = 67 / 2
+rightSpeed = 64 / 2
 f = 1226.11  # pixels
 X = 145  # mm
 
@@ -43,8 +43,6 @@ running = True
 
 
 def checkForLandmark():
-    cam.start(show_preview=False)
-    time.sleep(1)  # wait for camera to setup
     os.makedirs("images", exist_ok=True)
 
     image = cam.capture_array("main")
@@ -65,15 +63,16 @@ def checkForLandmark():
     x = int(cv2.norm(c[0] - c[1]))
     Z = f * X / x
     print(f"Distance to landmark Z: {Z} mm")
-    time.sleep(2)
     cam.stop()
     return True
 
 
 turning = False
 landmark_detected = False
+cam.start(show_preview=False)
 
 while running:
+
     if not turning:
         print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
         turning = True
