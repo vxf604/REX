@@ -5,6 +5,9 @@ from pprint import *
 import os
 import datetime
 import sys
+from robot import Robot
+
+
 
 try:
     import picamera2  # type: ignore
@@ -65,6 +68,17 @@ def measureFocal(Z, X):
         time.sleep(2)
     cam.stop()
 
+
+
+ 
+arlo = Robot()
+leftSpeed = 80
+rightSpeed = 80
+
+ 
+while True:
+    print (arlo.go_diff(leftSpeed, rightSpeed, 1, 0))
+    time.sleep(0.1)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
