@@ -5,7 +5,7 @@ from time import sleep
 from robot import Robot
 
 try:
-    import picamera2  # type: ignore
+    import picamera2  
     print("Camera.py: Using picamera2 module")
 except ImportError:
     print("Camera.py: picamera2 module not available")
@@ -14,13 +14,13 @@ except ImportError:
 arlo = Robot()
 leftSpeed = 67
 rightSpeed = 64
-f = 1226.11  # pixels
-X = 145      # mm
+f = 1226.11  
+X = 145      
 
 imageSize = (1640, 1232)
 FPS = 30
 cam = picamera2.Picamera2()
-frame_duration_limit = int(1 / FPS * 1000000)  # Microseconds
+frame_duration_limit = int(1 / FPS * 1000000) 
 picam2_config = cam.create_video_configuration(
     {"size": imageSize, "format": "RGB888"},
     controls={
@@ -34,7 +34,7 @@ print("Running ...")
 
 cam.configure(picam2_config)
 cam.start(show_preview=False)
-time.sleep(1)  # allow camera to warm up
+time.sleep(1)  
 
 aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
 parameters = aruco.DetectorParameters_create()
