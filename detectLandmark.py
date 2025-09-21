@@ -46,8 +46,6 @@ def measureFocal(Z, X):
         image_path = os.path.join("images", f"captured_image_{timestamp}_{i+1}.png")
         cv2.imwrite(image_path, image)
 
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        
         aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
         parameters = aruco.DetectorParameters_create()
         corners, ids, rejected = aruco.detectMarkers(
