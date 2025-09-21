@@ -23,8 +23,13 @@ leftSpeed = speed + 3
 rightSpeed = speed
 f = 1226.11  # pixels
 X = 145  # mm
+cWidth = 1640
+cHeight = 1232
+imageSize = (cWidth, cHeight)
 
-imageSize = (1640, 1232)
+intrinsic_matrix = np.array([[f, 0, cWidth / 2], [0, f, cHeight / 2], [0, 0, 1]])
+distortion_coeffs = np.zeros((5, 1))
+
 FPS = 30
 cam = picamera2.Picamera2()
 frame_duration_limit = int(1 / FPS * 1000000)  # Microseconds
@@ -46,13 +51,12 @@ running = True
 
 fx = 1226.11
 fy = 1226.11
-cx = 1640 / 2 
-cy = 1232/2
+cx = 1640 / 2
+cy = 1232 / 2
 
-cameraMatrix = np.array([[fx, 0, cx],
-                        [0, fy, cy],
-                        [0, 0, 1]], dtype=np.float32)
-distCoeffs = np.zeros((5, 1)) 
+cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
+distCoeffs = np.zeros((5, 1))
+
 
 def checkForLandmark():
     os.makedirs("images", exist_ok=True)
@@ -69,16 +73,7 @@ def checkForLandmark():
     )
     if ids is None:
         print(" No marker detected!")
-        return False
-    
-    rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, X, cameraMatrix, distCoeffs)
-    tvec = tvecs[0][0]
-    rvec = rvecs[0][0]
-    
-    rot_matrix, _ = cv2.Rodrigues(rvec)
-    yaw_angle = np.arctan2(rot_matrix[0,2], rot_matrix[2,2]) * 180 / np.pi
-    print(f"Marker offset: x={tvec[0]:.2f} mm, y={tvec[1]:.2f} mm, z={tvec[2]:.2f} mm")
-    print(f"Marker yaw (deg): {yaw_angle:.2f}")
+        return False, None
 
     c = corners[0][0]  # first marker detected
     x = int(cv2.norm(c[0] - c[1]))
@@ -98,8 +93,8 @@ while running:
     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
     sleep(0.1)
     print(arlo.stop())
-    landmark_detected = checkForLandmark()
-    
+    landmark_detected, c = checkForLandmark()
+
     if landmark_detected:
         print("Landmark detected! Stopping.")
         arlo.stop()
