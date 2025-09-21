@@ -90,7 +90,9 @@ while running:
     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
     sleep(0.1)
     print(arlo.stop())
+    print("Checking for landmark...")
     landmark_detected, c = checkForLandmark()
+    print("Landmark detected:", landmark_detected)
 
     if landmark_detected:
         print("Landmark detected! Stopping.")
@@ -108,8 +110,6 @@ while running:
         angle_deg = np.degrees(angle_rad)
         arlo.rotate_robot(angle_deg)
         print(f"Turn {angle_deg:.2f} degrees to face the marker.")
-        
-        
+
         arlo.drive_forward_meter((z / 1000) / 4, 64, 67)
         print("Robot is now facing the landmark!")
-        
