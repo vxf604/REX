@@ -106,6 +106,6 @@ while running:
         z = tvecs[0][0][2]
         angle_rad = np.arctan2(x, z)
         angle_deg = np.degrees(angle_rad)
-        arlo.rotate_robot(angle_deg, leftSpeed, rightSpeed)
+        arlo.rotate_robot(angle_deg)
         print(f"Turn {angle_deg:.2f} degrees to face the marker.")
         running = False
