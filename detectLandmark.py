@@ -73,6 +73,7 @@ cam.start(show_preview=False)
 
 while running:
     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
+    sleep(1)
     print(arlo.stop())
     landmark_detected = checkForLandmark()
     
