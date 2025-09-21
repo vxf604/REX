@@ -5,9 +5,14 @@ from pprint import *
 import os
 import datetime
 import sys
-from robot import Robot
+from time import sleep
+import robot
 
+arlo = robot.Robot()
+leftSpeed = 67
+rightSpeed = 64
 
+print("Running ...")
 
 try:
     import picamera2  # type: ignore
@@ -17,8 +22,27 @@ except ImportError:
     print("Camera.py: picamera2 module not available")
     exit(-1)
 
+running = True
 
-print("OpenCV version = " + cv2.__version__)
+
+
+cam = picamera2.Picamera2()
+cam.start (show_preview=False)
+aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
+parameters = aruco.DetectorParameters_create()
+
+found = False
+while not found:
+    frame = cam.capture_array("main")
+    corners, ids, rejected = aruco.detectMarkers(frame, aruco_dict, parameters=parameters)
+    if ids is not None:
+        print("Found landmark :", ids)
+        arlo.stop()
+        found = True
+    else:
+        print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
+        time.sleep(0.1) 
+cam.stop()
 
 
 def measureFocal(Z, X):
@@ -67,19 +91,3 @@ def measureFocal(Z, X):
 
         time.sleep(2)
     cam.stop()
-
-def go_around ():
-    arlo = Robot()
-    leftSpeed = 80
-    rightSpeed = 80
-
-    
-    while True:
-        print (arlo.go_diff(leftSpeed, rightSpeed, 1, 0))
-        time.sleep(0.1)
-
-if __name__ == "__main__":
-    go_around()
-
-    
-    
