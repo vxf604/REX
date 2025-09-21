@@ -49,6 +49,15 @@ print("Running ...")
 running = True
 
 
+fx = 1226.11
+fy = 1226.11
+cx = 1640 / 2
+cy = 1232 / 2
+
+cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
+distCoeffs = np.zeros((5, 1))
+
+
 def checkForLandmark():
     os.makedirs("images", exist_ok=True)
 
