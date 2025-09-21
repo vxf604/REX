@@ -3,7 +3,9 @@
 
 import cv2 # Import the OpenCV library
 import time
+import cv2.aruco as aruco
 from pprint import *
+
 
 try:
     import picamera2
@@ -41,10 +43,16 @@ time.sleep(1)  # wait for camera to setup
 # cv2.moveWindow(WIN_RF, 100, 100)
 
 
+aruco_dict= aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
+ 
+
+
 while cv2.waitKey(4) == -1: # Wait for a key pressed event
     image = cam.capture_array("main")
     cv2.imshow("captured_image.png", image)
     print("Image Captured")
+    
+    
     break
     
 
