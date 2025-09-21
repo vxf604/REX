@@ -7,6 +7,7 @@ import datetime
 import sys
 from time import sleep
 import robot
+import numpy as np
 
 try:
     import picamera2  # type: ignore
@@ -43,6 +44,16 @@ print("Running ...")
 running = True
 
 
+fx = 1226.11
+fy = 1226.11
+cx = 1640 / 2 
+cy = 1232/2
+
+cameraMatrix = np.array([[fx, 0, cx],
+                        [0, fy, cy],
+                        [0, 0, 1]], dtype=np.float32)
+distCoeffs = np.zeros((5, 1)) 
+
 def checkForLandmark():
     os.makedirs("images", exist_ok=True)
 
@@ -59,6 +70,10 @@ def checkForLandmark():
     if ids is None:
         print(" No marker detected!")
         return False
+    
+    rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, X, cameraMatrix, distCoeffs)
+    tvecs = tvecs[0][0]
+    print(f"Marker offset: x={tvecs[0]:.2f} mm, y={tvecs[1]:.2f} mm, z={tvecs[2]:.2f} mm")
 
     c = corners[0][0]  # first marker detected
     x = int(cv2.norm(c[0] - c[1]))
@@ -66,6 +81,9 @@ def checkForLandmark():
     print(f"Distance to landmark Z: {Z} mm")
     cam.stop()
     return True
+
+
+     
 
 
 landmark_detected = False
