@@ -108,5 +108,14 @@ while running:
         angle_deg = np.degrees(angle_rad)
         arlo.rotate_robot(angle_deg)
         print(f"Turn {angle_deg:.2f} degrees to face the marker.")
-        print(f"Drive forward {z/1000:.2f} meters to the marker.")
-        arlo.drive_forward_meter(z / 1000, 64, 67)
+        arlo.drive_forward_meter(1, leftSpeed, rightSpeed)
+        sleep(0.711)
+        
+        
+        
+        
+        safe_distance = 200
+        drive_distance = max (z - safe_distance)
+        arlo.drive_forward_meter(drive_distance, leftSpeed, rightSpeed)
+        print ("Finished moving to marker.")
+        running = False
