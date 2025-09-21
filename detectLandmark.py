@@ -7,6 +7,7 @@ import datetime
 import sys
 from time import sleep
 import robot
+import numpy as np
 
 try:
     import picamera2  # type: ignore
@@ -22,8 +23,13 @@ leftSpeed = speed + 3
 rightSpeed = speed
 f = 1226.11  # pixels
 X = 145  # mm
+cWidth = 1640
+cHeight = 1232
+imageSize = (cWidth, cHeight)
 
-imageSize = (1640, 1232)
+intrinsic_matrix = np.array([[f, 0, cWidth / 2], [0, f, cHeight / 2], [0, 0, 1]])
+distortion_coeffs = np.zeros((5, 1))
+
 FPS = 30
 cam = picamera2.Picamera2()
 frame_duration_limit = int(1 / FPS * 1000000)  # Microseconds
@@ -58,14 +64,14 @@ def checkForLandmark():
     )
     if ids is None:
         print(" No marker detected!")
-        return False
+        return False, None
 
     c = corners[0][0]  # first marker detected
     x = int(cv2.norm(c[0] - c[1]))
     Z = f * X / x
     print(f"Distance to landmark Z: {Z} mm")
     cam.stop()
-    return True
+    return True, corners
 
 
 landmark_detected = False
@@ -75,9 +81,22 @@ while running:
     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
     sleep(0.1)
     print(arlo.stop())
-    landmark_detected = checkForLandmark()
-    
+    landmark_detected, c = checkForLandmark()
+
     if landmark_detected:
         print("Landmark detected! Stopping.")
         print(arlo.stop())
-        running = False
+        rvecs, tvecs, objPoints = cv2.aruco.estimatePoseSingleMarkers(
+            c,
+            X,
+            intrinsic_matrix,
+            distortion_coeffs,
+        )
+
+    x = tvecs[0][0][0]
+    z = tvecs[0][0][2]
+    angle_rad = np.arctan2(x, z)
+    angle_deg = np.degrees(angle_rad)
+    robot.rotate_robot(angle_deg, leftSpeed, rightSpeed)
+    print(f"Turn {angle_deg:.2f} degrees to face the marker.")
+    running = False
