@@ -5,6 +5,14 @@ from pprint import *
 import os
 import datetime
 import sys
+from time import sleep
+import robot
+
+arlo = robot.Robot()
+leftSpeed = 67
+rightSpeed = 64
+
+print("Running ...")
 
 try:
     import picamera2  # type: ignore
@@ -14,8 +22,10 @@ except ImportError:
     print("Camera.py: picamera2 module not available")
     exit(-1)
 
+running = True
 
-print("OpenCV version = " + cv2.__version__)
+while running:
+    print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
 
 
 def measureFocal(Z, X):
@@ -64,12 +74,3 @@ def measureFocal(Z, X):
 
         time.sleep(2)
     cam.stop()
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Provide the distance from camera to marker Z (mm)")
-        exit(1)
-    Z = float(sys.argv[1])
-    X = 145
-    measureFocal(Z, X)
