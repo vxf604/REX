@@ -68,16 +68,15 @@ def checkForLandmark():
     return True
 
 
-turning = False
 landmark_detected = False
 cam.start(show_preview=False)
 
 while running:
-
-    if not turning:
-        print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
-        turning = True
+    print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
+    sleep(0.1)
+    print(arlo.stop())
     landmark_detected = checkForLandmark()
+    
     if landmark_detected:
         print("Landmark detected! Stopping.")
         print(arlo.stop())
