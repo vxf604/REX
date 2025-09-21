@@ -109,4 +109,4 @@ while running:
         arlo.rotate_robot(angle_deg)
         print(f"Turn {angle_deg:.2f} degrees to face the marker.")
         print(f"Drive forward {z/1000:.2f} meters to the marker.")
-        arlo.drive_forward_meter(z / 1000, 64, 67)
+        arlo.drive_forward_meter((z / 1000) / 2, 64, 67)
