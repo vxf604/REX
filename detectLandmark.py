@@ -80,10 +80,7 @@ def checkForLandmark():
     Z = f * X / x
     print(f"Distance to landmark Z: {Z} mm")
     cam.stop()
-    return True, yaw_angle
-
-
-     
+    return True, corners
 
 
 landmark_detected = False
@@ -97,17 +94,18 @@ while running:
 
     if landmark_detected:
         print("Landmark detected! Stopping.")
-        arlo.stop()
-        
-        while abs(yaw_angle) > 5:  # threshold in degrees
-            if yaw_angle > 0:
-                arlo.go_diff(leftSpeed, rightSpeed, 1, 0)  # rotate right
-            else:
-                arlo.go_diff(leftSpeed, rightSpeed, 0, 1)  # rotate left
-            sleep(0.1)
-            arlo.stop()
-            _, yaw_angle = checkForLandmark()
-        print("Robot is now facing the landmark!")
-        cam.stop()
-        arlo.stop()
+        print(arlo.stop())
+        rvecs, tvecs, objPoints = cv2.aruco.estimatePoseSingleMarkers(
+            c,
+            X,
+            intrinsic_matrix,
+            distortion_coeffs,
+        )
+
+        x = tvecs[0][0][0]
+        z = tvecs[0][0][2]
+        angle_rad = np.arctan2(x, z)
+        angle_deg = np.degrees(angle_rad)
+        arlo.rotate_robot(angle_deg, leftSpeed, rightSpeed)
+        print(f"Turn {angle_deg:.2f} degrees to face the marker.")
         running = False
