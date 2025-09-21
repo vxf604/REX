@@ -72,8 +72,13 @@ def checkForLandmark():
         return False
     
     rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, X, cameraMatrix, distCoeffs)
-    tvecs = tvecs[0][0]
-    print(f"Marker offset: x={tvecs[0]:.2f} mm, y={tvecs[1]:.2f} mm, z={tvecs[2]:.2f} mm")
+    tvec = tvecs[0][0]
+    rvec = rvecs[0][0]
+    
+    rot_matrix, _ = cv2.Rodrigues(rvec)
+    yaw_angle = np.arctan2(rot_matrix[0,2], rot_matrix[2,2]) * 180 / np.pi
+    print(f"Marker offset: x={tvec[0]:.2f} mm, y={tvec[1]:.2f} mm, z={tvec[2]:.2f} mm")
+    print(f"Marker yaw (deg): {yaw_angle:.2f}")
 
     c = corners[0][0]  # first marker detected
     x = int(cv2.norm(c[0] - c[1]))
