@@ -79,7 +79,6 @@ def checkForLandmark():
     x = int(cv2.norm(c[0] - c[1]))
     Z = f * X / x
     print(f"Distance to landmark Z: {Z} mm")
-    cam.stop()
     return True, corners
 
 
@@ -110,6 +109,10 @@ while running:
         print(f"Turn {angle_deg:.2f} degrees to face the marker.")
         
         
-        arlo.drive_forward_meter((z / 1000) / 4, 64, 67)
-        print("Robot is now facing the landmark!")
+        distance = arlo.drive_forward_meter((z / 1000) / 4, 64, 67)
+
+cam.stop()
+print("Finished")
+        
+        
         
