@@ -8,6 +8,14 @@ import sys
 from time import sleep
 import robot
 
+try:
+    import picamera2  # type: ignore
+
+    print("Camera.py: Using picamera2 module")
+except ImportError:
+    print("Camera.py: picamera2 module not available")
+    exit(-1)
+
 arlo = robot.Robot()
 leftSpeed = 67
 rightSpeed = 64
@@ -29,15 +37,6 @@ picam2_config = cam.create_video_configuration(
 )
 
 print("Running ...")
-
-try:
-    import picamera2  # type: ignore
-
-    print("Camera.py: Using picamera2 module")
-except ImportError:
-    print("Camera.py: picamera2 module not available")
-    exit(-1)
-
 running = True
 
 
