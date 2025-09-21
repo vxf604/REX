@@ -89,7 +89,9 @@ while running:
     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
     sleep(0.1)
     print(arlo.stop())
+    print("Checking for landmark...")
     landmark_detected, c = checkForLandmark()
+    print("Landmark detected:", landmark_detected)
 
     if landmark_detected:
         print("Landmark detected! Stopping.")
