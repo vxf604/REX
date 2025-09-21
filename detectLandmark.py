@@ -35,13 +35,14 @@ picam2_config = cam.create_video_configuration(
     },
     queue=False,
 )
+cam.configure(picam2_config)
+
 
 print("Running ...")
 running = True
 
 
 def checkForLandmark():
-    cam.configure(picam2_config)
     cam.start(show_preview=False)
     time.sleep(1)  # wait for camera to setup
     os.makedirs("images", exist_ok=True)
