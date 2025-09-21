@@ -48,7 +48,7 @@ def checkForLandmark():
 
     image = cam.capture_array("main")
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    image_path = os.path.join("images", f"captured_image_{timestamp}_{i+1}.png")
+    image_path = os.path.join("images", f"captured_image_{timestamp}.png")
     cv2.imwrite(image_path, image)
 
     aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
