@@ -213,16 +213,18 @@ class Robot(object):
 
     def drive_forward_meter(self, meter, leftSpeed, rightSpeed):
         self.go_diff(leftSpeed, rightSpeed, 1, 1)
-        time = 2.45 * meter
-        sleep(time)
+        drive_time = 2.45 * meter
+        sleep(drive_time)
         self.stop()
 
-    def rotate_robot(self, angle, leftSpeed, rightSpeed):
+    def rotate_robot(self, angle):
+        leftSpeed = 67
+        rightSpeed = 64
         if angle > 0:
             self.go_diff(leftSpeed, rightSpeed, 1, 0)
         else:
             self.go_diff(leftSpeed, rightSpeed, 0, 1)
 
-        time = (0.711 / 90) * abs(angle)
-        sleep(time)
+        turn_time = (0.711 / 90) * abs(angle)
+        sleep(turn_time)
         self.stop()
