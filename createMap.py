@@ -64,7 +64,7 @@ def createMap():
         corners,
         X,
         intrinsic_matrix,
-        distortion_coeffs,
+        distCoeffs,
     )
     landmarks = []
 
