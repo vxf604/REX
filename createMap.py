@@ -67,12 +67,17 @@ def createMap():
         distCoeffs,
     )
     landmarks = []
-
+    id_list = []
     for i in range(len(ids)):
+        id = ids[i][0]
+        if id in id_list:
+            continue
+
         x = tvecs[i][0][0]
-        print(cv2.norm(tvecs[i][0]))
+        print(f"Landmark ID{id} is {cv2.norm(tvecs[i][0])} mm away from the camera")
         y = tvecs[i][0][2]
         landmarks.append((ids[i][0], x, y))
+        id_list.append(id)
 
     plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
     plt.xlim(-2000, 2000)
