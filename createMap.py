@@ -47,9 +47,6 @@ cameraMatrix = np.array([[f, 0, cWidth], [0, f, cHeight], [0, 0, 1]], dtype=np.f
 distCoeffs = np.zeros((5, 1))
 
 
-print("Running ...")
-
-
 def createMap():
     image = cam.capture_array("main")
     aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
@@ -79,3 +76,7 @@ def createMap():
     plt.ylabel("y (mm)")
     plt.title("Map of landmarks")
     plt.savefig("landmark_map.png")
+
+
+print("Running ...")
+createMap()
