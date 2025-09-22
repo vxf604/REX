@@ -78,4 +78,4 @@ def createMap():
     plt.xlabel("x (mm)")
     plt.ylabel("y (mm)")
     plt.title("Map of landmarks")
-    plt.show()
+    plt.savefig("landmark_map.png")
