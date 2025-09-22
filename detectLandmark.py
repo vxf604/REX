@@ -107,9 +107,12 @@ while running:
         angle_deg = np.degrees(angle_rad)
         arlo.rotate_robot(angle_deg)
         print(f"Turn {angle_deg:.2f} degrees to face the marker.")
-
-        arlo.drive_forward_meter((z / 1000) / 4, 64, 67)
-        print("Robot is now facing the landmark!")
+        
+        
+        distance = arlo.drive_forward_meter((z / 1000) / 4, 64, 67)
 
 cam.stop()
-print("Program finished.")
+print("Finished")
+        
+        
+        
