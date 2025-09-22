@@ -91,8 +91,6 @@ while running:
     print(arlo.stop())
     print("Checking for landmark...")
     landmark_detected, c = checkForLandmark()
-    print("Landmark detected:", landmark_detected)
-
     if landmark_detected:
         print("Landmark detected! Stopping.")
         print(arlo.stop())
