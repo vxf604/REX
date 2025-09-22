@@ -23,6 +23,8 @@ f = 1226.11  # pixels
 X = 145  # mm
 cWidth = 1640
 cHeight = 1232
+cx = cWidth / 2
+cy = cHeight / 2
 imageSize = (cWidth, cHeight)
 
 intrinsic_matrix = np.array([[f, 0, cWidth / 2], [0, f, cHeight / 2], [0, 0, 1]])
@@ -43,7 +45,7 @@ picam2_config = cam.create_video_configuration(
 cam.configure(picam2_config)
 cam.start(show_preview=False)
 
-cameraMatrix = np.array([[f, 0, cWidth], [0, f, cHeight], [0, 0, 1]], dtype=np.float32)
+cameraMatrix = np.array([[f, 0, cx], [0, f, cy], [0, 0, 1]], dtype=np.float32)
 distCoeffs = np.zeros((5, 1))
 
 
