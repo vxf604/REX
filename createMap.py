@@ -45,7 +45,7 @@ picam2_config = cam.create_video_configuration(
 cam.configure(picam2_config)
 cam.start(show_preview=False)
 
-cameraMatrix = np.array([[f, 0, cx], [0, f, cy], [0, 0, 1]], dtype=np.float32)
+intrinsic_matrix = np.array([[f, 0, cx], [0, f, cy], [0, 0, 1]], dtype=np.float32)
 distCoeffs = np.zeros((5, 1))
 
 
