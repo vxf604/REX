@@ -70,7 +70,7 @@ def createMap():
 
     for i in range(len(ids)):
         x = tvecs[i][0][0]
-        print(np.norm(tvecs[i][0]))
+        print(cv2.norm(tvecs[i][0]))
         y = tvecs[i][0][1]
         landmarks.append((ids[i][0], x, y))
 
