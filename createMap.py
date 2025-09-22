@@ -71,12 +71,12 @@ def createMap():
     for i in range(len(ids)):
         x = tvecs[i][0][0]
         print(cv2.norm(tvecs[i][0]))
-        y = tvecs[i][0][1]
+        y = tvecs[i][0][2]
         landmarks.append((ids[i][0], x, y))
 
     plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
-    plt.xlim(-200, 200)
-    plt.ylim(-200, 200)
+    plt.xlim(-2000, 2000)
+    plt.ylim(-2000, 2000)
     plt.xlabel("x (mm)")
     plt.ylabel("y (mm)")
     plt.title("Map of landmarks")
