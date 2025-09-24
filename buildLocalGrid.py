@@ -98,7 +98,7 @@ def to_gride (landmarks, grid_size=100, resolution = 50):
        
     radius = 180
     for (id,x,y) in landmarks:
-        circle = plt.Circle((x, y+55), radius, color='r', fill=False, linestyle='--', alpha=0.5)
+        circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
         plt.gca().add_artist(circle)
         plt.text(x, y, f"ID {id}", fontsize=9, ha='center', va='center', color='blue')
 
