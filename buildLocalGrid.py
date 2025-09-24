@@ -80,22 +80,7 @@ def createMap():
         
         landmarks.append((ids[i][0], map_x, map_y))
         id_list.append(id)
-    
-    return landmarks
-    
-
-def to_gride (landmarks, grid_size=100, resolution = 50):
-    grid = np.zeros((grid_size, grid_size), dtype=int)
-    
-    offset = grid_size // 2 
-    for (_,x,y) in landmarks:
-        grid_x = int(x / resolution) + offset
-        grid_y = int(y / resolution) + offset
-        if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
-            grid[grid_y, grid_x] = 1
-    
-    
-       
+           
     radius = 180
     for (id,x,y) in landmarks:
         circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
@@ -104,21 +89,12 @@ def to_gride (landmarks, grid_size=100, resolution = 50):
         
         print (f"Landmark ID{id} at ({x}, {y})")
 
-    plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
-    plt.imshow(grid, cmap="gray_r", origin="lower",
-               extent=[-2000, 2000, 0, 2000], alpha=0.4)
     
     plt.xlim(-2000, 2000)
-    plt.ylim(-2000, 2000)
+    plt.ylim(0, 2000)
     plt.xlabel("x (mm)")
     plt.ylabel("y (mm)")
     plt.title("Map of landmarks")
     plt.savefig("landmark_map.png")
-    
-    return grid
-    
-
-print("Running ...")
-landmarks = createMap()
-if landmarks:
-    grid = to_gride(landmarks, grid_size=40)
+    plt.show()
+    return landmarks
