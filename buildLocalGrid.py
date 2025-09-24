@@ -86,21 +86,6 @@ def createMap():
         
         landmarks.append((ids[i][0], x, y))
         id_list.append(id)
-        
-        
-    radius = 210
-    for (id,x,y) in landmarks:
-        circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
-        plt.gca().add_artist(circle)
-        plt.text(x, y, f"ID {id}", fontsize=9, ha='center', va='center', color='blue')
-
-    plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
-    plt.xlim(-2000, 2000)
-    plt.ylim(-2000, 2000)
-    plt.xlabel("x (mm)")
-    plt.ylabel("y (mm)")
-    plt.title("Map of landmarks")
-    plt.savefig("landmark_map.png")
     
     return landmarks
     
@@ -110,21 +95,33 @@ def to_gride (landmarks, grid_size=100, resolution = 50):
     
     offset = grid_size // 2 
     for (_,x,y) in landmarks:
-        grid_x = int(x + offset)
-        grid_y = round(y + offset)
-        grid [grid_y, grid_x] = 1
+        grid_x = int(x / resolution) + offset
+        grid_y = int(y / resolution) + offset
+        if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+            grid[grid_y, grid_x] = 1
     
     
-    # plt.imshow(grid, cmap="gray_r", origin="lower")
-    # plt.title("Occupancy Grid Map")
-    # plt.show()
+       
+    radius = 210
+    for (id,x,y) in landmarks:
+        circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
+        plt.gca().add_artist(circle)
+        plt.text(x, y, f"ID {id}", fontsize=9, ha='center', va='center', color='blue')
+
+    plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
+    plt.imshow(grid, cmap="gray_r", origin="lower",
+               extent=[-2000, 2000, -2000, 2000], alpha=0.4)
+    
+    plt.xlim(-2000, 2000)
+    plt.ylim(-2000, 2000)
+    plt.xlabel("x (mm)")
+    plt.ylabel("y (mm)")
+    plt.title("Map of landmarks")
+    plt.savefig("landmark_map.png")
     
     return grid
     
     
-    
-    
-
 
 
 print("Running ...")
