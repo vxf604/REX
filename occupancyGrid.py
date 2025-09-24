@@ -80,15 +80,16 @@ def createGrid():
         id_list.append(id)
 
     cellSize = 10
+    limits = 5000
     gridSize = int(4000 / cellSize)
     occupancyGrid = np.zeros((gridSize, gridSize), dtype=int)
     for l in landmarks:
-        gridX = int((l[1] + 2000) / cellSize)
-        gridY = int((l[2] + 2000) / cellSize)
+        gridX = int((l[1] + 5000) / cellSize)
+        gridY = int((l[2] + 5000) / cellSize)
         occupancyGrid[gridY][gridX] = 1
 
-    plt.xlim(-2000, 2000)
-    plt.ylim(-2000, 2000)
+    plt.xlim(-5000, 5000)
+    plt.ylim(-5000, 5000)
     plt.title("Occupancy Grid")
     plt.xlabel("X cells")
     plt.ylabel("Y cells")
