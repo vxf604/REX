@@ -95,7 +95,6 @@ def createGrid():
         extent=[-limits, limits, -limits, limits],
     )
 
-    # force gridlines at every cell boundary
     plt.xticks(np.arange(-limits, limits + 1, cellSize))
     plt.yticks(np.arange(-limits, limits + 1, cellSize))
     plt.grid(True, color="gray", linewidth=0.3)

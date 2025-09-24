@@ -67,7 +67,7 @@ def createMap():
         distCoeffs,
     )
     landmarks = []
-    
+
     id_list = []
     for i in range(len(ids)):
         id = ids[i][0]
@@ -77,54 +77,46 @@ def createMap():
         x = tvecs[i][0][0]
         print(f"Landmark ID{id} is {cv2.norm(tvecs[i][0])} mm away from the camera")
         y = tvecs[i][0][2]
-        
-        
-        
-        
-        normalize_vector = cv2.norm(tvecs[i][0]) #Giver distance af en vektor
-        print ("Distance to landmark:", normalize_vector)
-        
+
+        normalize_vector = cv2.norm(tvecs[i][0])  # Giver distance af en vektor
+        print("Distance to landmark:", normalize_vector)
+
         landmarks.append((ids[i][0], x, y))
         id_list.append(id)
-        
-        
+
     radius = 210
-    for (id,x,y) in landmarks:
-        circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
+    for id, x, y in landmarks:
+        circle = plt.Circle(
+            (x, y), radius, color="r", fill=False, linestyle="--", alpha=0.5
+        )
         plt.gca().add_artist(circle)
-        plt.text(x, y, f"ID {id}", fontsize=9, ha='center', va='center', color='blue')
+        plt.text(x, y, f"ID {id}", fontsize=9, ha="center", va="center", color="blue")
 
     plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
     plt.xlim(-2000, 2000)
-    plt.ylim(-2000, 2000)
+    plt.ylim(0, 2000)
     plt.xlabel("x (mm)")
     plt.ylabel("y (mm)")
     plt.title("Map of landmarks")
     plt.savefig("landmark_map.png")
-    
-    return landmarks
-    
 
-def to_gride (landmarks, grid_size=100, resolution = 50):
+    return landmarks
+
+
+def to_gride(landmarks, grid_size=100, resolution=50):
     grid = np.zeros((grid_size, grid_size), dtype=int)
-    
-    offset = grid_size // 2 
-    for (_,x,y) in landmarks:
+
+    offset = grid_size // 2
+    for _, x, y in landmarks:
         grid_x = int(x + offset)
         grid_y = round(y + offset)
-        grid [grid_y, grid_x] = 1
-    
-    
+        grid[grid_y, grid_x] = 1
+
     plt.imshow(grid, cmap="gray_r", origin="lower")
     plt.title("Occupancy Grid Map")
     plt.show()
-    
-    return grid
-    
-    
-    
-    
 
+    return grid
 
 
 print("Running ...")
