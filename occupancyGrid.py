@@ -79,7 +79,7 @@ def createGrid():
         landmarks.append((ids[i][0], x, y))
         id_list.append(id)
 
-    cellSize = 100
+    cellSize = 300
     limits = 5000
     gridSize = int((limits * 2) / cellSize)
     occupancyGrid = np.zeros((gridSize, gridSize), dtype=int)
