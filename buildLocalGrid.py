@@ -98,5 +98,6 @@ def createMap():
     plt.ylabel("y (mm)")
     plt.title("Map of landmarks")
     plt.savefig("landmark_map.png")
-    plt.show()
-    return createMap()
+
+    return True
+createMap()
