@@ -90,6 +90,12 @@ def createGrid():
 
     plt.xlim(-5000, 5000)
     plt.ylim(-5000, 5000)
+    plt.imshow(
+        occupancyGrid,
+        origin="lower",
+        cmap="binary",
+        extent=[-limits, limits, -limits, limits],
+    )
     plt.title("Occupancy Grid")
     plt.xlabel("X cells")
     plt.ylabel("Y cells")
