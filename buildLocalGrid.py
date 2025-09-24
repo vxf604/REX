@@ -107,7 +107,7 @@ def to_gride (landmarks, grid_size=100, resolution = 50):
 
     plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
     plt.imshow(grid, cmap="gray_r", origin="lower",
-               extent=[-2000, 2000, -2000, 2000], alpha=0.4)
+               extent=[-2000, 2000, 0, 2000], alpha=0.4)
     
     plt.xlim(-2000, 2000)
     plt.ylim(-2000, 2000)
