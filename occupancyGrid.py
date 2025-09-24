@@ -90,21 +90,16 @@ def createGrid():
 
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    ax.pcolormesh(
-        np.arange(-limits, limits, cellSize),
-        np.arange(-limits, limits, cellSize),
+    plt.imshow(
         occupancyGrid,
+        origin="lower",
         cmap="binary",
-        edgecolors="k",
-        linewidth=0.2,
+        extent=[-limits, limits, -limits, limits],
     )
-
-    ax.set_aspect("equal")
-    ax.set_title("Occupancy Grid (Robot POV)")
-    ax.set_xlabel("X (mm)")
-    ax.set_ylabel("Y (mm)")
-
-    plt.savefig("occupancy_grid.png", dpi=300)
+    plt.title("Occupancy Grid")
+    plt.xlabel("X (mm)")
+    plt.ylabel("Y (mm)")
+    plt.savefig("occupancy_grid.png", dpi=150)
     plt.close()
 
 
