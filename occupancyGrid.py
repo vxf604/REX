@@ -93,7 +93,7 @@ def createGrid():
     plt.title("Occupancy Grid")
     plt.xlabel("X cells")
     plt.ylabel("Y cells")
-    plt.imsave("occupancyGrid.png")
+    plt.savefig("landmark_map.png")
 
 
 print("Running ...")
