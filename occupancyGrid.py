@@ -79,7 +79,7 @@ def createGrid():
         landmarks.append((ids[i][0], x, y))
         id_list.append(id)
 
-    cellSize = 10
+    cellSize = 300
     limits = 5000
     gridSize = int((limits * 2) / cellSize)
     occupancyGrid = np.zeros((gridSize, gridSize), dtype=int)
@@ -88,16 +88,23 @@ def createGrid():
         gridY = int((l[2] + 5000) / cellSize)
         occupancyGrid[gridY][gridX] = 1
 
-    plt.matshow(occupancyGrid, cmap="binary")
-    plt.title("Occupancy Grid")
-    plt.xlabel("Grid X (cells)")
-    plt.ylabel("Grid Y (cells)")
+    plt.imshow(
+        occupancyGrid,
+        origin="lower",
+        cmap="binary",
+        extent=[-limits, limits, -limits, limits],
+    )
 
-    plt.grid(color="k", linestyle="-", linewidth=0.5)
-    plt.xticks(np.arange(0, occupancyGrid.shape[1], 50))
-    plt.yticks(np.arange(0, occupancyGrid.shape[0], 50))
+    # force gridlines at every cell boundary
+    plt.xticks(np.arange(-limits, limits + 1, cellSize))
+    plt.yticks(np.arange(-limits, limits + 1, cellSize))
+    plt.grid(True, color="gray", linewidth=0.3)
 
-    plt.savefig("occupancy_grid.png")
+    plt.title("Occupancy Grid (Robot POV)")
+    plt.xlabel("X (mm)")
+    plt.ylabel("Y (mm)")
+    plt.savefig("occupancy_grid.png", dpi=150)
+    plt.close()
 
 
 print("Running ...")
