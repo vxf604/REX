@@ -67,6 +67,7 @@ def createMap():
         distCoeffs,
     )
     landmarks = []
+    
     id_list = []
     for i in range(len(ids)):
         id = ids[i][0]
@@ -79,11 +80,13 @@ def createMap():
         
         
         
+        
         normalize_vector = cv2.norm(tvecs[i][0]) #Giver distance af en vektor
         print ("Distance to landmark:", normalize_vector)
         
         landmarks.append((ids[i][0], x, y))
         id_list.append(id)
+        
         
     radius = 210
     for (id,x,y) in landmarks:
@@ -98,6 +101,28 @@ def createMap():
     plt.ylabel("y (mm)")
     plt.title("Map of landmarks")
     plt.savefig("landmark_map.png")
+    
+
+def to_gride (landmarks, grid_size=100, resolution = 50):
+    grid = np.zeros((grid_size, grid_size), dtype=int)
+    
+    offset = grid_size // 2 
+    for (_x,y) in landmarks:
+        grid_x = int(x + offset)
+        grid_y = round(y + offset)
+        grid [grid_y, grid_x] = 1
+    
+    
+    plt.imshow(grid, cmap="gray_r", origin="lower")
+    plt.title("Occupancy Grid Map")
+    plt.show()
+    
+    return grid
+    
+    
+    
+    
+
 
 
 print("Running ...")
