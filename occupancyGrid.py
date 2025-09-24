@@ -88,16 +88,24 @@ def createGrid():
         gridY = int((l[2] + 5000) / cellSize)
         occupancyGrid[gridY][gridX] = 1
 
-    plt.matshow(occupancyGrid, cmap="binary")
-    plt.title("Occupancy Grid")
-    plt.xlabel("Grid X (cells)")
-    plt.ylabel("Grid Y (cells)")
+    fig, ax = plt.subplots(figsize=(6, 6))
 
-    plt.grid(color="k", linestyle="-", linewidth=0.5)
-    plt.xticks(np.arange(0, occupancyGrid.shape[1], 50))
-    plt.yticks(np.arange(0, occupancyGrid.shape[0], 50))
+    ax.pcolormesh(
+        np.arange(-limits, limits, cellSize),
+        np.arange(-limits, limits, cellSize),
+        occupancyGrid,
+        cmap="binary",
+        edgecolors="k",
+        linewidth=0.2,
+    )
 
-    plt.savefig("occupancy_grid.png")
+    ax.set_aspect("equal")
+    ax.set_title("Occupancy Grid (Robot POV)")
+    ax.set_xlabel("X (mm)")
+    ax.set_ylabel("Y (mm)")
+
+    plt.savefig("occupancy_grid.png", dpi=300)
+    plt.close()
 
 
 print("Running ...")
