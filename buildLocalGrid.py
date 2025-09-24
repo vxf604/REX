@@ -80,12 +80,12 @@ def createMap():
         
         
         normalize_vector = cv2.norm(tvecs[i][0]) #Giver distance af en vektor
-        print ("Distance to landmakr:", normalize_vector)
+        print ("Distance to landmark:", normalize_vector)
         
         landmarks.append((ids[i][0], x, y))
         id_list.append(id)
         
-    radius = 2000
+    radius = 200
     for (id,x,y) in landmarks:
         circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
         plt.gca().add_artist(circle)
