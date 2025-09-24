@@ -76,9 +76,9 @@ def createMap():
 
         x = tvecs[i][0][0]
         print(f"Landmark ID{id} is {cv2.norm(tvecs[i][0])} mm away from the camera")
-        y = tvecs[i][0][2]
+        y = tvecs[i][0][2] +55
         
-        landmarks.append((ids[i][0], x, y+55))
+        landmarks.append((ids[i][0], x, y))
         id_list.append(id)
     
     return landmarks
