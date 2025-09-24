@@ -99,4 +99,4 @@ def createMap():
     plt.title("Map of landmarks")
     plt.savefig("landmark_map.png")
     plt.show()
-    return landmarks
+    return createMap()
