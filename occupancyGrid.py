@@ -97,6 +97,7 @@ def createGrid():
         extent=[-limits, limits, -limits, limits],
     )
     plt.title("Occupancy Grid")
+    plt.grid(True, which="both", color="lightgray", linewidth=0.5)
     plt.xlabel("X cells")
     plt.ylabel("Y cells")
     plt.savefig("occupancy_grid.png")
