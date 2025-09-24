@@ -101,6 +101,8 @@ def to_gride (landmarks, grid_size=100, resolution = 50):
         circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
         plt.gca().add_artist(circle)
         plt.text(x, y, f"ID {id}", fontsize=9, ha='center', va='center', color='blue')
+        
+        print (f"Landmark ID{id} at ({x}, {y})")
 
     plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
     plt.imshow(grid, cmap="gray_r", origin="lower",
