@@ -67,7 +67,7 @@ def createMap():
         distCoeffs,
     )
     landmarks = []
-    
+
     id_list = []
     for i in range(len(ids)):
         id = ids[i][0]
@@ -77,20 +77,22 @@ def createMap():
         map_x = tvecs[i][0][0]
         print(f"Landmark ID{id} is {cv2.norm(tvecs[i][0])} mm away from the camera")
         map_y = tvecs[i][0][2]
-        
+
         landmarks.append((ids[i][0], map_x, map_y))
         id_list.append(id)
-           
+
     radius = 180
-    for (id,x,y) in landmarks:
-        circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
+    for id, x, y in landmarks:
+        circle = plt.Circle(
+            (x, y), radius, color="r", fill=False, linestyle="--", alpha=0.5
+        )
         plt.gca().add_artist(circle)
-        plt.text(x, y, f"ID {id}", fontsize=9, ha='center', va='center', color='blue')
-        
-        print (f"Landmark ID{id} at ({x}, {y})")
+        plt.text(x, y, f"ID {id}", fontsize=9, ha="center", va="center", color="blue")
+
+        print(f"Landmark ID{id} at ({x}, {y})")
 
     plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
-    
+
     plt.xlim(-2000, 2000)
     plt.xlabel("x (mm)")
     plt.ylabel("y (mm)")
