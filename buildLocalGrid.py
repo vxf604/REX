@@ -102,6 +102,8 @@ def createMap():
     plt.title("Map of landmarks")
     plt.savefig("landmark_map.png")
     
+    return landmarks
+    
 
 def to_gride (landmarks, grid_size=100, resolution = 50):
     grid = np.zeros((grid_size, grid_size), dtype=int)
@@ -126,4 +128,6 @@ def to_gride (landmarks, grid_size=100, resolution = 50):
 
 
 print("Running ...")
-createMap()
+landmarks = createMap()
+if landmarks:
+    grid = to_gride(landmarks, grid_size=40)
