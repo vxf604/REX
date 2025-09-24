@@ -107,7 +107,7 @@ def to_gride (landmarks, grid_size=100, resolution = 50):
     grid = np.zeros((grid_size, grid_size), dtype=int)
     
     offset = grid_size // 2 
-    for (_x,y) in landmarks:
+    for (_,x,y) in landmarks:
         grid_x = int(x + offset)
         grid_y = round(y + offset)
         grid [grid_y, grid_x] = 1
