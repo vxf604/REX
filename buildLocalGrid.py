@@ -92,7 +92,6 @@ def createMap():
     plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
     
     plt.xlim(-2000, 2000)
-    plt.ylim(0, 2000)
     plt.xlabel("x (mm)")
     plt.ylabel("y (mm)")
     plt.title("Map of landmarks")
