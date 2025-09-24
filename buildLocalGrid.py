@@ -142,6 +142,7 @@ def to_gride (landmarks, grid_size=100, radius=210):
     plt.show()
     
 
+
 # print("Running ...")
 # landmarks = createMap()
 # if landmarks:
