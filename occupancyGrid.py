@@ -81,7 +81,7 @@ def createGrid():
 
     cellSize = 10
     limits = 5000
-    gridSize = int(4000 / cellSize)
+    gridSize = int((limits * 2) / cellSize)
     occupancyGrid = np.zeros((gridSize, gridSize), dtype=int)
     for l in landmarks:
         gridX = int((l[1] + 5000) / cellSize)
