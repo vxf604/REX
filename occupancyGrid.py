@@ -88,18 +88,15 @@ def createGrid():
         gridY = int((l[2] + 5000) / cellSize)
         occupancyGrid[gridY][gridX] = 1
 
-    plt.xlim(-5000, 5000)
-    plt.ylim(-5000, 5000)
-    plt.imshow(
-        occupancyGrid,
-        origin="lower",
-        cmap="binary",
-        extent=[-limits, limits, -limits, limits],
-    )
+    plt.matshow(occupancyGrid, cmap="binary")
     plt.title("Occupancy Grid")
-    plt.grid(True, which="both", color="lightgray", linewidth=0.5)
-    plt.xlabel("X cells")
-    plt.ylabel("Y cells")
+    plt.xlabel("Grid X (cells)")
+    plt.ylabel("Grid Y (cells)")
+
+    plt.grid(color="k", linestyle="-", linewidth=0.5)
+    plt.xticks(np.arange(0, occupancyGrid.shape[1], 50))
+    plt.yticks(np.arange(0, occupancyGrid.shape[0], 50))
+
     plt.savefig("occupancy_grid.png")
 
 
