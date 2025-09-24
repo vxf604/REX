@@ -87,39 +87,63 @@ def createMap():
     return landmarks
     
 
-def to_gride (landmarks, grid_size=100, resolution = 50):
+def to_gride (landmarks, grid_size=100, radius=210):
+    fig, ax = plt.subplots()
+    step  = 200
+    for x in range (-2000, 2000, step):
+        ax.axvline(x, color='lightgray', linestyle='--', linewidth=0.5)
+    for y in range (-2000, 2000, step):
+        ax.axhline(y, color='lightgray', linestyle='--', linewidth=0.5)
+    
     grid = np.zeros((grid_size, grid_size), dtype=int)
     
     offset = grid_size // 2 
-    for (_,x,y) in landmarks:
-        grid_x = int(x / resolution) + offset
-        grid_y = int(y / resolution) + offset
-        if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
-            grid[grid_y, grid_x] = 1
+    # for (_,x,y) in landmarks:
+    #     grid_x = int(x / resolution) + offset
+    #     grid_y = int(y / resolution) + offset
+    #     if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+    #         grid[grid_y, grid_x] = 1
+    for (id, x, y) in landmarks:
+        circle = plt.Circle((x, y), radius, color='r', fill=False,
+                            linestyle='--', alpha=0.5)
+        ax.add_artist(circle)
+        ax.text(x, y, f"ID {id}", fontsize=9, ha='center', va='center', color='blue')
+
+    ax.scatter([l[1] for l in landmarks], [l[2] for l in landmarks], c="blue")
     
     
        
-    radius = 210
-    for (id,x,y) in landmarks:
-        circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
-        plt.gca().add_artist(circle)
-        plt.text(x, y, f"ID {id}", fontsize=9, ha='center', va='center', color='blue')
+    # radius = 210
+    # for (id,x,y) in landmarks:
+    #     circle = plt.Circle((x, y), radius, color='r', fill=False, linestyle='--', alpha=0.5)
+    #     plt.gca().add_artist(circle)
+    #     plt.text(x, y, f"ID {id}", fontsize=9, ha='center', va='center', color='blue')
 
-    plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
-    plt.imshow(grid, cmap="gray_r", origin="lower",
-               extent=[-2000, 2000, -2000, 2000], alpha=0.4)
+    # plt.scatter([l[1] for l in landmarks], [l[2] for l in landmarks])
+    # plt.imshow(grid, cmap="gray_r", origin="lower",
+    #            extent=[-2000, 2000, -2000, 2000], alpha=0.4)
     
-    plt.xlim(-2000, 2000)
-    plt.ylim(-2000, 2000)
-    plt.xlabel("x (mm)")
-    plt.ylabel("y (mm)")
-    plt.title("Map of landmarks")
-    plt.savefig("landmark_map.png")
+    # plt.xlim(-2000, 2000)
+    # plt.ylim(-2000, 2000)
+    # plt.xlabel("x (mm)")
+    # plt.ylabel("y (mm)")
+    # plt.title("Map of landmarks")
+    # plt.savefig("landmark_map.png")
     
+    # return grid
+    
+    ax.set_xlim(-2000, 2000)
+    ax.set_ylim(-2000, 2000)
+    ax.set_xlabel("x (mm)")
+    ax.set_ylabel("y (mm)")
+    ax.set_title("Landmarks with Grid")
+
+    plt.savefig("combined_map.png")
+    plt.show()
+    
+
+# print("Running ...")
+# landmarks = createMap()
+# if landmarks:
+#     grid = to_gride(landmarks, grid_size=40)
     return grid
-    
-
-print("Running ...")
-landmarks = createMap()
-if landmarks:
-    grid = to_gride(landmarks, grid_size=40)
