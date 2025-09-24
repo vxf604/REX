@@ -81,7 +81,7 @@ def createMap():
         normalize_vector = cv2.norm(tvecs[i][0]) #Giver distance af en vektor
         print ("Distance to landmark:", normalize_vector)
         
-        landmarks.append((ids[i][0], x, y))
+        landmarks.append((ids[i][0], x, y+55))
         id_list.append(id)
     
     return landmarks
