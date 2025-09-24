@@ -78,9 +78,6 @@ def createMap():
         print(f"Landmark ID{id} is {cv2.norm(tvecs[i][0])} mm away from the camera")
         y = tvecs[i][0][2]
         
-        
-        
-        
         normalize_vector = cv2.norm(tvecs[i][0]) #Giver distance af en vektor
         print ("Distance to landmark:", normalize_vector)
         
@@ -121,8 +118,6 @@ def to_gride (landmarks, grid_size=100, resolution = 50):
     
     return grid
     
-    
-
 
 print("Running ...")
 landmarks = createMap()
