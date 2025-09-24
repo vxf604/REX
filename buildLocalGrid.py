@@ -115,9 +115,9 @@ def to_gride (landmarks, grid_size=100, resolution = 50):
         grid [grid_y, grid_x] = 1
     
     
-    plt.imshow(grid, cmap="gray_r", origin="lower")
-    plt.title("Occupancy Grid Map")
-    plt.show()
+    # plt.imshow(grid, cmap="gray_r", origin="lower")
+    # plt.title("Occupancy Grid Map")
+    # plt.show()
     
     return grid
     
