@@ -99,8 +99,8 @@ def in_collision(point, landmarks, robot_radius=1500):
     for landmark in landmarks:
         id, map_x, map_y = landmark
         landmark_pos = (map_x, map_y)
-        distance = distance(point, landmark_pos)
-        if distance <= landmark_radius + robot_radius:
+        d = distance(point, landmark_pos)
+        if d <= landmark_radius + robot_radius:
             return True
     return False
 
