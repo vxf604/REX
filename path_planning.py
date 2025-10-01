@@ -26,6 +26,8 @@ f = 1226.11  # pixels
 X = 145  # mm
 cWidth = 1640
 cHeight = 1232
+cx = cWidth / 2
+cy = cHeight / 2
 imageSize = (cWidth, cHeight)
 
 intrinsic_matrix = np.array([[f, 0, cWidth / 2], [0, f, cHeight / 2], [0, 0, 1]])
@@ -44,6 +46,7 @@ picam2_config = cam.create_video_configuration(
     queue=False,
 )
 cam.configure(picam2_config)
+cam.start(show_preview=False)
 
 
 print("Running ...")
@@ -81,13 +84,9 @@ def checkForLandmark():
     x = int(cv2.norm(c[0] - c[1]))
     Z = f * X / x
     print(f"Distance to landmark Z: {Z} mm")
-    print("Corners:", corners)
-    print("IDs:", ids)
     return True, corners, ids
 
 
-landmark_detected = False
-cam.start(show_preview=False)
 radius_landmark = 1800
 
 
@@ -178,6 +177,8 @@ def follow_rrt_path(arlo, path):
 
         arlo.drive_forward_meter(distance_m, leftspeed=64, rightspeed=67)
 
+
+landmark_detected = False
 
 while running:
     print(arlo.go_diff(leftSpeed, rightSpeed, 0, 1))
