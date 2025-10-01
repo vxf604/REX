@@ -91,7 +91,7 @@ radius_landmark = 1800
 
 
 def distance(p1, p2):
-    return np.linalg.norm(np.array(p1) - np.array(p2))
+    return float(np.linalg.norm(np.array(p1) - np.array(p2)))
 
 
 def in_collision(point, landmarks, robot_radius=1500):
@@ -130,7 +130,7 @@ def Steer(q_near, q_rand, delta_q=300):
         return (q_near[0] + delta_q * dx / d, q_near[1] + delta_q * dy / d)
 
 
-def buildRRT(landmarks, goal, delta_q=300, max_iter=20000):
+def buildRRT(landmarks, goal, delta_q=300):
     start = (0, 0)
     G = [start]
     parent = {0: None}
@@ -138,7 +138,7 @@ def buildRRT(landmarks, goal, delta_q=300, max_iter=20000):
     goal_index = None
     i = 0
 
-    while goal_index is None and i < max_iter:
+    while goal_index is None:
         i += 1
         q_rand = randConf()
         q_near = NEAREST_VERTEX(q_rand, G)
@@ -211,7 +211,7 @@ while running:
             landmarks.append((ids[i][0], x, y))
             id_list.append(id)
         goal = (0, 4000)
-        path = buildRRT(landmarks, 500, goal)
+        path = buildRRT(landmarks, goal)
         print("Path:", path)
         follow_rrt_path(arlo, path)
         running = False
