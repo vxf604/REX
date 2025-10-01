@@ -78,7 +78,7 @@ def checkForLandmark():
     )
     if ids is None:
         print(" No marker detected!")
-        return False, None
+        return False, None, None
 
     c = corners[0][0]  # first marker detected
     x = int(cv2.norm(c[0] - c[1]))
