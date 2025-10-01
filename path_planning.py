@@ -163,7 +163,7 @@ def buildRRT(landmarks, goal, delta_q=300):
     return path
 
 
-def follow_rrt_path(arlo, path):
+def follow_rrt_path(path):
     for i in range(1, len(path)):
         start = path[i - 1]
         target = path[i]
@@ -212,7 +212,7 @@ while running:
         goal = (0, 4000)
         path = buildRRT(landmarks, goal)
         print("Path:", path)
-        follow_rrt_path(arlo, path)
+        follow_rrt_path(path)
         running = False
 
 
