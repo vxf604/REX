@@ -215,8 +215,8 @@ def follow_rrt_path(path):
         target = path[i]
         print(f"Moving from {start} to {target}")
 
-        dx = target[0] - start[0]
-        dy = target[1] - start[1]
+        dx = target[1] - start[1]
+        dy = target[0] - start[0]
         angle_rad = np.arctan2(dy, dx)
         angle_deg = np.degrees(angle_rad)
         
