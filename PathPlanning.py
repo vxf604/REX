@@ -20,15 +20,17 @@ for i in range (len(ids)):
     landmarks.append((landmark_id, map_x, map_y))
     id_list.append(landmark_id)
     
-def in_collision (p, landmarks, robot_radius=150):
-    x, y = p
-    for landmark in landmarks:
-        id, map_x, map_y, radius = landmark
-        distance = np.sqrt((x - map_x)**2 + (y - map_y)**2) #Euclidean distance
-        if distance <= radius + robot_radius:
-            return True
+def in_collision (path, landmarks, robot_radius=150):
+    for p in path:
+        x, y = p
+        
+        for landmark in landmarks:
+            id, map_x, map_y, radius = landmark
+            distance = np.sqrt((x - map_x)**2 + (y - map_y)**2) #Euclidean distance
+            if distance <= radius + robot_radius:
+                return True
     return False
-
+    
 
 def follow_rrt_path(arlo,path):
     for i in range(1, len(path)):
@@ -42,6 +44,21 @@ def follow_rrt_path(arlo,path):
         
         arlo.rotate_robot(angle_deg)
         
+        distance_m = np.sqrt(dx**2 + dy**2) / 1000 # to meter
+        
+        distance_travelled = 0
+        
+        while distance_travelled < distance_m:
+            arlo.drive_forward_meter(distance_m, leftspeed= 64,  rightspeed = 67)
+            distance_travelled += 0.2
+            
+            current_position = arlo.get_position()
+            if in_collision (current_position, landmarks):
+                print("Collision detected! Stopping.")
+                arlo.stop()
+                break
+            
+
         
 
     
