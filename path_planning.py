@@ -9,6 +9,7 @@ from time import sleep
 import robot
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 try:
     import picamera2  # type: ignore
@@ -61,6 +62,44 @@ landmark_radius = 180
 
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 distCoeffs = np.zeros((5, 1))
+
+
+def save_path_image(landmarks, start, goal, G, path, filename="rrt_path.png"):
+    plt.figure(figsize=(8, 8))
+
+    # Draw all RRT nodes
+    if len(G) > 0:
+        Gx, Gy = zip(*G)
+        plt.scatter(Gx, Gy, c="lightgray", s=10, label="RRT nodes")
+
+    # Draw landmarks as circles
+    for lid, lx, ly in landmarks:
+        circle = plt.Circle(
+            (lx, ly), landmark_radius, color="red", fill=False, linestyle="--"
+        )
+        plt.gca().add_patch(circle)
+        plt.text(lx, ly, f"ID{lid}", color="red")
+
+    # Draw start and goal
+    plt.scatter(start[0], start[1], c="green", s=100, marker="o", label="Start")
+    plt.scatter(goal[0], goal[1], c="blue", s=100, marker="*", label="Goal")
+
+    # Draw the final path
+    if path is not None and len(path) > 1:
+        px, py = zip(*path)
+        plt.plot(px, py, c="black", linewidth=2, label="Path")
+
+    plt.xlabel("X [mm]")
+    plt.ylabel("Y [mm]")
+    plt.title("RRT Path Planning")
+    plt.legend()
+    plt.axis("equal")
+    plt.grid(True)
+
+    # Save instead of show
+    plt.savefig(filename)
+    plt.close()
+    print(f"Path image saved as {filename}")
 
 
 def checkForLandmark():
@@ -160,7 +199,7 @@ def buildRRT(landmarks, goal, delta_q=300):
         node = parent[node]
     path.reverse()
 
-    return path
+    return path, G
 
 
 def follow_rrt_path(path):
@@ -210,8 +249,9 @@ while running:
             landmarks.append((ids[i][0], x, y))
             id_list.append(id)
         goal = (0, 4000)
-        path = buildRRT(landmarks, goal)
+        path, G = buildRRT(landmarks, goal)
         print("Path:", path)
+        save_path_image(landmarks, (0, 0), goal, G, path, filename="rrt_path.png")
         follow_rrt_path(path)
         running = False
 
