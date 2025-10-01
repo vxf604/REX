@@ -81,6 +81,8 @@ def checkForLandmark():
     x = int(cv2.norm(c[0] - c[1]))
     Z = f * X / x
     print(f"Distance to landmark Z: {Z} mm")
+    print("Corners:", corners)
+    print("IDs:", ids)
     return True, corners, ids
 
 
