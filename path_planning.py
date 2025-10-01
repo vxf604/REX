@@ -148,7 +148,7 @@ def in_collision(point, landmarks, robot_radius=150):
 
 
 def randConf():
-    return (random.uniform(-5000, 5000) / SCALE, random.uniform(-5000, 5000) / SCALE)
+    return (random.uniform(-2000, 2000) / SCALE, random.uniform(-1000, 5000) / SCALE)
 
 
 def NEAREST_VERTEX(v, G):
