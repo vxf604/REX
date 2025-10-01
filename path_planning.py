@@ -148,7 +148,7 @@ def in_collision(point, landmarks, robot_radius=150):
 
 
 def randConf():
-    return (random.uniform(-2000, 2000) / SCALE, random.uniform(-1000, 5000) / SCALE)
+    return (random.uniform(-5000, 5000) / SCALE, random.uniform(-5000, 5000) / SCALE)
 
 
 def NEAREST_VERTEX(v, G):
@@ -215,25 +215,24 @@ def follow_rrt_path(path):
         target = path[i]
         print(f"Moving from {start} to {target}")
 
-        dx = target[1] - start[1]
-        dy = target[0] - start[0]
+        dx = target[0] - start[0] * SCALE
+        dy = target[1] - start[1] * SCALE
         angle_rad = np.arctan2(dy, dx)
         angle_deg = np.degrees(angle_rad)
-
+        
         rotate_angle = angle_deg - current_heading
         rotate_angle = (rotate_angle + 180) % 360 - 180
 
         print(f"Rotating {rotate_angle} degrees")
+
         arlo.rotate_robot(rotate_angle)
-
-        # move forward
-        distance_m = np.sqrt(dx**2 + dy**2) * SCALE / 1000.0
+        
+        distance_m = np.sqrt(dx**2 + dy**2) / 1000.0  # back to meters
         print(f"Driving forward {distance_m} meters")
-        arlo.drive_forward_meter(distance_m, 64, 67)
 
-        # update heading relative to the turn
-        current_heading += rotate_angle
-        current_heading = (current_heading + 180) % 360 - 180  # keep in [-180, 180]
+        arlo.drive_forward_meter(distance_m, 64, 67)
+        
+        current_heading = (current_heading + rotate_angle) % 360
 
 
 landmark_detected = False
