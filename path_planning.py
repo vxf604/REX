@@ -220,6 +220,7 @@ def follow_rrt_path(path):
         angle_rad = np.arctan2(dy, dx)
         angle_deg = np.degrees(angle_rad)
         
+        rotate_angle = angle_deg - current_heading
         rotate_angle = (rotate_angle + 180) % 360 - 180
 
         print(f"Rotating {rotate_angle} degrees")
