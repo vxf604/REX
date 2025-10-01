@@ -151,6 +151,11 @@ def buildRRT(landmarks, K, goal, delta_q=300):
             goal_index = len(G) - 1
             break
 
+    if goal_index is None:
+
+        nearest_to_goal = NEAREST_VERTEX(goal, G)
+        goal_index = G.index(nearest_to_goal)
+        print("Did not reach goal, connecting to nearest node:", nearest_to_goal)
     path = []
     node = goal_index
     while node is not None:
