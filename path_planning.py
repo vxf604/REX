@@ -23,6 +23,7 @@ arlo = robot.Robot()
 speed = 40
 leftSpeed = speed + 3
 rightSpeed = speed
+SCALE = 100  # 1 unit = 100 mm
 f = 1226.11  # pixels
 X = 145  # mm
 cWidth = 1640
@@ -58,7 +59,7 @@ fx = 1226.11
 fy = 1226.11
 cx = 1640 / 2
 cy = 1232 / 2
-landmark_radius = 180
+landmark_radius = 180  # mm
 
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 distCoeffs = np.zeros((5, 1))
@@ -69,24 +70,30 @@ def save_path_image(landmarks, start, goal, G, path, filename="rrt_path.png"):
 
     # Draw all RRT nodes
     if len(G) > 0:
-        Gx, Gy = zip(*G)
+        Gx, Gy = zip(*[(gx * SCALE, gy * SCALE) for gx, gy in G])
         plt.scatter(Gx, Gy, c="lightgray", s=10, label="RRT nodes")
 
     # Draw landmarks as circles
     for lid, lx, ly in landmarks:
+        lx_mm = lx * SCALE
+        ly_mm = ly * SCALE
         circle = plt.Circle(
-            (lx, ly), landmark_radius, color="red", fill=False, linestyle="--"
+            (lx_mm, ly_mm), landmark_radius, color="red", fill=False, linestyle="--"
         )
         plt.gca().add_patch(circle)
-        plt.text(lx, ly, f"ID{lid}", color="red")
+        plt.text(lx_mm, ly_mm, f"ID{lid}", color="red")
 
     # Draw start and goal
-    plt.scatter(start[0], start[1], c="green", s=100, marker="o", label="Start")
-    plt.scatter(goal[0], goal[1], c="blue", s=100, marker="*", label="Goal")
+    plt.scatter(
+        start[0] * SCALE, start[1] * SCALE, c="green", s=100, marker="o", label="Start"
+    )
+    plt.scatter(
+        goal[0] * SCALE, goal[1] * SCALE, c="blue", s=100, marker="*", label="Goal"
+    )
 
     # Draw the final path
     if path is not None and len(path) > 1:
-        px, py = zip(*path)
+        px, py = zip(*[(px * SCALE, py * SCALE) for px, py in path])
         plt.plot(px, py, c="black", linewidth=2, label="Path")
 
     plt.xlabel("X [mm]")
@@ -106,10 +113,6 @@ def checkForLandmark():
     os.makedirs("images", exist_ok=True)
 
     image = cam.capture_array("main")
-    # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    # image_path = os.path.join("images", f"captured_image_{timestamp}.png")
-    # cv2.imwrite(image_path, image)
-
     aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
     parameters = aruco.DetectorParameters_create()
     corners, ids, rejected = aruco.detectMarkers(
@@ -126,7 +129,7 @@ def checkForLandmark():
     return True, corners, ids
 
 
-radius_landmark = 1800
+radius_landmark = 1800  # mm
 
 
 def distance(p1, p2):
@@ -139,13 +142,13 @@ def in_collision(point, landmarks, robot_radius=150):
         id, map_x, map_y = landmark
         landmark_pos = (map_x, map_y)
         d = distance(point, landmark_pos)
-        if d <= landmark_radius + robot_radius:
+        if d <= (landmark_radius / SCALE) + (robot_radius / SCALE):
             return True
     return False
 
 
 def randConf():
-    return (random.uniform(-5000, 5000), random.uniform(-5000, 5000))
+    return (random.uniform(-5000, 5000) / SCALE, random.uniform(-5000, 5000) / SCALE)
 
 
 def NEAREST_VERTEX(v, G):
@@ -159,7 +162,7 @@ def NEAREST_VERTEX(v, G):
     return minV
 
 
-def Steer(q_near, q_rand, delta_q=300):
+def Steer(q_near, q_rand, delta_q=300 / SCALE):
     dx, dy = q_rand[0] - q_near[0], q_rand[1] - q_near[1]
     d = distance(q_near, q_rand)
 
@@ -169,7 +172,7 @@ def Steer(q_near, q_rand, delta_q=300):
         return (q_near[0] + delta_q * dx / d, q_near[1] + delta_q * dy / d)
 
 
-def buildRRT(landmarks, goal, delta_q=300):
+def buildRRT(landmarks, goal, delta_q=300 / SCALE):
     start = (0, 0)
     G = [start]
     parent = {0: None}
@@ -201,7 +204,10 @@ def buildRRT(landmarks, goal, delta_q=300):
 
     return path, G
 
+
 current_heading = 0
+
+
 def follow_rrt_path(path):
     global current_heading
     for i in range(1, len(path)):
@@ -214,16 +220,13 @@ def follow_rrt_path(path):
         angle_rad = np.arctan2(dy, dx)
         angle_deg = np.degrees(angle_rad)
         
-        
         rotate_angle = (rotate_angle + 180) % 360 - 180
-        
+
         print(f"Rotating {rotate_angle} degrees")
-        
-        
 
         arlo.rotate_robot(rotate_angle)
 
-        distance_m = np.sqrt(dx**2 + dy**2) / 1000  # to meter
+        distance_m = np.sqrt(dx**2 + dy**2) * SCALE / 1000.0  # back to meters
         print(f"Driving forward {distance_m} meters")
 
         arlo.drive_forward_meter(distance_m, 64, 67)
@@ -255,12 +258,12 @@ while running:
             if id in id_list:
                 continue
 
-            x = tvecs[i][0][0]
+            x = tvecs[i][0][0] / SCALE
             print(f"Landmark ID{id} is {cv2.norm(tvecs[i][0])} mm away from the camera")
-            y = tvecs[i][0][2]
+            y = tvecs[i][0][2] / SCALE
             landmarks.append((ids[i][0], x, y))
             id_list.append(id)
-        goal = (0, 4000)
+        goal = (0 / SCALE, 4000 / SCALE)
         path, G = buildRRT(landmarks, goal)
         print("Path:", path)
         save_path_image(landmarks, (0, 0), goal, G, path, filename="rrt_path.png")
