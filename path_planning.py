@@ -130,17 +130,20 @@ def Steer(q_near, q_rand, delta_q=300):
         return (q_near[0] + delta_q * dx / d, q_near[1] + delta_q * dy / d)
 
 
-def buildRRT(landmarks, K, goal, delta_q=300):
+def buildRRT(landmarks, goal, delta_q=300, max_iter=20000):
     start = (0, 0)
     G = [start]
     parent = {0: None}
 
     goal_index = None
+    i = 0
 
-    for i in range(K):
+    while goal_index is None and i < max_iter:
+        i += 1
         q_rand = randConf()
         q_near = NEAREST_VERTEX(q_rand, G)
         q_new = Steer(q_near, q_rand, delta_q)
+
         if in_collision(q_new, landmarks):
             continue
 
@@ -149,13 +152,8 @@ def buildRRT(landmarks, K, goal, delta_q=300):
 
         if distance(q_new, goal) < delta_q:
             goal_index = len(G) - 1
-            break
+            print(f"Goal reached after {i} iterations")
 
-    if goal_index is None:
-
-        nearest_to_goal = NEAREST_VERTEX(goal, G)
-        goal_index = G.index(nearest_to_goal)
-        print("Did not reach goal, connecting to nearest node:", nearest_to_goal)
     path = []
     node = goal_index
     while node is not None:
