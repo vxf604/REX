@@ -93,14 +93,13 @@ def distance(p1, p2):
     return np.linalg.norm(np.array(p1) - np.array(p2))
 
 
-def in_collision(point, landmarks, robot_radius=150):
+def in_collision(point, landmarks, robot_radius=1500):
     x, y = point
-
     for landmark in landmarks:
-        id, map_x, map_y, radius = landmark
+        id, map_x, map_y = landmark
         landmark_pos = (map_x, map_y)
         distance = distance(point, landmark_pos)
-        if distance <= radius + robot_radius:
+        if distance <= landmark_radius + robot_radius:
             return True
     return False
 
