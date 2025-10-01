@@ -135,7 +135,7 @@ def buildRRT(landmarks, K, goal, delta_q=300):
     G = [start]
     parent = {0: None}
 
-    goal_idx = None
+    goal_index = None
 
     for i in range(K):
         q_rand = randConf()
