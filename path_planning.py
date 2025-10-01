@@ -177,7 +177,7 @@ def follow_rrt_path(path):
 
         distance_m = np.sqrt(dx**2 + dy**2) / 1000  # to meter
 
-        arlo.drive_forward_meter(distance_m, leftspeed=64, rightspeed=67)
+        arlo.drive_forward_meter(distance_m, 64, 67)
 
 
 landmark_detected = False
