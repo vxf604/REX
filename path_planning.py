@@ -57,7 +57,7 @@ fx = 1226.11
 fy = 1226.11
 cx = 1640 / 2
 cy = 1232 / 2
-landmark_radius = 1800
+landmark_radius = 180
 
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 distCoeffs = np.zeros((5, 1))
@@ -94,7 +94,7 @@ def distance(p1, p2):
     return float(np.linalg.norm(np.array(p1) - np.array(p2)))
 
 
-def in_collision(point, landmarks, robot_radius=1500):
+def in_collision(point, landmarks, robot_radius=150):
     x, y = point
     for landmark in landmarks:
         id, map_x, map_y = landmark
@@ -152,7 +152,6 @@ def buildRRT(landmarks, goal, delta_q=300):
 
         if distance(q_new, goal) < delta_q:
             goal_index = len(G) - 1
-            print(f"Goal reached after {i} iterations")
 
     path = []
     node = goal_index
@@ -167,7 +166,7 @@ def buildRRT(landmarks, goal, delta_q=300):
 def follow_rrt_path(arlo, path):
     for i in range(1, len(path)):
         start = path[i - 1]
-        target = path[len(path) - i]
+        target = path[i]
 
         dx = target[0] - start[0]
         dy = target[1] - start[1]
