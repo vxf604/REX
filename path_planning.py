@@ -221,7 +221,7 @@ def follow_rrt_path(path):
         angle_deg = np.degrees(angle_rad)
         print(f"Rotating {angle_deg} degrees")
         arlo.rotate_robot(angle_deg)
-        distance_m = np.sqrt(dx**2 + dy**2)  # back to meters
+        distance_m = np.sqrt(dx**2 + dy**2) * (SCALE / 1000.0)
         print(f"Moving from {start} to {target}")
         print(f"Driving forward {distance_m} meters")
         arlo.drive_forward_meter(distance_m, 64, 67)
