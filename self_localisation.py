@@ -126,3 +126,36 @@ while running:
 
 cam.stop()
 print("Finished")
+
+
+
+def rotation1 (p, rot1)
+    x, y, theta = p
+    theta = (theta + rot1 + roterror()) % (2 * np.pi)
+    return (x, y, theta)
+
+def translation1 (p, transl1)
+    x, y, theta = p
+    transl1 += random.gauss(0, 0.01)
+    x = x + transi1 * np.cos(theta +  roterror())
+    y = y + transi1 * np.sin(theta + roterror())
+    return (x, y, theta)
+
+
+
+
+
+
+def sample_motion_model(u, particle):
+    rotation = 
+    trans = 
+
+
+
+
+def MCL (particle, u, detection, landmarks):
+    
+    X = []
+    for i = 1 in particle: 
+        particle_prediction = sample_motion_model (u, particle) 
+

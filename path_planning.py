@@ -148,7 +148,7 @@ def in_collision(point, landmarks, robot_radius=150):
 
 
 def randConf():
-    return (random.uniform(-5000, 5000) / SCALE, random.uniform(-5000, 5000) / SCALE)
+    return (random.uniform(-2000, 2000) / SCALE, random.uniform(-2000, 2000) / SCALE)
 
 
 def NEAREST_VERTEX(v, G):
@@ -202,6 +202,8 @@ def buildRRT(landmarks, goal, delta_q=300 / SCALE):
         node = parent[node]
     path.reverse()
 
+    path.append(goal)
+
     return path, G
 
 
@@ -210,6 +212,7 @@ current_heading = 0
 
 def follow_rrt_path(path):
     global current_heading
+    current_pos = np.array([0.0, 0.0])
 
     for i in range(1, len(path)):
         start = path[i - 1]
@@ -217,15 +220,20 @@ def follow_rrt_path(path):
 
         dx = target[0] - start[0]
         dy = target[1] - start[1]
-        angle_rad = np.arctan2(dx, dy)
-        angle_deg = np.degrees(angle_rad)
-        print(f"Rotating {angle_deg} degrees")
-        arlo.rotate_robot(angle_deg)
+
+        desired_angle_deg = np.degrees(np.arctan2(dx, dy))
+        rotation_needed = desired_angle_deg - current_heading
+
+        print(f"Rotating {rotation_needed:.2f} degrees")
+        arlo.rotate_robot(rotation_needed)
+        current_heading = desired_angle_deg
+
         distance_m = np.sqrt(dx**2 + dy**2) * (SCALE / 1000.0)
-        print(f"Moving from {start} to {target}")
-        print(f"Driving forward {distance_m} meters")
+        print(f"Driving forward {distance_m:.3f} meters")
         arlo.drive_forward_meter(distance_m, 64, 67)
-        arlo.rotate_robot(-angle_deg)
+
+        rad = np.radians(current_heading)
+        current_pos += np.array([np.sin(rad), np.cos(rad)]) * distance_m
 
 
 landmark_detected = False
@@ -257,7 +265,7 @@ while running:
             y = tvecs[i][0][2] / SCALE
             landmarks.append((ids[i][0], x, y))
             id_list.append(id)
-        goal = (0 / SCALE, 4000 / SCALE)
+        goal = (0 / SCALE, 1750 / SCALE)
         path, G = buildRRT(landmarks, goal)
         print("Path:", path)
         save_path_image(landmarks, (0, 0), goal, G, path, filename="rrt_path.png")
