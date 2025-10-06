@@ -1,7 +1,7 @@
 # Arlo Robot Controller
 
 from time import sleep
-import serial
+import serial  # type: ignore
 
 
 class Robot(object):
@@ -25,6 +25,10 @@ class Robot(object):
         pi). The value of port should point to the USB port on which the robot Arduino is connected.
         """
         self.port = port
+        self.pose = (0, 0, 0)  # x, y, theta
+        self.speed = 40
+        self.leftSpeed = self.speed + 3
+        self.rightSpeed = self.speed
 
         # self.serialRead = serial.Serial(self.port,9600, timeout=1) # 1 sec. timeout, wait until data is received or until timeout
         self.serialRead = serial.Serial(
@@ -228,3 +232,6 @@ class Robot(object):
         turn_time = (0.711 / 90) * abs(angle)
         sleep(turn_time)
         self.stop()
+
+    def set_pose(self, x, y, theta):
+        self.pose = (x, y, theta)

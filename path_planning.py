@@ -1,118 +1,29 @@
 import cv2
 import cv2.aruco as aruco
-import time
 from pprint import *
 import os
-import datetime
-import sys
 from time import sleep
 import robot
 import numpy as np
 import random
-import matplotlib.pyplot as plt
-
-try:
-    import picamera2  # type: ignore
-
-    print("Camera.py: Using picamera2 module")
-except ImportError:
-    print("Camera.py: picamera2 module not available")
-    exit(-1)
+import cam
+import print_path
 
 arlo = robot.Robot()
-speed = 40
-leftSpeed = speed + 3
-rightSpeed = speed
-SCALE = 100  # 1 unit = 100 mm
-f = 1226.11  # pixels
-X = 145  # mm
-cWidth = 1640
-cHeight = 1232
-cx = cWidth / 2
-cy = cHeight / 2
-imageSize = (cWidth, cHeight)
-
-intrinsic_matrix = np.array([[f, 0, cWidth / 2], [0, f, cHeight / 2], [0, 0, 1]])
-distortion_coeffs = np.zeros((5, 1))
-
-FPS = 30
-cam = picamera2.Picamera2()
-frame_duration_limit = int(1 / FPS * 1000000)  # Microseconds
-# Change configuration to set resolution, framerate
-picam2_config = cam.create_video_configuration(
-    {"size": imageSize, "format": "RGB888"},
-    controls={
-        "FrameDurationLimits": (frame_duration_limit, frame_duration_limit),
-        "ScalerCrop": (0, 0, 3280, 2464),
-    },
-    queue=False,
-)
-cam.configure(picam2_config)
-cam.start(show_preview=False)
+printer = print_path.PathPrinter()
+SCALE = 100
+cam = cam.Cam()
+landmark_radius = 180  # mm
 
 
 print("Running ...")
 running = True
 
 
-fx = 1226.11
-fy = 1226.11
-cx = 1640 / 2
-cy = 1232 / 2
-landmark_radius = 180  # mm
-
-cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
-distCoeffs = np.zeros((5, 1))
-
-
-def save_path_image(landmarks, start, goal, G, path, filename="rrt_path.png"):
-    plt.figure(figsize=(8, 8))
-
-    # Draw all RRT nodes
-    if len(G) > 0:
-        Gx, Gy = zip(*[(gx * SCALE, gy * SCALE) for gx, gy in G])
-        plt.scatter(Gx, Gy, c="lightgray", s=10, label="RRT nodes")
-
-    # Draw landmarks as circles
-    for lid, lx, ly in landmarks:
-        lx_mm = lx * SCALE
-        ly_mm = ly * SCALE
-        circle = plt.Circle(
-            (lx_mm, ly_mm), landmark_radius, color="red", fill=False, linestyle="--"
-        )
-        plt.gca().add_patch(circle)
-        plt.text(lx_mm, ly_mm, f"ID{lid}", color="red")
-
-    # Draw start and goal
-    plt.scatter(
-        start[0] * SCALE, start[1] * SCALE, c="green", s=100, marker="o", label="Start"
-    )
-    plt.scatter(
-        goal[0] * SCALE, goal[1] * SCALE, c="blue", s=100, marker="*", label="Goal"
-    )
-
-    # Draw the final path
-    if path is not None and len(path) > 1:
-        px, py = zip(*[(px * SCALE, py * SCALE) for px, py in path])
-        plt.plot(px, py, c="black", linewidth=2, label="Path")
-
-    plt.xlabel("X [mm]")
-    plt.ylabel("Y [mm]")
-    plt.title("RRT Path Planning")
-    plt.legend()
-    plt.axis("equal")
-    plt.grid(True)
-
-    # Save instead of show
-    plt.savefig(filename)
-    plt.close()
-    print(f"Path image saved as {filename}")
-
-
 def checkForLandmark():
     os.makedirs("images", exist_ok=True)
 
-    image = cam.capture_array("main")
+    image = cam.capture()
     aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
     parameters = aruco.DetectorParameters_create()
     corners, ids, rejected = aruco.detectMarkers(
@@ -124,7 +35,7 @@ def checkForLandmark():
 
     c = corners[0][0]  # first marker detected
     x = int(cv2.norm(c[0] - c[1]))
-    Z = f * X / x
+    Z = cam.f * cam.X / x
     print(f"Distance to landmark Z: {Z} mm")
     return True, corners, ids
 
@@ -243,12 +154,7 @@ while running:
     landmark_detected, c, ids = checkForLandmark()
     if landmark_detected:
         print("Landmark detected! Stopping.")
-        rvecs, tvecs, objPoints = cv2.aruco.estimatePoseSingleMarkers(
-            c,
-            X,
-            intrinsic_matrix,
-            distortion_coeffs,
-        )
+        rvecs, tvecs, objPoints = cam.estimatePose(c)
         landmarks = []
         id_list = []
         for i in range(len(ids)):
@@ -264,7 +170,9 @@ while running:
         goal = (0 / SCALE, 2000 / SCALE)
         path, G = buildRRT(landmarks, goal)
         print("Path:", path)
-        save_path_image(landmarks, (0, 0), goal, G, path, filename="rrt_path.png")
+        printer.save_path_image(
+            landmarks, (0, 0), goal, G, path, filename="rrt_path.png"
+        )
         follow_rrt_path(path)
         running = False
 
