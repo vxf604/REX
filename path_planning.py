@@ -265,7 +265,7 @@ while running:
             y = tvecs[i][0][2] / SCALE
             landmarks.append((ids[i][0], x, y))
             id_list.append(id)
-        goal = (0 / SCALE, 1750 / SCALE)
+        goal = (0 / SCALE, 2000 / SCALE)
         path, G = buildRRT(landmarks, goal)
         print("Path:", path)
         save_path_image(landmarks, (0, 0), goal, G, path, filename="rrt_path.png")
