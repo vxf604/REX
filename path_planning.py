@@ -232,7 +232,8 @@ def follow_rrt_path(path):
 
         arlo.drive_forward_meter(distance_m, 64, 67)
 
-        current_heading = (current_heading + rotate_angle) % 360
+        current_heading += rotate_angle
+        current_heading = (current_heading + 180) % 360 - 180
 
 
 landmark_detected = False
