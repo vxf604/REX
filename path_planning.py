@@ -217,7 +217,7 @@ def follow_rrt_path(path):
 
         dx = target[0] - start[0]
         dy = target[1] - start[1]
-        angle_rad = np.arctan2(dy, dx)
+        angle_rad = np.arctan2(dx, dy)
         angle_deg = np.degrees(angle_rad)
         print(f"Rotating {angle_deg} degrees")
         arlo.rotate_robot(angle_deg)
