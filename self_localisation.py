@@ -1,10 +1,6 @@
 import cv2
 import cv2.aruco as aruco
-import time
 from pprint import *
-import os
-import datetime
-import sys
 from time import sleep
 import robot
 import numpy as np
