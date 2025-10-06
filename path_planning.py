@@ -210,29 +210,24 @@ current_heading = 0
 
 def follow_rrt_path(path):
     global current_heading
+    
+    
     for i in range(1, len(path)):
         start = path[i - 1]
         target = path[i]
-        print(f"Moving from {start} to {target}")
 
         dx = target[0] - start[0]
         dy = target[1] - start[1]
         angle_rad = np.arctan2(dy, dx)
         angle_deg = np.degrees(angle_rad)
-
-        rotate_angle = angle_deg - current_heading
-        rotate_angle = (rotate_angle + 180) % 360 - 180
-
         print(f"Rotating {rotate_angle} degrees")
-
         arlo.rotate_robot(rotate_angle)
-
         distance_m = np.sqrt(dx**2 + dy**2)  # back to meters
+        print(f"Moving from {start} to {target}")
         print(f"Driving forward {distance_m} meters")
-
         arlo.drive_forward_meter(distance_m, 64, 67)
-
-        current_heading = (current_heading + rotate_angle) % 360
+        arlo.rotate_robot(-rotate_angle)
+        
 
 
 landmark_detected = False
