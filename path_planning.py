@@ -202,6 +202,8 @@ def buildRRT(landmarks, goal, delta_q=300 / SCALE):
         node = parent[node]
     path.reverse()
 
+    path.append(goal)
+
     return path, G
 
 
