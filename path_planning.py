@@ -220,13 +220,13 @@ def follow_rrt_path(path):
         dy = target[1] - start[1]
         angle_rad = np.arctan2(dy, dx)
         angle_deg = np.degrees(angle_rad)
-        print(f"Rotating {rotate_angle} degrees")
-        arlo.rotate_robot(rotate_angle)
+        print(f"Rotating {angle_deg} degrees")
+        arlo.rotate_robot(angle_deg)
         distance_m = np.sqrt(dx**2 + dy**2)  # back to meters
         print(f"Moving from {start} to {target}")
         print(f"Driving forward {distance_m} meters")
         arlo.drive_forward_meter(distance_m, 64, 67)
-        arlo.rotate_robot(-rotate_angle)
+        arlo.rotate_robot(-angle_deg)
         
 
 
