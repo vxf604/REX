@@ -160,20 +160,16 @@ def sample_motion_model(p, rot1, trans, rot2):
 
 
 
-def ini_particles(n):
+def initialize_particles(num_particles):
     particles = []
-    for i in range (n):
-        x = random.uniform(-2000, 2000) / SCALE
-        y = random.uniform(-2000, 2000) / SCALE
-        theta = random.uniform(-np.pi, np.pi)
-        particles.append ((x, y, theta))
+    for i in range(num_particles):
+        # Random starting points. 
+        p = particle.Particle(600.0*np.random.ranf() - 100.0, 600.0*np.random.ranf() - 250.0, np.mod(2.0*np.pi*np.random.ranf(), 2.0*np.pi), 1.0/num_particles)
+        particles.append(p)
+
     return particles
 
-
 def normal_distribution(mu, sigma, x):
-    mu = distance[i]
-    sigma = 0.1
-    x = landmarks[objectIDs[i]][0]
     return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(-0.5 * ((x - mu) / sigma) ** 2)
 
 
@@ -198,13 +194,17 @@ def measurement_model(p, landmarks):
         
     
 def MCL (particles, control_rtr, detections, LANDMARKS,sig_d=10.0, sig_b=math.radians(8.0), angles_deg=True):
-    weights = []
     for particle in particles:
-        new_x, new_y, new_theta = sample_motion_model((x, y, theta), rot1, trans, rot2)
-        particle.append((new_x, new_y, new_theta, w))
-    
+        x = particle.getX()
+        y = particle.getY()
+        theta = particle.getTheta()
+
+        new_x, new_y, new_theta = sample_motion_model((x, y, theta))
         weight = measurement_model((x,y,theta), LANDMARKS)
-        weights.append(weight)
+        particle.setX(new_x)
+        particle.setY(new_y)
+        particle.setTheta(new_theta)
+        particle.setWeight(weight)
         
     
         
