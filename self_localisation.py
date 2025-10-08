@@ -5,15 +5,17 @@ from time import sleep
 import robot
 import numpy as np
 import random
-from cam import Cam
+import cam
+import camera
 import landmark_checker
 import particle
 import sys
+import math
 
 SCALE = 100
 arlo = robot.Robot()
 landmarkChecker = landmark_checker.LandmarkChecker(landmark_radius=180, scale=SCALE)
-cam = Cam()
+# cam = Cam()
 
 onRobot = True  # Whether or not we are running on the Arlo robot
 showGUI = True  # Whether or not to open GUI windows
@@ -158,19 +160,54 @@ def sample_motion_model(p, rot1, trans, rot2):
 
 
 
+def ini_particles(n):
+    particles = []
+    for i in range (n):
+        x = random.uniform(-2000, 2000) / SCALE
+        y = random.uniform(-2000, 2000) / SCALE
+        theta = random.uniform(-np.pi, np.pi)
+        particles.append ((x, y, theta))
+    return particles
+
+
+def normal_distribution(mu, sigma, x):
+    mu = distance[i]
+    sigma = 0.1
+    x = landmarks[objectIDs[i]][0]
+    return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(-0.5 * ((x - mu) / sigma) ** 2)
+
+
+def predicted_distance (p, landmark):
+    lx , ly = landmark
+    x, y = p
+    return np.sqrt ((lx - x)**2 + (ly - y)**2)
+
+
+
 def measurement_model(p, landmarks):
     objectIDs, distance, angles = cam.detect_aruco_landmarks()
     
-    if not instance(objectID, type[None]):
+    if not isinstance(objectIDs, type[None]):
         for i in range (len (objectIDs))
-        print ("Object ID: ", objectIDs[i], " Distance: ", distance[i], " Angle: ", angles[i])
+        print("Object ID: ", objectIDs[i], " Distance: ", distance[i], " Angle: ", angles[i])
+        predicted_dist = predicted_distance (p, landmarks[objectIDs[i]])
+        prob = normal_distribution(predicted_dist, 0.1, distance[i])
+        return prob
+        
     
+        
     
-# def MCL (particle, u, detection, landmarks):
+def MCL (particles, control_rtr, detections, LANDMARKS,sig_d=10.0, sig_b=math.radians(8.0), angles_deg=True):
+    weights = []
+    for particle in particles:
+        new_x, new_y, new_theta = sample_motion_model((x, y, theta), rot1, trans, rot2)
+        particle.append((new_x, new_y, new_theta, w))
     
-#     X = []
-#     for i = 1 in particle: 
-#         particle_prediction = sample_motion_model (p, u['rot1'], u['rot2'], u['trans'])
+        weight = measurement_model((x,y,theta), LANDMARKS)
+        weights.append(weight)
+        
+    
+        
 
 try:
     if showGUI:
