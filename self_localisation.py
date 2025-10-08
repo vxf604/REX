@@ -5,7 +5,7 @@ from time import sleep
 import robot
 import numpy as np
 import random
-from cam import Cam
+import cam
 import landmark_checker
 
 SCALE = 100
@@ -75,13 +75,36 @@ def sample_motion_model(p, rot1, trans, rot2):
 
 
 
+
+
+
+
+def normal_distribution(mu, sigma, x):
+    mu = distance [i]
+    sigma = 0.1
+    x = landmarks[objectIDs[i]][0]
+    return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(-0.5 * ((x - mu) / sigma) ** 2)
+
+
+def predicted_distance (p, landmark):
+    lx , ly = landmark
+    x, y = p
+    return np.sqrt ((lx - x)**2 + (ly - y)**2)
+
+
+
 def measurement_model(p, landmarks):
     objectIDs, distance, angles = cam.detect_aruco_landmarks()
     
     if not instance(objectID, type[None]):
         for i in range (len (objectIDs))
         print ("Object ID: ", objectIDs[i], " Distance: ", distance[i], " Angle: ", angles[i])
-    
+            predicted_dist = predicted_distance (p, landmarks[objectIDs[i]])
+            prob = normal_distribution(predicted_dist, 0.1, distance[i])
+            return prob
+        
+        
+        
     
 # def MCL (particle, u, detection, landmarks):
     
