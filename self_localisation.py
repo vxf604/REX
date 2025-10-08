@@ -149,7 +149,7 @@ def roterror(std_rot=0.01):
     return random.gauss(0.0, std_rot)
 
 
-def transerror(trans1, std_trans=0.01):
+def transerror(trans1, std_trans=10):
     return random.gauss(0.0, std_trans)
 
 
@@ -168,15 +168,16 @@ def rotation2(p, rot2):
 def translation1(p, transl1):
     x, y, theta = p
     d = transl1 + transerror(transl1)
-    x = x + d * np.cos(theta + roterror())
-    y = y + d * np.sin(theta + roterror())
+    x = x + d * np.cos(theta)
+    y = y + d * np.sin(theta)
     return (x, y, theta)
 
 
-def sample_motion_model(particles, previous_particles):
+def sample_motion_model(p, rot1, trans, rot2):
+
     p = rotation1(p, rot1)
-    p = rotation2(p, rot2)
     p = translation1(p, trans)
+    p = rotation2(p, rot2)
     return p
 
 
@@ -210,7 +211,7 @@ def predicted_distance(p, landmark):
 
 def measurement_model(distance, particle, landmark):
     predicted_dist = predicted_distance(particle, landmark)
-    prob = normal_distribution(predicted_dist, 0.1, distance)
+    prob = normal_distribution(predicted_dist, 150, distance)
     return prob
 
 
@@ -320,9 +321,7 @@ try:
                     x = particle.getX()
                     y = particle.getY()
                     theta = particle.getTheta()
-                    new_x, new_y, new_theta = sample_motion_model(
-                        particle,
-                    )
+                    new_x, new_y, new_theta = sample_motion_model(particle,0, 0, 0)
 
                     # compute particle weights
                     new_weight = measurement_model(
