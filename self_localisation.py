@@ -175,20 +175,16 @@ def normal_distribution(mu, sigma, x):
 
 def predicted_distance (p, landmark):
     lx , ly = landmark
-    x, y = p
+    x = p.getX()
+    y = p.getY()
     return np.sqrt ((lx - x)**2 + (ly - y)**2)
 
 
 
-def measurement_model(p, landmarks):
-    objectIDs, distance, angles = cam.detect_aruco_landmarks()
-    
-    if not isinstance(objectIDs, type[None]):
-        for i in range (len (objectIDs))
-        print("Object ID: ", objectIDs[i], " Distance: ", distance[i], " Angle: ", angles[i])
-        predicted_dist = predicted_distance (p, landmarks[objectIDs[i]])
-        prob = normal_distribution(predicted_dist, 0.1, distance[i])
-        return prob
+def measurement_model(distance, particle, landmark):
+    predicted_dist = predicted_distance(particle, landmark)
+    prob = normal_distribution(predicted_dist, 0.1, distance)
+    return prob
         
     
         
@@ -285,12 +281,24 @@ try:
             for i in range(len(objectIDs)):
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
                 # XXX: Do something for each detected object - remember, the same ID may appear several times
+                for particle in particles:
+                    x = particle.getX()
+                    y = particle.getY()
+                    theta = particle.getTheta()
+                    new_x, new_y, new_theta = sample_motion_model((x, y, theta))
 
-            # Compute particle weights
-            # XXX: You do this
-
+                    # compute particle weights
+                    new_weight = measurement_model(dists[i], particle, landmarks[objectIDs[i]])
+                    p = particle.Particle(new_x, new_y, new_theta, new_weight)
+                    particles.append(p)
             # Resampling
-            # XXX: You do this
+            new_particles = []
+            for i in range(len(objectIDs)):
+                j = random.choices(particles, weights=[p.getWeight() for p in particles], k=num_particles)
+                for particle in j:
+                    new_particles.append(particle)
+            
+            particles = new_particles
 
             # Draw detected objects
             cam.draw_aruco_objects(colour)
