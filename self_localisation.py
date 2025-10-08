@@ -103,7 +103,7 @@ def predicted_distance (p, landmark):
 def measurement_model(p, landmarks):
     objectIDs, distance, angles = cam.detect_aruco_landmarks()
     
-    if not instance(objectID, type[None]):
+    if not isinstance(objectIDs, type[None]):
         for i in range (len (objectIDs))
         print ("Object ID: ", objectIDs[i], " Distance: ", distance[i], " Angle: ", angles[i])
             predicted_dist = predicted_distance (p, landmarks[objectIDs[i]])
@@ -115,13 +115,15 @@ def measurement_model(p, landmarks):
     
 def MCL (particles, control_rtr, detections, LANDMARKS,
              sig_d=10.0, sig_b=math.radians(8.0), angles_deg=True):
-    for (x, y, theta, w) in particle:
-        new_x, new_y, new_theta = sample_motion_model((x, y, theta), rot1, trans, rot2)
-        particle.append((new_x, new_y, new_theta, w))
     
-        
+          
     weights = []
-    for (x,y,theta,w) = particle:
+    for particle in particles:
+        new_x, new_y, new_theta = sample_motion_model((x, y, theta), rot1, trans, rot2)
+        
+        
+        particle.append((new_x, new_y, new_theta))
+
         weight = measurement_model((x,y,theta), LANDMARKS)
         weights.append(weight)
         
