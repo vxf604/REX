@@ -7,6 +7,7 @@ import numpy as np
 import random
 import cam
 import landmark_checker
+import particle
 
 SCALE = 100
 arlo = robot.Robot()
@@ -75,8 +76,14 @@ def sample_motion_model(p, rot1, trans, rot2):
 
 
 
-
-
+def ini_particles(n):
+    particles = []
+    for i in range (n):
+        x = random.uniform(-2000, 2000) / SCALE
+        y = random.uniform(-2000, 2000) / SCALE
+        theta = random.uniform(-np.pi, np.pi)
+        particles.append ((x, y, theta))
+    return particles
 
 
 def normal_distribution(mu, sigma, x):
@@ -103,12 +110,21 @@ def measurement_model(p, landmarks):
             prob = normal_distribution(predicted_dist, 0.1, distance[i])
             return prob
         
-        
+    
         
     
-# def MCL (particle, u, detection, landmarks):
+def MCL (particles, control_rtr, detections, LANDMARKS,
+             sig_d=10.0, sig_b=math.radians(8.0), angles_deg=True):
+    for (x, y, theta, w) in particle:
+        new_x, new_y, new_theta = sample_motion_model((x, y, theta), rot1, trans, rot2)
+        particle.append((new_x, new_y, new_theta, w))
     
-#     X = []
-#     for i = 1 in particle: 
-#         particle_prediction = sample_motion_model (p, u['rot1'], u['rot2'], u['trans']) 
+        
+    weights = []
+    for (x,y,theta,w) = particle:
+        weight = measurement_model((x,y,theta), LANDMARKS)
+        weights.append(weight)
+        
+    
+        
 
