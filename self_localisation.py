@@ -9,6 +9,7 @@ import landmark_checker
 import particle
 import sys
 import math
+import copy
 
 SCALE = 100
 # arlo = robot.Robot()
@@ -52,9 +53,9 @@ CMAGENTA = (255, 0, 255)
 CWHITE = (255, 255, 255)
 CBLACK = (0, 0, 0)
 
-landmarkIDs = [1, 2]
+landmarkIDs = [7, 2]
 landmarks = {
-    1: (0.0, 0.0),  # Coordinates for landmark 1
+    7: (0.0, 0.0),  # Coordinates for landmark 1
     2: (300.0, 0.0),  # Coordinates for landmark 2
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
@@ -104,7 +105,10 @@ def draw_world(est_pose, particles, world):
     for particle in particles:
         x = int(particle.getX() + offsetX)
         y = ymax - (int(particle.getY() + offsetY))
-        colour = jet(particle.getWeight() / max_weight)
+        if max_weight == 0:
+            colour = jet(0)
+        else:
+            colour = jet(particle.getWeight() / max_weight)
         cv2.circle(world, (x, y), 2, colour, 2)
         b = (
             int(particle.getX() + 15.0 * np.cos(particle.getTheta())) + offsetX,
@@ -154,23 +158,29 @@ def transerror(trans1, std_trans=10):
 
 
 def rotation1(p, rot1):
-    x, y, theta = p
-    theta = (theta + rot1 + roterror()) % (2 * np.pi) - np.pi
-    return (x, y, theta)
+    theta = p.getTheta()
+    theta = (theta + rot1 + roterror()) % (2 * np.pi)
+    p.setTheta(theta)
+    return p
 
 
 def rotation2(p, rot2):
-    x, y, theta = p
-    theta = (theta + rot2 + roterror()) % (2 * np.pi) - np.pi
-    return (x, y, theta)
+    theta = p.getTheta()
+    theta = (theta + rot2 + roterror()) % (2 * np.pi)
+    p.setTheta(theta)
+    return p
 
 
 def translation1(p, transl1):
-    x, y, theta = p
+    x = p.getX()
+    y = p.getY()
+    theta = p.getTheta()
     d = transl1 + transerror(transl1)
     x = x + d * np.cos(theta)
     y = y + d * np.sin(theta)
-    return (x, y, theta)
+    p.setX(x)
+    p.setY(y)
+    return p
 
 
 def sample_motion_model(p, rot1, trans, rot2):
@@ -178,6 +188,7 @@ def sample_motion_model(p, rot1, trans, rot2):
     p = rotation1(p, rot1)
     p = translation1(p, trans)
     p = rotation2(p, rot2)
+
     return p
 
 
@@ -211,30 +222,30 @@ def predicted_distance(p, landmark):
 
 def measurement_model(distance, particle, landmark):
     predicted_dist = predicted_distance(particle, landmark)
-    prob = normal_distribution(predicted_dist, 150, distance)
+    prob = normal_distribution(predicted_dist, 15, distance)
     return prob
 
 
-def MCL(
-    particles,
-    control_rtr,
-    detections,
-    LANDMARKS,
-    sig_d=10.0,
-    sig_b=math.radians(8.0),
-    angles_deg=True,
-):
-    for particle in particles:
-        x = particle.getX()
-        y = particle.getY()
-        theta = particle.getTheta()
+# def MCL(
+#     particles,
+#     control_rtr,
+#     detections,
+#     LANDMARKS,
+#     sig_d=10.0,
+#     sig_b=math.radians(8.0),
+#     angles_deg=True,
+# ):
+#     for particle in particles:
+#         x = particle.getX()
+#         y = particle.getY()
+#         theta = particle.getTheta()
 
-        new_x, new_y, new_theta = sample_motion_model((x, y, theta))
-        weight = measurement_model((x, y, theta), LANDMARKS)
-        particle.setX(new_x)
-        particle.setY(new_y)
-        particle.setTheta(new_theta)
-        particle.setWeight(weight)
+#         new_x, new_y, new_theta = sample_motion_model((x, y, theta))
+#         weight = measurement_model((x, y, theta), LANDMARKS)
+#         particle.setX(new_x)
+#         particle.setY(new_y)
+#         particle.setTheta(new_theta)
+#         particle.setWeight(weight)
 
 
 try:
@@ -305,7 +316,7 @@ try:
 
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
-        if not isinstance(objectIDs, type(None)):
+        if not isinstance(objectIDs, type(None) or len(objectIDs) > 0):
             # List detected objects
             for i in range(len(objectIDs)):
                 print(
@@ -317,30 +328,55 @@ try:
                     angles[i],
                 )
                 # XXX: Do something for each detected object - remember, the same ID may appear several times
-                for particle in particles:
-                    x = particle.getX()
-                    y = particle.getY()
-                    theta = particle.getTheta()
-                    new_x, new_y, new_theta = sample_motion_model(particle,0, 0, 0)
+                new_particles = []
+                p_len = len(particles)
+                for j in range(p_len):
+                    p = particles[j]
+                    x = p.getX()
+                    y = p.getY()
+                    theta = p.getTheta()
+                    new_p = sample_motion_model(p, 0, 0, 0)
 
                     # compute particle weights
                     new_weight = measurement_model(
-                        dists[i], particle, landmarks[objectIDs[i]]
+                        dists[i], new_p, landmarks[objectIDs[i]]
                     )
-                    p = particle.Particle(new_x, new_y, new_theta, new_weight)
-                    particles.append(p)
+                    new_p.setWeight(new_weight)
+                    new_particles.append(new_p)
+
             # Resampling
             new_particles = []
+
             for i in range(len(objectIDs)):
                 j = random.choices(
                     particles,
                     weights=[p.getWeight() for p in particles],
                     k=num_particles,
                 )
-                for particle in j:
-                    new_particles.append(particle)
+                for p in j:
+                    new_particles.append(copy.copy(p))
 
             particles = new_particles
+
+            total_weight = 0
+
+            for p in particles:
+                total_weight += p.getWeight()
+
+            if total_weight > 0:
+                for p in particles:
+                    normalized_weight = p.getWeight() / total_weight
+                    p.setWeight(normalized_weight)
+
+            else:
+                for p in particles:
+                    p.setWeight(1.0 / num_particles)
+            print("total_weight:", total_weight)
+
+            total_weight = 0
+            for p in particles:
+                total_weight += p.getWeight()
+            print("total_weight after normalization:", total_weight)
 
             # Draw detected objects
             cam.draw_aruco_objects(colour)
@@ -372,28 +408,3 @@ finally:
 
     # Clean-up capture thread
     cam.terminateCaptureThread()
-
-# print("Running ...")
-# landmark_detected = False
-# while running:
-#     print("Checking for landmark...")
-#     landmark_detected, c, ids = landmarkChecker.checkForLandmark()
-#     if landmark_detected:
-#         print("Landmark detected! Stopping.")
-#         rvecs, tvecs, objPoints = cam.estimatePose(c)
-#         landmarks = []
-#         id_list = []
-#         for i in range(len(ids)):
-#             id = ids[i][0]
-#             if id in id_list:
-#                 continue
-#             x = tvecs[i][0][0] / SCALE
-#             print(f"Landmark ID{id} is {cv2.norm(tvecs[i][0])} mm away from the camera")
-#             y = tvecs[i][0][2] / SCALE
-#             landmarks.append((ids[i][0], x, y))
-#             id_list.append(id)
-#         goal = (0 / SCALE, 2000 / SCALE)
-#         running = False
-
-# cam.stop()
-# print("Finished")
