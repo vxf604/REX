@@ -5,12 +5,9 @@ from time import sleep
 import numpy as np
 import random
 import camera
-import landmark_checker
 import particle
-import sys
 import math
 import copy
-import camera
 
 onRobot = True  # Whether or not we are running on the Arlo robot
 showGUI = False  # Whether or not to open GUI windows
@@ -26,10 +23,12 @@ def isRunningOnArlo():
 try:
     import robot
 
+    showGUI = False
     onRobot = True
 except ImportError:
     print("selflocalize.py: robot module not present - forcing not running on Arlo!")
     onRobot = False
+    showGUI = True
 
 
 running = True
@@ -200,7 +199,7 @@ def normalize_angle(angle):
 def predicted_distance(p, landmark):
     lx, ly = landmark
     x = p.getX()
-    y = -p.getY()
+    y = p.getY()
     return np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
 
 
@@ -271,7 +270,6 @@ try:
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
     while True:
-        resample_count += 1
         # Move the robot according to user input (only for testing)
         action = cv2.waitKey(10)
         if action == ord("q"):  # Quit
@@ -356,7 +354,17 @@ try:
 
             # --- Compute particle weights (combine all detections) ---
             for p in particles:
-                p = sample_motion_model(p, angle_diff, distance_to_drive * 100.0, 0.0)
+                if isRunningOnArlo():
+                    p = sample_motion_model(
+                        p, angle_diff, distance_to_drive * 100.0, 0.0
+                    )
+                else:
+                    p = sample_motion_model(
+                        p,
+                        0,
+                        0,
+                        0.0,
+                    )
 
             for p in particles:
                 weight = 1.0
