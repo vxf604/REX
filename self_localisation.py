@@ -346,7 +346,8 @@ try:
             
             print("Angle difference:", angle_diff)
             print(arlo.rotate_robot(angle_diff))
-            print(arlo.drive_forward_meter(distance/ SCALE))
+            print(arlo.drive_forward_meter(distance/ (SCALE * 0.7)))
+
 
         # Fetch next frame
         colour = cam.get_next_frame()
