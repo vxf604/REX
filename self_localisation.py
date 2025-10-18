@@ -358,8 +358,6 @@ try:
                 )
 
             # --- Compute particle weights (combine all detections) ---
-<<<<<<< HEAD
-            
             # for i in range(len(particles)):
             #     if onRobot:
             #         particles[i] = sample_motion_model(
@@ -369,20 +367,6 @@ try:
             #         particles[i] = sample_motion_model(
             #             particles[i], 0.0, 10.0, 0.0
             #         )
-=======
-            for p in particles:
-                if isRunningOnArlo():
-                    p = sample_motion_model(
-                        p, angle_diff, distance_to_drive * 100.0, 0.0
-                    )
-                else:
-                    p = sample_motion_model(
-                        p,
-                        0,
-                        0,
-                        0.0,
-                    )
->>>>>>> 4a5c21759e9ec9728e6ece64ea571148ed167edf
 
             for p in particles:
                 weight = 1.0
