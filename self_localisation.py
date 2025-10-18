@@ -311,7 +311,7 @@ try:
                 2 * math.pi
             ) - math.pi
 
-            distance_m = distance / 100.0
+            distance_m = distance / 1000.0
             distance_to_drive = distance_m
             if seen_two_landmarks:
                 distance_to_drive = distance_m / 4.0
