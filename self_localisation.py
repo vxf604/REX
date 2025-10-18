@@ -354,7 +354,7 @@ try:
                 distance_m = distance / SCALE
                 drive_m = distance_m  # justér tallet her
                 print(f"Distance est.: {distance_m:.2f} m, driving {drive_m:.2f} m")
-                arlo.drive_forward_meter(drive_m)
+                arlo.drive_forward_meter(drive_m, 67, 64)
 
 
         # Fetch next frame
