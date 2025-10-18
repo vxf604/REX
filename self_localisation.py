@@ -15,7 +15,7 @@ import robot
 SCALE = 100
 arlo = robot.Robot()
 landmarkChecker = landmark_checker.LandmarkChecker(landmark_radius=180, scale=SCALE)
-# cam = Cam()
+cam = Cam()
 
 onRobot = True  # Whether or not we are running on the Arlo robot
 showGUI = True  # Whether or not to open GUI windows
@@ -26,11 +26,6 @@ def isRunningOnArlo():
     You can use this flag to switch the code from running on you laptop to Arlo - you need to do the programming here!
     """
     return onRobot
-
-
-# if isRunningOnArlo():
-#     # XXX: You need to change this path to point to where your robot.py file is located
-#     sys.path.append("../../../../Arlo/python")
 
 
 try:
@@ -421,6 +416,7 @@ try:
         
         angle_diff = math.atan(est_pose.getTheta() - math.atan2(landmarkcenter[1], landmarkcenter[0]))
         print(arlo.rotate_robot(angle_diff))
+        sleep(0.5)
         print(arlo.drive_forward_meter(distance/100.0, 63,60))
         
         
