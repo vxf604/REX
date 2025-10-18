@@ -10,9 +10,10 @@ import particle
 import sys
 import math
 import copy
+import robot
 
 SCALE = 100
-# arlo = robot.Robot()
+arlo = robot.Robot()
 landmarkChecker = landmark_checker.LandmarkChecker(landmark_radius=180, scale=SCALE)
 # cam = Cam()
 
@@ -149,12 +150,13 @@ def initialize_particles(num_particles):
 
 
 # Sørg for at standard deviation passer med hvad vores x og y er i (mm eller cm eller m)
-def roterror(std_rot=0.01):
+def roterror(std_rot=math.radians(2.0)):
     return random.gauss(0.0, std_rot)
 
 
-def transerror(trans1, std_trans=10):
-    return random.gauss(0.0, std_trans)
+def transerror(trans1, std_trans=0.05):
+    return random.gauss(0.0, abs(trans1) * std_trans)
+
 
 
 def rotation1(p, rot1):
@@ -211,6 +213,9 @@ def normal_distribution(mu, sigma, x):
     return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(
         -0.5 * ((x - mu) / sigma) ** 2
     )
+    
+def normalize_angle(angle):
+    return (angle + np.pi) % (2 * np.pi) - np.pi
 
 
 def predicted_distance(p, landmark):
@@ -219,11 +224,28 @@ def predicted_distance(p, landmark):
     y = p.getY()
     return np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
 
+def predict_angle(p,landmark):
+    lx, ly = landmark
+    dx =lx -  p.getX()
+    dy =ly - p.getY()
+    angle = math.atan2(dy, dx)
+    return normalize_angle(angle - p.getTheta())
 
-def measurement_model(distance, particle, landmark):
-    predicted_dist = predicted_distance(particle, landmark)
-    prob = normal_distribution(predicted_dist, 15, distance)
-    return prob
+
+
+
+def measurement_model(distance, angle, pt, landmark):
+    predicted_dist = predicted_distance(pt, landmark)
+    predict_ang = predict_angle(pt, landmark)
+    
+    angle_error = normalize_angle(angle - predict_ang)
+    dist_error = distance - predicted_dist
+    
+    
+    likelihood_dis = normal_distribution(0, 15.0, dist_error)
+
+    likelihood_ang = normal_distribution(0, math.radians(25.0), angle_error)
+    return likelihood_dis * likelihood_ang
 
 
 # def MCL(
@@ -316,70 +338,64 @@ try:
 
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
-        if not isinstance(objectIDs, type(None) or len(objectIDs) > 0):
-            # List detected objects
+        if objectIDs is not None and len(objectIDs) > 0:
+            angles = [-a for a in angles] 
+
+            unique = {}
+            for i, ID in enumerate(objectIDs):
+                if ID not in unique:
+                    unique[ID] = (dists[i], angles[i])
+            objectIDs = list(unique.keys())
+            dists = [unique[ID][0] for ID in objectIDs]
+            angles = [unique[ID][1] for ID in objectIDs]
+            
+            
             for i in range(len(objectIDs)):
-                print(
-                    "Object ID = ",
-                    objectIDs[i],
-                    ", Distance = ",
-                    dists[i],
-                    ", angle = ",
-                    angles[i],
-                )
-                # XXX: Do something for each detected object - remember, the same ID may appear several times
-                new_particles = []
-                p_len = len(particles)
-                for j in range(p_len):
-                    p = particles[j]
-                    x = p.getX()
-                    y = p.getY()
-                    theta = p.getTheta()
-                    new_p = sample_motion_model(p, 0, 0, 0)
+                print(f"Object ID = {objectIDs[i]}, Distance = {dists[i]}, angle = {angles[i]}")
 
-                    # compute particle weights
-                    new_weight = measurement_model(
-                        dists[i], new_p, landmarks[objectIDs[i]]
-                    )
-                    new_p.setWeight(new_weight)
-                    new_particles.append(new_p)
-
-            # Resampling
-            new_particles = []
-
-            for i in range(len(objectIDs)):
-                j = random.choices(
-                    particles,
-                    weights=[p.getWeight() for p in particles],
-                    k=num_particles,
-                )
-                for p in j:
-                    new_particles.append(copy.copy(p))
-
-            particles = new_particles
-
-            total_weight = 0
-
+            # --- Compute particle weights (combine all detections) ---
+            
             for p in particles:
-                total_weight += p.getWeight()
+                p.setX(p.getX() + random.gauss(0, 5))  # jitter in mm/cm depending on your scale
+                p.setY(p.getY() + random.gauss(0, 5))
+                p.setTheta(p.getTheta() + random.gauss(0, math.radians(2)))
+                
+            for p in particles:
+                weight = 1.0
+                for i in range(len(objectIDs)):
+                    landmark_id = int(objectIDs[i])
+                    if landmark_id not in landmarks:
+                        continue
+                    dist_measured = dists[i]
+                    ang_measured = angles[i]
+                    weight *= measurement_model(dist_measured, ang_measured, p, landmarks[landmark_id])
+                p.setWeight(weight)
 
-            if total_weight > 0:
-                for p in particles:
-                    normalized_weight = p.getWeight() / total_weight
-                    p.setWeight(normalized_weight)
-
-            else:
+            # --- Normalize weights ---
+            S = sum(p.getWeight() for p in particles)
+            if S <= 1e-300:
                 for p in particles:
                     p.setWeight(1.0 / num_particles)
-            print("total_weight:", total_weight)
+            else:
+                invS = 1.0 / S
+                for p in particles:
+                    p.setWeight(p.getWeight() * invS)
 
-            total_weight = 0
+            # --- Resample once ---
+            weights = [p.getWeight() for p in particles]
+            chosen = random.choices(particles, weights=weights, k=num_particles)
+
+            # --- Replace worst 10% with random new particles ---
+            frac_new = 0.1
+            k_new = int(frac_new * num_particles)
+            fresh = initialize_particles(k_new)
+            particles = [copy.copy(p) for p in chosen[:-k_new]] + fresh
+            
             for p in particles:
-                total_weight += p.getWeight()
-            print("total_weight after normalization:", total_weight)
-
-            # Draw detected objects
+                p.setWeight(1.0 / num_particles)
+                
             cam.draw_aruco_objects(colour)
+            
         else:
             # No observation - reset weights to uniform distribution
             for p in particles:
@@ -398,6 +414,25 @@ try:
 
             # Show world
             cv2.imshow(WIN_World, world)
+            
+        landmarkcenter= landmarks[2] - landmarks[1]
+        
+        distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
+        
+        angle_diff = math.atan(est_pose.getTheta() - math.atan2(landmarkcenter[1], landmarkcenter[0]))
+        print(arlo.rotate_robot(angle_diff))
+        print(arlo.drive_forward_meter(distance/100.0, 63,60))
+        
+        
+        
+        
+        
+        landmarks = {
+    7: (0.0, 0.0),  # Coordinates for landmark 1
+    2: (300.0, 0.0),  # Coordinates for landmark 2
+}    
+
+
 
 
 finally:
