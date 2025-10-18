@@ -337,7 +337,10 @@ try:
                                   (landmarks[2][1] + landmarks[7][1])/2
                                 )
                 print("landmarkcenter:", landmarkcenter)
-                distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
+                distance = math.sqrt(
+                    (landmarkcenter[0] - est_pose.getX())**2 +
+                    ((landmarkcenter[1] - est_pose.getY()) * 0.6)**2
+                )
                 print("est_pose:", (est_pose.getX(), est_pose.getY(), est_pose.getTheta()))
                 print("Distance to landmark center:", distance)
                 
