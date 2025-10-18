@@ -11,7 +11,7 @@ print("Running ...")
 # send a go_diff command to drive forward
 leftSpeed = 67
 rightSpeed = 64
-print(arlo.drive_forward_meter(2, leftSpeed, rightSpeed))
+print(arlo.drive_forward_meter(1, leftSpeed, rightSpeed))
 
 
 
