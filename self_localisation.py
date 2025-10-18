@@ -10,14 +10,13 @@ import particle
 import sys
 import math
 import copy
-import robot
 import camera
 
 SCALE = 100
-arlo = robot.Robot()
+# arlo = robot.Robot()
 landmarkChecker = landmark_checker.LandmarkChecker(landmark_radius=180, scale=SCALE)
 
-onRobot = False  # Whether or not we are running on the Arlo robot
+onRobot = True  # Whether or not we are running on the Arlo robot
 showGUI = False  # Whether or not to open GUI windows
 
 
@@ -331,26 +330,28 @@ try:
         # Use motor controls to update particles
         # XXX: Make the robot drive
         # XXX: You do this
-        if resample_count == 20:
-            landmarkcenter = ((landmarks[2][0] - landmarks[7][0])/2, landmarks[2][1] - landmarks[7][1])
-            print("landmarkcenter:", landmarkcenter)
-            distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
-            print("est_pose:", (est_pose.getX(), est_pose.getY(), est_pose.getTheta()))
-            print("Distance to landmark center:", distance)
-            
-            target_angle = math.atan2(
-                                        landmarkcenter[1] -  est_pose.getY(), 
-                                        landmarkcenter[0] - est_pose.getX()
-                                    )
-            angle_diff = (target_angle - est_pose.getTheta() + math.pi) % (2 * math.pi) - math.pi
-            
-            print("Angle difference:", angle_diff)
-            print(arlo.rotate_robot(angle_diff))
-            # print(arlo.drive_forward_meter(distance/ (SCALE * 1.1)))
-            distance_m = distance / SCALE
-            drive_m = distance_m * 1.45 + 0.10  # justér tallet her
-            print(f"Distance est.: {distance_m:.2f} m, driving {drive_m:.2f} m")
-            arlo.drive_forward_meter(drive_m)
+        if onRobot:
+            if resample_count == 20:
+                landmarkcenter = ((landmarks[2][0] - landmarks[7][0])/2, landmarks[2][1] - landmarks[7][1])
+                print("landmarkcenter:", landmarkcenter)
+                distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
+                print("est_pose:", (est_pose.getX(), est_pose.getY(), est_pose.getTheta()))
+                print("Distance to landmark center:", distance)
+                
+                target_angle = math.atan2(
+                                            landmarkcenter[1] -  est_pose.getY(), 
+                                            landmarkcenter[0] - est_pose.getX()
+                                        )
+                angle_diff = (target_angle - est_pose.getTheta() + math.pi) % (2 * math.pi) - math.pi
+                
+                
+                print("Angle difference:", angle_diff)
+                print(arlo.rotate_robot(angle_diff))
+                # print(arlo.drive_forward_meter(distance/ (SCALE * 1.1)))
+                distance_m = distance / SCALE
+                drive_m = distance_m  # justér tallet her
+                print(f"Distance est.: {distance_m:.2f} m, driving {drive_m:.2f} m")
+                arlo.drive_forward_meter(drive_m)
 
 
         # Fetch next frame
