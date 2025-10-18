@@ -328,7 +328,7 @@ try:
         # Use motor controls to update particles
         # XXX: Make the robot drive
         # XXX: You do this
-        landmarkcenter= landmarks[7] - landmarks[2]
+        landmarkcenter = (landmarks[7][0] - landmarks[2][0], landmarks[7][1] - landmarks[2][1])
         
         distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
         
