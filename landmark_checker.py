@@ -4,7 +4,7 @@ import cv2.aruco as aruco
 
 
 class LandmarkChecker:
-    def __init__(self, landmark_radius=180, scale=100):
+    def __init__(self, landmark_radius=180, scale=10):
         self.landmark_radius = landmark_radius
         self.SCALE = scale
 
@@ -24,5 +24,6 @@ class LandmarkChecker:
         c = corners[0][0]  # first marker detected
         x = int(cv2.norm(c[0] - c[1]))
         Z = cam.f * cam.X / x
-        print(f"Distance to landmark Z: {Z} mm")
-        return True, corners, ids
+        Z_scaled = Z / self.SCALE
+        print(f"Distance to landmark Z: {Z_scaled}")
+        return True, corners, ids, Z_scaled
