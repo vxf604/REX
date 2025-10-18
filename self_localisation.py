@@ -276,6 +276,7 @@ try:
         cv2.namedWindow(WIN_World)
         cv2.moveWindow(WIN_World, 500, 50)
 
+    resample_count= 0
     # Initialize particles
     num_particles = 1000
     particles = initialize_particles(num_particles)
@@ -306,7 +307,7 @@ try:
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
     while True:
-
+        resample_count += 1
         # Move the robot according to user input (only for testing)
         action = cv2.waitKey(10)
         if action == ord("q"):  # Quit
@@ -328,16 +329,18 @@ try:
         # Use motor controls to update particles
         # XXX: Make the robot drive
         # XXX: You do this
-        landmarkcenter = ((landmarks[2][0] - landmarks[7][0])/2, landmarks[2][1] - landmarks[7][1])
-        print("landmarkcenter:", landmarkcenter)
-        distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
-        print("est_pose:", (est_pose.getX(), est_pose.getY(), est_pose.getTheta()))
-        print("Distance to landmark center:", distance)
-        
-        angle_diff = math.atan(est_pose.getTheta() - math.atan2(landmarkcenter[1], landmarkcenter[0]))
-        print(arlo.rotate_robot(angle_diff))
-        sleep(0.5)
-        print(arlo.drive_forward_meter(distance/100.0, 63,60))
+        if resample_count == 20:
+            landmarkcenter = ((landmarks[2][0] - landmarks[7][0])/2, landmarks[2][1] - landmarks[7][1])
+            print("landmarkcenter:", landmarkcenter)
+            distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
+            print("est_pose:", (est_pose.getX(), est_pose.getY(), est_pose.getTheta()))
+            print("Distance to landmark center:", distance)
+            
+            angle_diff = math.atan(est_pose.getTheta() - math.atan2(landmarkcenter[1], landmarkcenter[0]))
+            print("Angle difference:", angle_diff)
+            print(arlo.rotate_robot(angle_diff))
+            sleep(0.5)
+            print(arlo.drive_forward_meter(distance/100.0, 63,60))
 
         # Fetch next frame
         colour = cam.get_next_frame()
