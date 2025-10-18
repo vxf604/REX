@@ -52,7 +52,7 @@ CBLACK = (0, 0, 0)
 landmarkIDs = [7, 2]
 landmarks = {
     7: (0.0, 0.0),  # Coordinates for landmark 1
-    2: (300.0, 0.0),  # Coordinates for landmark 2
+    2: (200.0, 0.0),  # Coordinates for landmark 2
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -333,7 +333,9 @@ try:
         # XXX: You do this
         if onRobot:
             if resample_count == 20:
-                landmarkcenter = ((landmarks[2][0] + landmarks[7][0])/2, landmarks[2][1] + landmarks[7][1])
+                landmarkcenter = ((landmarks[2][0] + landmarks[7][0])/2, 
+                                  (landmarks[2][1] + landmarks[7][1])/2
+                                )
                 print("landmarkcenter:", landmarkcenter)
                 distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
                 print("est_pose:", (est_pose.getX(), est_pose.getY(), est_pose.getTheta()))
