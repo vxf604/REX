@@ -200,7 +200,7 @@ def normalize_angle(angle):
 def predicted_distance(p, landmark):
     lx, ly = landmark
     x = p.getX()
-    y = -p.getY()
+    y = p.getY()
     return np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
 
 
@@ -271,7 +271,6 @@ try:
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
     while True:
-        resample_count += 1
         # Move the robot according to user input (only for testing)
         action = cv2.waitKey(10)
         if action == ord("q"):  # Quit
@@ -327,6 +326,11 @@ try:
 
             print(f"Driving forward {distance_to_drive} meters")
             arlo.drive_forward_meter(distance_to_drive, 67, 64)
+            
+            for i in range(len(particles)):
+                particles[i] = sample_motion_model(
+                    particles[i], angle_diff, distance_to_drive * 100.0, 0.0
+                )
 
         # Fetch next frame
         colour = cam.get_next_frame()
@@ -355,8 +359,16 @@ try:
                 )
 
             # --- Compute particle weights (combine all detections) ---
-            for p in particles:
-                p = sample_motion_model(p, angle_diff, distance_to_drive * 100.0, 0.0)
+            
+            # for i in range(len(particles)):
+            #     if onRobot:
+            #         particles[i] = sample_motion_model(
+            #             particles[i], angle_diff,distance_to_drive * 100.0, 0.0
+            #         )
+            #     else:
+            #         particles[i] = sample_motion_model(
+            #             particles[i], 0.0, 10.0, 0.0
+            #         )
 
             for p in particles:
                 weight = 1.0
@@ -393,6 +405,8 @@ try:
 
             for p in particles:
                 p.setWeight(1.0 / num_particles)
+            
+            particle.add_uncertainty(particles, sigma = 5.0, sigma_theta = math.radians(3.0))
 
             cam.draw_aruco_objects(colour)
 
