@@ -289,6 +289,7 @@ try:
     angular_velocity = 0.0  # radians/sec
 
     # Initialize the robot (XXX: You do this)
+    
 
     # Allocate space for world map
     world = np.zeros((500, 500, 3), dtype=np.uint8)
@@ -327,6 +328,14 @@ try:
         # Use motor controls to update particles
         # XXX: Make the robot drive
         # XXX: You do this
+        landmarkcenter= landmarks[2] - landmarks[1]
+        
+        distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
+        
+        angle_diff = math.atan(est_pose.getTheta() - math.atan2(landmarkcenter[1], landmarkcenter[0]))
+        print(arlo.rotate_robot(angle_diff))
+        sleep(0.5)
+        print(arlo.drive_forward_meter(distance/100.0, 63,60))
 
         # Fetch next frame
         colour = cam.get_next_frame()
@@ -410,24 +419,9 @@ try:
             # Show world
             cv2.imshow(WIN_World, world)
             
-        landmarkcenter= landmarks[2] - landmarks[1]
-        
-        distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
-        
-        angle_diff = math.atan(est_pose.getTheta() - math.atan2(landmarkcenter[1], landmarkcenter[0]))
-        print(arlo.rotate_robot(angle_diff))
-        sleep(0.5)
-        print(arlo.drive_forward_meter(distance/100.0, 63,60))
         
         
         
-        
-        
-        landmarks = {
-    7: (0.0, 0.0),  # Coordinates for landmark 1
-    2: (300.0, 0.0),  # Coordinates for landmark 2
-}    
-
 
 
 
