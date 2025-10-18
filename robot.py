@@ -230,6 +230,7 @@ class Robot(object):
             self.go_diff(leftSpeed, rightSpeed, 0, 1)
 
         turn_time = (0.711 / 90) * abs(angle)
+        print("rotating for ", turn_time)
         sleep(turn_time)
         self.stop()
 
