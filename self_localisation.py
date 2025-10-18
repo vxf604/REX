@@ -348,7 +348,7 @@ try:
             print(arlo.rotate_robot(angle_diff))
             # print(arlo.drive_forward_meter(distance/ (SCALE * 1.1)))
             distance_m = distance / SCALE
-            drive_m = distance_m * 1.25  # justér tallet her
+            drive_m = distance_m * 1.35  # justér tallet her
             print(f"Distance est.: {distance_m:.2f} m, driving {drive_m:.2f} m")
             arlo.drive_forward_meter(drive_m)
 
