@@ -11,6 +11,7 @@ import sys
 import math
 import copy
 import camera
+import robot
 
 SCALE = 100
 arlo = robot.Robot()
