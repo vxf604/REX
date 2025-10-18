@@ -275,6 +275,8 @@ try:
         WIN_World = "World view"
         cv2.namedWindow(WIN_World)
         cv2.moveWindow(WIN_World, 500, 50)
+    else :
+        print("GUI disabled")
 
     resample_count= 0
     # Initialize particles
