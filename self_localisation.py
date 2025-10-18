@@ -339,7 +339,7 @@ try:
             angle_diff = math.atan(est_pose.getTheta() - math.atan2(landmarkcenter[1], landmarkcenter[0]))
             print("Angle difference:", angle_diff)
             print(arlo.rotate_robot(angle_diff))
-            # print(arlo.drive_forward_meter(distance/100.0, 63,60))
+            print(arlo.drive_forward_meter(distance/100.0))
 
         # Fetch next frame
         colour = cam.get_next_frame()

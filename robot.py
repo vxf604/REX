@@ -215,8 +215,8 @@ class Robot(object):
         cmd = "y" + str(turntime) + "\n"
         return self.send_command(cmd)
 
-    def drive_forward_meter(self, meter, leftSpeed, rightSpeed):
-        self.go_diff(leftSpeed, rightSpeed, 1, 1)
+    def drive_forward_meter(self, meter):
+        self.go_diff(self.leftSpeed, self.rightSpeed, 1, 1)
         drive_time = 2.45 * meter
         sleep(drive_time)
         self.stop()
