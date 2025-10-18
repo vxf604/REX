@@ -216,7 +216,7 @@ def normalize_angle(angle):
 def predicted_distance(p, landmark):
     lx, ly = landmark
     x = p.getX()
-    y = p.getY()
+    y = - p.getY()
     return np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
 
 def predict_angle(p,landmark):
