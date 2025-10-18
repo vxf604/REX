@@ -13,7 +13,7 @@ import copy
 import robot
 import camera
 
-# SCALE = 100
+SCALE = 100
 arlo = robot.Robot()
 landmarkChecker = landmark_checker.LandmarkChecker(landmark_radius=180, scale=SCALE)
 
@@ -346,7 +346,7 @@ try:
             
             print("Angle difference:", angle_diff)
             print(arlo.rotate_robot(angle_diff))
-            print(arlo.drive_forward_meter(distance/1000.0))
+            print(arlo.drive_forward_meter(distance/(1000.0 / SCALE)))
 
         # Fetch next frame
         colour = cam.get_next_frame()
