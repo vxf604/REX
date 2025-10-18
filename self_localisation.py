@@ -331,6 +331,7 @@ try:
         landmarkcenter = (landmarks[7][0] - landmarks[2][0], landmarks[7][1] - landmarks[2][1])
         
         distance = (((est_pose.getY() - landmarkcenter[1])**2 + ((est_pose.getX() - landmarkcenter[0])**2))**0.5)
+        print("Distance to landmark center:", distance)
         
         angle_diff = math.atan(est_pose.getTheta() - math.atan2(landmarkcenter[1], landmarkcenter[0]))
         print(arlo.rotate_robot(angle_diff))
