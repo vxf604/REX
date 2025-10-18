@@ -13,7 +13,7 @@ import copy
 import camera
 
 SCALE = 100
-# arlo = robot.Robot()
+arlo = robot.Robot()
 landmarkChecker = landmark_checker.LandmarkChecker(landmark_radius=180, scale=SCALE)
 
 onRobot = True  # Whether or not we are running on the Arlo robot
