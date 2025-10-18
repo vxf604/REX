@@ -11,11 +11,12 @@ import sys
 import math
 import copy
 import robot
+import camera
 
 SCALE = 100
 arlo = robot.Robot()
 landmarkChecker = landmark_checker.LandmarkChecker(landmark_radius=180, scale=SCALE)
-cam = Cam()
+cam = camera.cam()
 
 onRobot = True  # Whether or not we are running on the Arlo robot
 showGUI = True  # Whether or not to open GUI windows
