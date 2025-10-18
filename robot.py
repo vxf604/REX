@@ -27,7 +27,7 @@ class Robot(object):
         self.port = port
         self.pose = (0, 0, 0)  # x, y, theta
         self.speed = 40
-        self.leftSpeed = self.speed
+        self.leftSpeed = self.speed + 3
         self.rightSpeed = self.speed
 
         # self.serialRead = serial.Serial(self.port,9600, timeout=1) # 1 sec. timeout, wait until data is received or until timeout
