@@ -339,7 +339,7 @@ try:
             print("Distance to landmark center:", distance)
             
             target_angle = math.atan2(math.atan2(landmarkcenter[1] -  est_pose.getY(), 
-                                               landmarkcenter[0] - est_pose.getX()))
+                                                landmarkcenter[0] - est_pose.getX()))
             angle_diff = (target_angle - est_pose.getTheta() + math.pi) % (2 * math.pi) - math.pi
             
             print("Angle difference:", angle_diff)
