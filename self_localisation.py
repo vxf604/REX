@@ -11,11 +11,6 @@ import sys
 import math
 import copy
 import camera
-import robot
-
-SCALE = 100
-arlo = robot.Robot()
-landmarkChecker = landmark_checker.LandmarkChecker(landmark_radius=180, scale=SCALE)
 
 onRobot = True  # Whether or not we are running on the Arlo robot
 showGUI = False  # Whether or not to open GUI windows
@@ -149,6 +144,10 @@ def roterror(std_rot=math.radians(2.0)):
     return random.gauss(0.0, std_rot)
 
 
+def euclidean_distance(x1, y1, x2, y2):
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+
 def transerror(trans1, std_trans=0.05):
     return random.gauss(0.0, abs(trans1) * std_trans)
 
@@ -186,21 +185,6 @@ def sample_motion_model(p, rot1, trans, rot2):
     p = rotation2(p, rot2)
 
     return p
-
-
-def initialize_particles(num_particles):
-    particles = []
-    for i in range(num_particles):
-        # Random starting points.
-        p = particle.Particle(
-            600.0 * np.random.ranf() - 100.0,
-            600.0 * np.random.ranf() - 250.0,
-            np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-            1.0 / num_particles,
-        )
-        particles.append(p)
-
-    return particles
 
 
 def normal_distribution(mu, sigma, x):
@@ -241,28 +225,6 @@ def measurement_model(distance, angle, pt, landmark):
     return likelihood_dis * likelihood_ang
 
 
-# def MCL(
-#     particles,
-#     control_rtr,
-#     detections,
-#     LANDMARKS,
-#     sig_d=10.0,
-#     sig_b=math.radians(8.0),
-#     angles_deg=True,
-# ):
-#     for particle in particles:
-#         x = particle.getX()
-#         y = particle.getY()
-#         theta = particle.getTheta()
-
-#         new_x, new_y, new_theta = sample_motion_model((x, y, theta))
-#         weight = measurement_model((x, y, theta), LANDMARKS)
-#         particle.setX(new_x)
-#         particle.setY(new_y)
-#         particle.setTheta(new_theta)
-#         particle.setWeight(weight)
-
-
 try:
     if showGUI:
         # Open windows
@@ -276,7 +238,6 @@ try:
     else:
         print("GUI disabled")
 
-    resample_count = 0
     # Initialize particles
     num_particles = 1000
     particles = initialize_particles(num_particles)
@@ -289,7 +250,11 @@ try:
     velocity = 0.0  # cm/sec
     angular_velocity = 0.0  # radians/sec
 
+    seen_two_landmarks = False
+
     # Initialize the robot (XXX: You do this)
+    if isRunningOnArlo():
+        arlo = robot.Robot()
 
     # Allocate space for world map
     world = np.zeros((500, 500, 3), dtype=np.uint8)
@@ -329,36 +294,39 @@ try:
         # XXX: Make the robot drive
         # XXX: You do this
         if onRobot:
-            if resample_count == 20:
-                landmarkcenter = (
-                    (landmarks[2][0] + landmarks[7][0]) / 2,
-                    (landmarks[2][1] + landmarks[7][1]) / 2,
-                )
-                print("landmarkcenter:", landmarkcenter)
-                distance = math.sqrt(
-                    (landmarkcenter[0] - est_pose.getX()) ** 2
-                    + ((landmarkcenter[1] - est_pose.getY())) ** 2
-                )
-                print(
-                    "est_pose:", (est_pose.getX(), est_pose.getY(), est_pose.getTheta())
-                )
-                print("Distance to landmark center:", distance)
 
-                target_angle = math.atan2(
-                    landmarkcenter[1] - est_pose.getY(),
-                    landmarkcenter[0] - est_pose.getX(),
-                )
-                angle_diff = (target_angle - est_pose.getTheta() + math.pi) % (
-                    2 * math.pi
-                ) - math.pi
+            landmarkcenter = (
+                (landmarks[2][0] + landmarks[7][0]) / 2,
+                (landmarks[2][1] + landmarks[7][1]) / 2,
+            )
 
-                print("Angle difference:", angle_diff)
-                print(arlo.rotate_robot(angle_diff))
-                # print(arlo.drive_forward_meter(distance/ (SCALE * 1.1)))
-                distance_m = distance / SCALE
-                drive_m = distance_m  # justér tallet her
-                print(f"Distance est.: {distance_m:.2f} m, driving {drive_m:.2f} m")
-                arlo.drive_forward_meter(drive_m, 67, 64)
+            distance = euclidean_distance(
+                est_pose.getX(), est_pose.getY(), landmarkcenter[0], landmarkcenter[1]
+            )
+
+            target_angle = math.atan2(
+                landmarkcenter[1] - est_pose.getY(),
+                landmarkcenter[0] - est_pose.getX(),
+            )
+
+            angle_diff = (target_angle - est_pose.getTheta() + math.pi) % (
+                2 * math.pi
+            ) - math.pi
+
+            distance_m = distance / 100.0
+            distance_to_drive = distance_m
+            if seen_two_landmarks:
+                distance_to_drive = distance_m / 4.0
+
+            print("landmarkcenter:", landmarkcenter)
+            print("est_pose:", (est_pose.getX(), est_pose.getY(), est_pose.getTheta()))
+            print("Distance to landmark center:", distance)
+
+            print("Rotating robot towards landmark center by", angle_diff, "radians")
+            print(arlo.rotate_robot(angle_diff))
+
+            print(f"Driving forward {distance_to_drive} meters")
+            arlo.drive_forward_meter(distance_to_drive, 67, 64)
 
         # Fetch next frame
         colour = cam.get_next_frame()
@@ -376,19 +344,19 @@ try:
             dists = [unique[ID][0] for ID in objectIDs]
             angles = [unique[ID][1] for ID in objectIDs]
 
+            if len(objectIDs) >= 2:
+                seen_two_landmarks = True
+            else:
+                seen_two_landmarks = False
+
             for i in range(len(objectIDs)):
                 print(
                     f"Object ID = {objectIDs[i]}, Distance = {dists[i]}, angle = {angles[i]}"
                 )
 
             # --- Compute particle weights (combine all detections) ---
-
             for p in particles:
-                p.setX(
-                    p.getX() + random.gauss(0, 5)
-                )  # jitter in mm/cm depending on your scale
-                p.setY(p.getY() + random.gauss(0, 5))
-                p.setTheta(p.getTheta() + random.gauss(0, math.radians(2)))
+                p = sample_motion_model(p, angle_diff, distance_to_drive * 100.0, 0.0)
 
             for p in particles:
                 weight = 1.0
