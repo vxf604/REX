@@ -1,18 +1,17 @@
 import cv2
-import cv2.aruco as aruco
-from pprint import *
-from time import sleep
-import numpy as np
-import random
-import camera
-import landmark_checker
 import particle
-import sys
+import camera
+import numpy as np
+import time
+from timeit import default_timer as timer
 import math
+import random
 import copy
 
-onRobot = True  # Whether or not we are running on the Arlo robot
+
+# Flags
 showGUI = True  # Whether or not to open GUI windows
+onRobot = True  # Whether or not we are running on the Arlo robot
 
 
 def isRunningOnArlo():
@@ -32,8 +31,8 @@ except ImportError:
     onRobot = False
     showGUI = True
 
-# Some color constants in BGR format
 
+# Some color constants in BGR format
 CRED = (0, 0, 255)
 CGREEN = (0, 255, 0)
 CBLUE = (255, 0, 0)
@@ -43,10 +42,12 @@ CMAGENTA = (255, 0, 255)
 CWHITE = (255, 255, 255)
 CBLACK = (0, 0, 0)
 
+# Landmarks.
+# The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
 landmarkIDs = [6, 2]
 landmarks = {
     6: (0.0, 0.0),  # Coordinates for landmark 1
-    2: (300.0, 0.0),  # Coordinates for landmark 2
+    2: (200.0, 0.0),  # Coordinates for landmark 2
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -95,10 +96,7 @@ def draw_world(est_pose, particles, world):
     for particle in particles:
         x = int(particle.getX() + offsetX)
         y = ymax - (int(particle.getY() + offsetY))
-        if max_weight == 0:
-            colour = jet(0)
-        else:
-            colour = jet(particle.getWeight() / max_weight)
+        colour = jet(particle.getWeight() / max_weight)
         cv2.circle(world, (x, y), 2, colour, 2)
         b = (
             int(particle.getX() + 15.0 * np.cos(particle.getTheta())) + offsetX,
@@ -138,105 +136,47 @@ def initialize_particles(num_particles):
     return particles
 
 
-# Sørg for at standard deviation passer med hvad vores x og y er i (mm eller cm eller m)
-def roterror(std_rot=0.2):
-    return random.gauss(0.0, std_rot)
+# --- Motion Model (sample_motion_model) ---
+def sample_motion_model(p, rot1, trans, rot2):
+    """Implements p(x_t | x_{t-1}, u_t) using noisy rotation-translation-rotation model"""
+    # Add Gaussian noise to rotation and translation
+    rot1_hat = rot1 + random.gauss(0.0, math.radians(2))
+    trans_hat = trans + random.gauss(0.0, abs(trans) * 0.05)
+    rot2_hat = rot2 + random.gauss(0.0, math.radians(2))
 
+    # Update particle pose
+    x = p.getX() + trans_hat * math.cos(p.getTheta() + rot1_hat)
+    y = p.getY() + trans_hat * math.sin(p.getTheta() + rot1_hat)
+    theta = (p.getTheta() + rot1_hat + rot2_hat) % (2 * math.pi)
 
-def transerror(trans1, std_trans=5.0):
-    return random.gauss(0.0, std_trans)
-
-
-def rotation1(p, rot1):
-    theta = p.getTheta()
-    theta = theta + rot1 + roterror()
-    p.setTheta(theta)
-    return p
-
-
-def rotation2(p, rot2):
-    theta = p.getTheta()
-    theta = theta + rot2 + roterror()
-    p.setTheta(theta)
-    return p
-
-
-def translation1(p, transl1):
-    x = p.getX()
-    y = p.getY()
-    theta = p.getTheta()
-    d = transl1 + transerror(transl1)
-    x = x + d * np.cos(theta)
-    y = y + d * np.sin(theta)
     p.setX(x)
     p.setY(y)
+    p.setTheta(theta)
     return p
 
 
-def sample_motion_model(p, rot1, trans, rot2):
+# --- Measurement Model (measurement_model) ---
+def measurement_model(distance, angle, p, landmark):
+    """Computes likelihood p(z_t | x_t, m) using Gaussian on distance + angle error."""
+    sigma_d = 15.0  # cm standard deviation for distance
+    sigma_a = math.radians(10)  # radians for angle
 
-    p = rotation1(p, rot1)
-    p = translation1(p, trans)
-    p = rotation2(p, rot2)
-
-    return p
-
-
-def initialize_particles(num_particles):
-    particles = []
-    for i in range(num_particles):
-        # Random starting points.
-        p = particle.Particle(
-            600.0 * np.random.ranf() - 100.0,
-            600.0 * np.random.ranf() - 250.0,
-            np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-            1.0 / num_particles,
-        )
-        particles.append(p)
-
-    return particles
-
-
-def normal_distribution(mu, sigma, x):
-    return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(
-        -0.5 * ((x - mu) / sigma) ** 2
-    )
-
-
-def predicted_distance(p, landmark):
     lx, ly = landmark
-    x = p.getX()
-    y = p.getY()
-    return np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
+    dx, dy = lx - p.getX(), ly - p.getY()
+
+    predicted_dist = math.sqrt(dx**2 + dy**2)
+    predicted_angle = math.atan2(dy, dx) - p.getTheta()
+    predicted_angle = (predicted_angle + math.pi) % (2 * math.pi) - math.pi
+
+    dist_error = distance - predicted_dist
+    angle_error = (angle - predicted_angle + math.pi) % (2 * math.pi) - math.pi
+
+    weight_d = math.exp(-0.5 * (dist_error / sigma_d) ** 2)
+    weight_a = math.exp(-0.5 * (angle_error / sigma_a) ** 2)
+    return weight_d * weight_a
 
 
-def predicted_angle(p, landmark):
-    lx, ly = landmark
-    x, y, theta = p.getX(), p.getY(), p.getTheta()
-
-    e_theta = np.array([math.cos(theta), math.sin(theta)])
-    e_theta_hat = np.array([-math.sin(theta), math.cos(theta)])
-    e_l = np.array([lx - x, ly - y])
-    e_l = e_l / np.linalg.norm(e_l)
-
-    phi = np.sign(np.dot(e_l, e_theta_hat)) * math.acos(
-        np.clip(np.dot(e_l, e_theta), -1.0, 1.0)
-    )
-    return phi
-
-
-def measurement_model(distance, angle, particle, landmark):
-    sigma_d = 15.0
-    sigma_a = math.radians(3.0)
-    predicted_dist = predicted_distance(particle, landmark)
-    predicted_ang = predicted_angle(particle, landmark)
-    dist_weight = normal_distribution(distance, sigma_d, predicted_dist)
-    angle_diff = (angle - predicted_ang + np.pi) % (2 * np.pi) - np.pi
-    angle_weight = normal_distribution(0.0, sigma_a, angle_diff)
-    prob = dist_weight * angle_weight
-    return prob
-
-
+# Main program #
 try:
     if showGUI:
         # Open windows
@@ -261,8 +201,6 @@ try:
     angular_velocity = 0.0  # radians/sec
 
     # Initialize the robot (XXX: You do this)
-    if isRunningOnArlo():
-        arlo = robot.Robot()
 
     # Allocate space for world map
     world = np.zeros((500, 500, 3), dtype=np.uint8)
@@ -279,6 +217,7 @@ try:
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
     while True:
+
         # Move the robot according to user input (only for testing)
         action = cv2.waitKey(10)
         if action == ord("q"):  # Quit
@@ -297,87 +236,96 @@ try:
             elif action == ord("d"):  # Right
                 angular_velocity -= 0.2
 
+        # Use motor controls to update particles
+        # XXX: Make the robot drive
+        # XXX: You do this
+        # --- MOTION UPDATE (simplified velocity + angular velocity model) ---
+        dt = 0.1  # seconds per update (fixed small timestep)
+
+        for p in particles:
+            # Move particle according to velocity and angular velocity
+            x = p.getX() + velocity * dt * math.cos(p.getTheta())
+            y = p.getY() + velocity * dt * math.sin(p.getTheta())
+            theta = (p.getTheta() + angular_velocity * dt) % (2 * math.pi)
+
+            p.setX(x)
+            p.setY(y)
+            p.setTheta(theta)
+
+        # Add Gaussian noise to simulate uncertainty
+        particle.add_uncertainty(particles, sigma=6.0, sigma_theta=math.radians(2))
         # Fetch next frame
         colour = cam.get_next_frame()
 
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
-        if not isinstance(objectIDs, type(None)) and len(objectIDs) > 0:
+        if not isinstance(objectIDs, type(None)):
             # List detected objects
             for i in range(len(objectIDs)):
                 print(
-                    f"Object ID = {objectIDs[i]}, Distance = {dists[i]:.2f}, Angle = {angles[i]:.2f}"
+                    "Object ID = ",
+                    objectIDs[i],
+                    ", Distance = ",
+                    dists[i],
+                    ", angle = ",
+                    angles[i],
                 )
+                # XXX: Do something for each detected object - remember, the same ID may appear several times
 
-            # --- Update weights for all particles ---
-            new_particles = []
-            p_len = len(particles)
-            for j in range(p_len):
-                p = particles[j]
-                new_p = sample_motion_model(p, 0, 0, 0)
-
-                # Combine measurements from all visible landmarks
-                total_prob = 1.0
+            # --- MEASUREMENT UPDATE ---
+            for p in particles:
+                weight = 1.0
                 for i in range(len(objectIDs)):
                     landmark_id = objectIDs[i]
-                    total_prob *= measurement_model(
-                        dists[i], angles[i], new_p, landmarks[landmark_id]
-                    )
+                    if landmark_id not in landmarks:
+                        continue
+                    dist = dists[i]
+                    ang = angles[i]
+                    weight *= measurement_model(dist, ang, p, landmarks[landmark_id])
+                p.setWeight(weight)
 
-                new_p.setWeight(total_prob)
-                new_particles.append(new_p)
-
-            # --- Normalize weights once ---
-            total_weight = sum(p.getWeight() for p in new_particles)
-            if total_weight > 0:
-                for p in new_particles:
-                    p.setWeight(p.getWeight() / total_weight)
+            # --- NORMALIZE WEIGHTS ---
+            S = sum(p.getWeight() for p in particles)
+            if S > 0:
+                for p in particles:
+                    p.setWeight(p.getWeight() / S)
             else:
-                for p in new_particles:
-                    p.setWeight(1.0 / len(new_particles))
+                for p in particles:
+                    p.setWeight(1.0 / len(particles))
 
-            # 5% random particles injection
-            num_random = int(0.05 * num_particles)
-            new_particles.sort(key=lambda p: p.getWeight())
-            for r in range(num_random):
-                new_particles[r] = particle.Particle(
+            # --- RESAMPLING ---
+            weights = [p.getWeight() for p in particles]
+            indices = np.random.choice(len(particles), size=len(particles), p=weights)
+            particles = [copy.deepcopy(particles[i]) for i in indices]
+
+            # Optional: add 5% random new particles to maintain diversity
+            for i in range(int(0.05 * len(particles))):
+                particles[i] = particle.Particle(
                     600.0 * np.random.ranf() - 100.0,
                     600.0 * np.random.ranf() - 250.0,
                     np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-                    1.0 / num_particles,
+                    1.0 / len(particles),
                 )
 
-            def systematic_resample(particles):
-                N = len(particles)
-                positions = (np.arange(N) + random.random()) / N
-                cumulative_sum = np.cumsum([p.getWeight() for p in particles])
-                cumulative_sum[-1] = 1.0
-                i, j = 0, 0
-                new_particles = []
-                while i < N:
-                    if positions[i] < cumulative_sum[j]:
-                        new_particles.append(copy.copy(particles[j]))
-                        i += 1
-                    else:
-                        j += 1
-                return new_particles
-
-            particles = systematic_resample(new_particles)
             # Draw detected objects
             cam.draw_aruco_objects(colour)
-            objectIDs = None
         else:
             # No observation - reset weights to uniform distribution
             for p in particles:
                 p.setWeight(1.0 / num_particles)
 
-        # Estimate robot pose
-        est_pose = particle.estimate_pose(particles)
+        est_pose = particle.estimate_pose(
+            particles
+        )  # The estimate of the robots current pose
 
-        # Visualization
         if showGUI:
+            # Draw map
             draw_world(est_pose, particles, world)
+
+            # Show frame
             cv2.imshow(WIN_RF1, colour)
+
+            # Show world
             cv2.imshow(WIN_World, world)
 
 

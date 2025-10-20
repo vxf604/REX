@@ -133,7 +133,10 @@ def roterror(std_rot=math.radians(2.0)):
 
 
 def transerror(trans1, std_trans=0.05):
-    return random.gauss(0.0, abs(trans1) * std_trans)
+    if isRunningOnArlo():
+        return random.gauss(0.0, abs(trans1) * std_trans)
+    else:
+        return random.gauss(0.0, std_trans)
 
 
 def rotation1(p, rot1):
@@ -219,7 +222,9 @@ try:
     draw_world(est_pose, particles, world)
 
     print("Opening and initializing camera")
-    cam = camera.Camera(0, robottype="arlo" if onRobot else "macbookpro", useCaptureThread=False)
+    cam = camera.Camera(
+        0, robottype="arlo" if onRobot else "macbookpro", useCaptureThread=False
+    )
 
     while True:
         if cv2.waitKey(10) == ord("q"):
@@ -234,8 +239,12 @@ try:
             distance_cm = math.sqrt(
                 (target[0] - est_pose.getX()) ** 2 + (target[1] - est_pose.getY()) ** 2
             )
-            target_angle = math.atan2(target[1] - est_pose.getY(), target[0] - est_pose.getX())
-            angle_diff = (target_angle - est_pose.getTheta() + math.pi) % (2 * math.pi) - math.pi
+            target_angle = math.atan2(
+                target[1] - est_pose.getY(), target[0] - est_pose.getX()
+            )
+            angle_diff = (target_angle - est_pose.getTheta() + math.pi) % (
+                2 * math.pi
+            ) - math.pi
 
             print(f"Rotating {angle_diff:.2f} radians")
             arlo.rotate_robot(angle_diff)
@@ -246,7 +255,9 @@ try:
             arlo.drive_forward_meter(partial_distance_m, 67, 64)
 
             for i in range(len(particles)):
-                particles[i] = sample_motion_model(particles[i], angle_diff, partial_distance_cm, 0.0)
+                particles[i] = sample_motion_model(
+                    particles[i], angle_diff, partial_distance_cm, 0.0
+                )
 
             colour = cam.get_next_frame()
             objectIDs, dists, angles = cam.detect_aruco_objects(colour)
@@ -260,7 +271,9 @@ try:
                             continue
                         dist_measured = dists[i]
                         ang_measured = -angles[i]
-                        weight *= measurement_model(dist_measured, ang_measured, p, landmarks[ID])
+                        weight *= measurement_model(
+                            dist_measured, ang_measured, p, landmarks[ID]
+                        )
                     p.setWeight(weight)
 
                 S = sum(p.getWeight() for p in particles)
@@ -277,21 +290,26 @@ try:
                 est_pose = particle.estimate_pose(particles)
 
                 new_distance_cm = math.sqrt(
-                    (target[0] - est_pose.getX()) ** 2 + (target[1] - est_pose.getY()) ** 2
+                    (target[0] - est_pose.getX()) ** 2
+                    + (target[1] - est_pose.getY()) ** 2
                 )
                 remaining_distance_m = new_distance_cm / 100.0
                 print(f"Driving remaining {remaining_distance_m:.2f} meters")
                 arlo.drive_forward_meter(remaining_distance_m, 67, 64)
 
                 for i in range(len(particles)):
-                    particles[i] = sample_motion_model(particles[i], 0.0, new_distance_cm, 0.0)
+                    particles[i] = sample_motion_model(
+                        particles[i], 0.0, new_distance_cm, 0.0
+                    )
             else:
                 print("Lost landmark tracking — driving remaining 3/4 without update.")
                 remaining_distance_cm = distance_cm * (3.0 / 4.0)
                 remaining_distance_m = remaining_distance_cm / 100.0
                 arlo.drive_forward_meter(remaining_distance_m, 67, 64)
                 for i in range(len(particles)):
-                    particles[i] = sample_motion_model(particles[i], 0.0, remaining_distance_cm, 0.0)
+                    particles[i] = sample_motion_model(
+                        particles[i], 0.0, remaining_distance_cm, 0.0
+                    )
 
 
         colour = cam.get_next_frame()
@@ -336,7 +354,9 @@ try:
             for p in particles:
                 p.setWeight(1.0 / num_particles)
 
-            particle.add_uncertainty(particles, sigma=5.0, sigma_theta=math.radians(3.0))
+            particle.add_uncertainty(
+                particles, sigma=5.0, sigma_theta=math.radians(3.0)
+            )
             cam.draw_aruco_objects(colour)
 
         est_pose = particle.estimate_pose(particles)

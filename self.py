@@ -1,18 +1,16 @@
 import cv2
-import cv2.aruco as aruco
-from pprint import *
-from time import sleep
-import numpy as np
-import random
-import camera
-import landmark_checker
 import particle
-import sys
+import camera
+import numpy as np
+import time
+from timeit import default_timer as timer
 import math
-import copy
+import random
 
-onRobot = True  # Whether or not we are running on the Arlo robot
+
+# Flags
 showGUI = True  # Whether or not to open GUI windows
+onRobot = True  # Whether or not we are running on the Arlo robot
 
 
 def isRunningOnArlo():
@@ -32,8 +30,8 @@ except ImportError:
     onRobot = False
     showGUI = True
 
-# Some color constants in BGR format
 
+# Some color constants in BGR format
 CRED = (0, 0, 255)
 CGREEN = (0, 255, 0)
 CBLUE = (255, 0, 0)
@@ -43,10 +41,12 @@ CMAGENTA = (255, 0, 255)
 CWHITE = (255, 255, 255)
 CBLACK = (0, 0, 0)
 
+# Landmarks.
+# The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
 landmarkIDs = [6, 2]
 landmarks = {
     6: (0.0, 0.0),  # Coordinates for landmark 1
-    2: (300.0, 0.0),  # Coordinates for landmark 2
+    2: (100.0, 0.0),  # Coordinates for landmark 2
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -95,10 +95,7 @@ def draw_world(est_pose, particles, world):
     for particle in particles:
         x = int(particle.getX() + offsetX)
         y = ymax - (int(particle.getY() + offsetY))
-        if max_weight == 0:
-            colour = jet(0)
-        else:
-            colour = jet(particle.getWeight() / max_weight)
+        colour = jet(particle.getWeight() / max_weight)
         cv2.circle(world, (x, y), 2, colour, 2)
         b = (
             int(particle.getX() + 15.0 * np.cos(particle.getTheta())) + offsetX,
@@ -138,7 +135,6 @@ def initialize_particles(num_particles):
     return particles
 
 
-# Sørg for at standard deviation passer med hvad vores x og y er i (mm eller cm eller m)
 def roterror(std_rot=0.2):
     return random.gauss(0.0, std_rot)
 
@@ -182,21 +178,6 @@ def sample_motion_model(p, rot1, trans, rot2):
     return p
 
 
-def initialize_particles(num_particles):
-    particles = []
-    for i in range(num_particles):
-        # Random starting points.
-        p = particle.Particle(
-            600.0 * np.random.ranf() - 100.0,
-            600.0 * np.random.ranf() - 250.0,
-            np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-            1.0 / num_particles,
-        )
-        particles.append(p)
-
-    return particles
-
-
 def normal_distribution(mu, sigma, x):
     return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(
         -0.5 * ((x - mu) / sigma) ** 2
@@ -227,7 +208,7 @@ def predicted_angle(p, landmark):
 
 def measurement_model(distance, angle, particle, landmark):
     sigma_d = 15.0
-    sigma_a = math.radians(3.0)
+    sigma_a = math.radians(70.0)
     predicted_dist = predicted_distance(particle, landmark)
     predicted_ang = predicted_angle(particle, landmark)
     dist_weight = normal_distribution(distance, sigma_d, predicted_dist)
@@ -237,6 +218,7 @@ def measurement_model(distance, angle, particle, landmark):
     return prob
 
 
+# Main program #
 try:
     if showGUI:
         # Open windows
@@ -279,6 +261,7 @@ try:
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
     while True:
+
         # Move the robot according to user input (only for testing)
         action = cv2.waitKey(10)
         if action == ord("q"):  # Quit
@@ -297,87 +280,69 @@ try:
             elif action == ord("d"):  # Right
                 angular_velocity -= 0.2
 
+        # Use motor controls to update particles
+        # XXX: Make the robot drive
+        # XXX: You do this
+
         # Fetch next frame
         colour = cam.get_next_frame()
 
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
-        if not isinstance(objectIDs, type(None)) and len(objectIDs) > 0:
+        if not isinstance(objectIDs, type(None)):
+            uniqueIDs = set(objectIDs)
+            filtered_objectIDs = []
+            filtered_dists = []
+            filtered_angles = []
+
+            for uid in uniqueIDs:
+                indices = [i for i, id_ in enumerate(objectIDs) if id_ == uid]
+                best_idx = min(indices, key=lambda i: dists[i])  # pick closest
+                filtered_objectIDs.append(objectIDs[best_idx])
+                filtered_dists.append(dists[best_idx])
+                filtered_angles.append(angles[best_idx])
+            objectIDs, dists, angles = (
+                filtered_objectIDs,
+                filtered_dists,
+                filtered_angles,
+            )
+
             # List detected objects
             for i in range(len(objectIDs)):
                 print(
-                    f"Object ID = {objectIDs[i]}, Distance = {dists[i]:.2f}, Angle = {angles[i]:.2f}"
+                    "Object ID = ",
+                    objectIDs[i],
+                    ", Distance = ",
+                    dists[i],
+                    ", angle = ",
+                    angles[i],
                 )
 
-            # --- Update weights for all particles ---
-            new_particles = []
-            p_len = len(particles)
-            for j in range(p_len):
-                p = particles[j]
-                new_p = sample_motion_model(p, 0, 0, 0)
+            # Compute particle weights
+            # XXX: You do this
 
-                # Combine measurements from all visible landmarks
-                total_prob = 1.0
-                for i in range(len(objectIDs)):
-                    landmark_id = objectIDs[i]
-                    total_prob *= measurement_model(
-                        dists[i], angles[i], new_p, landmarks[landmark_id]
-                    )
+            # Resampling
+            # XXX: You do this
 
-                new_p.setWeight(total_prob)
-                new_particles.append(new_p)
-
-            # --- Normalize weights once ---
-            total_weight = sum(p.getWeight() for p in new_particles)
-            if total_weight > 0:
-                for p in new_particles:
-                    p.setWeight(p.getWeight() / total_weight)
-            else:
-                for p in new_particles:
-                    p.setWeight(1.0 / len(new_particles))
-
-            # 5% random particles injection
-            num_random = int(0.05 * num_particles)
-            new_particles.sort(key=lambda p: p.getWeight())
-            for r in range(num_random):
-                new_particles[r] = particle.Particle(
-                    600.0 * np.random.ranf() - 100.0,
-                    600.0 * np.random.ranf() - 250.0,
-                    np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-                    1.0 / num_particles,
-                )
-
-            def systematic_resample(particles):
-                N = len(particles)
-                positions = (np.arange(N) + random.random()) / N
-                cumulative_sum = np.cumsum([p.getWeight() for p in particles])
-                cumulative_sum[-1] = 1.0
-                i, j = 0, 0
-                new_particles = []
-                while i < N:
-                    if positions[i] < cumulative_sum[j]:
-                        new_particles.append(copy.copy(particles[j]))
-                        i += 1
-                    else:
-                        j += 1
-                return new_particles
-
-            particles = systematic_resample(new_particles)
             # Draw detected objects
             cam.draw_aruco_objects(colour)
-            objectIDs = None
         else:
             # No observation - reset weights to uniform distribution
             for p in particles:
                 p.setWeight(1.0 / num_particles)
 
-        # Estimate robot pose
-        est_pose = particle.estimate_pose(particles)
+        est_pose = particle.estimate_pose(
+            particles
+        )  # The estimate of the robots current pose
 
-        # Visualization
         if showGUI:
+            # Draw map
             draw_world(est_pose, particles, world)
+
+            # Show frame
             cv2.imshow(WIN_RF1, colour)
+
+            # Show world
             cv2.imshow(WIN_World, world)
 
 
