@@ -327,10 +327,11 @@ try:
             weights = [p.getWeight() for p in particles]
             chosen = random.choices(particles, weights=weights, k=num_particles)
 
-            frac_new = 0.1
-            k_new = int(frac_new * num_particles)
-            fresh = initialize_particles(k_new)
-            particles = [copy.copy(p) for p in chosen[:-k_new]] + fresh
+            percentage = 0.1
+            num_inject = percentage * num_particles
+            inject = initialize_particles(int(num_inject))
+            num_chosen = int(num_particles - num_inject)
+            particles = [copy.copy(p) for p in chosen[:num_chosen]] + inject
 
             for p in particles:
                 p.setWeight(1.0 / num_particles)
