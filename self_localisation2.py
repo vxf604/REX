@@ -25,10 +25,12 @@ def isRunningOnArlo():
 try:
     import robot
 
+    showGUI = False
     onRobot = True
 except ImportError:
     print("selflocalize.py: robot module not present - forcing not running on Arlo!")
     onRobot = False
+    showGUI = True
 
 
 running = True
@@ -283,6 +285,8 @@ try:
     angular_velocity = 0.0  # radians/sec
 
     # Initialize the robot (XXX: You do this)
+    if isRunningOnArlo():
+        arlo = robot.Robot()
 
     # Allocate space for world map
     world = np.zeros((500, 500, 3), dtype=np.uint8)
@@ -334,9 +338,6 @@ try:
             p_len = len(particles)
             for j in range(p_len):
                 p = particles[j]
-                rot1 = random.gauss(0.0, 0.02)
-                trans = random.gauss(0.0, 5.0)
-                rot2 = random.gauss(0.0, 0.02)
                 new_p = sample_motion_model(p, 0, 0, 0)
 
                 # Combine measurements from all visible landmarks

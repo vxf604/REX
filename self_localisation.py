@@ -139,7 +139,7 @@ def initialize_particles(num_particles):
 
 
 # Sørg for at standard deviation passer med hvad vores x og y er i (mm eller cm eller m)
-def roterror(std_rot=math.radians(2.0)):
+def roterror(std_rot=math.radians(4.0)):
     return random.gauss(0.0, std_rot)
 
 
@@ -148,7 +148,10 @@ def euclidean_distance(x1, y1, x2, y2):
 
 
 def transerror(trans1, std_trans=0.05):
-    return random.gauss(0.0, abs(trans1) * std_trans)
+    if isRunningOnArlo():
+        return random.gauss(0.0, abs(trans1) * std_trans)
+    else:
+        return random.gauss(0.0, std_trans)
 
 
 def rotation1(p, rot1):
@@ -326,6 +329,19 @@ try:
             print(f"Driving forward {distance_to_drive} meters")
             arlo.drive_forward_meter(distance_to_drive, 67, 64)
 
+            for p in particles:
+                if isRunningOnArlo():
+                    p = sample_motion_model(
+                        p, angle_diff, distance_to_drive * 100.0, 0.0
+                    )
+                else:
+                    p = sample_motion_model(
+                        p,
+                        0,
+                        0,
+                        0.0,
+                    )
+
         # Fetch next frame
         colour = cam.get_next_frame()
 
@@ -352,20 +368,7 @@ try:
                     f"Object ID = {objectIDs[i]}, Distance = {dists[i]}, angle = {angles[i]}"
                 )
 
-            # --- Compute particle weights (combine all detections) ---
-            for p in particles:
-                if isRunningOnArlo():
-                    p = sample_motion_model(
-                        p, angle_diff, distance_to_drive * 100.0, 0.0
-                    )
-                else:
-                    p = sample_motion_model(
-                        p,
-                        0,
-                        0,
-                        0.0,
-                    )
-
+            # --- Compute particle weights (combine all detections) --
             for p in particles:
                 weight = 1.0
                 for i in range(len(objectIDs)):
