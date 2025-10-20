@@ -13,6 +13,7 @@ onRobot = True  # Whether or not we are running on the Arlo robot
 showGUI = False  # Whether or not to open GUI windows
 
 
+
 def isRunningOnArlo():
     """Return True if we are running on Arlo, otherwise False."""
     return onRobot
@@ -31,7 +32,7 @@ except ImportError:
 
 running = True
 
-# --- Colors (BGR) ---
+# Some color constants in BGR format
 CRED = (0, 0, 255)
 CGREEN = (0, 255, 0)
 CBLUE = (255, 0, 0)
@@ -39,17 +40,18 @@ CYELLOW = (0, 255, 255)
 CMAGENTA = (255, 0, 255)
 CWHITE = (255, 255, 255)
 
-# --- Landmarks ---
+
 landmarkIDs = [7, 2]
 landmarks = {
-    7: (0.0, 0.0),
-    2: (200.0, 0.0),
+    7: (0.0, 0.0), #Coordinates of landmark 7
+    2: (200.0, 0.0), #Coordinates of landmark 2
 }
-landmark_colors = [CRED, CGREEN]
+landmark_colors = [CRED, CGREEN] # Colors for drawing landmarks
 
 
-# --- Visualization helpers ---
 def jet(x):
+    """Colour map for drawing particles. This function determines the colour of
+    a particle from its weight."""
     r = (
         (x >= 3.0 / 8.0 and x < 5.0 / 8.0) * (4.0 * x - 3.0 / 2.0)
         + (x >= 5.0 / 8.0 and x < 7.0 / 8.0)
@@ -69,11 +71,24 @@ def jet(x):
 
 
 def draw_world(est_pose, particles, world):
-    offsetX, offsetY = 100, 250
+    """Visualization.
+    This functions draws robots position in the world coordinate system."""
+    # Fix the origin of the coordinate system
+    offsetX = 100
+    offsetY = 250
+    
+    # Constant needed for transforming from world coordinates to screen coordinates (flip the y-axis)
     ymax = world.shape[0]
-    world[:] = CWHITE
-    max_weight = max([p.getWeight() for p in particles])
+    
+    world[:] = CWHITE # Clear the background to white
+    
+    #Find the largest weight
+    max_weight = 0
+    for particle in particles:
+        max_weight = max(max_weight, particle.getWeight())
 
+    
+    # Draw particles
     for p in particles:
         x = int(p.getX() + offsetX)
         y = ymax - (int(p.getY() + offsetY))
@@ -85,6 +100,7 @@ def draw_world(est_pose, particles, world):
         )
         cv2.line(world, (x, y), b, colour, 2)
 
+    # Draw landmarks
     for i, ID in enumerate(landmarkIDs):
         lm = (int(landmarks[ID][0] + offsetX), int(ymax - (landmarks[ID][1] + offsetY)))
         cv2.circle(world, lm, 5, landmark_colors[i], 2)
@@ -98,7 +114,7 @@ def draw_world(est_pose, particles, world):
     cv2.line(world, a, b, CMAGENTA, 2)
 
 
-# --- Particle initialization ---
+# Particle initialization
 def initialize_particles(num_particles):
     particles = []
     for i in range(num_particles):
@@ -112,7 +128,6 @@ def initialize_particles(num_particles):
     return particles
 
 
-# --- Noise models ---
 def roterror(std_rot=math.radians(2.0)):
     return random.gauss(0.0, std_rot)
 
@@ -121,7 +136,6 @@ def transerror(trans1, std_trans=0.05):
     return random.gauss(0.0, abs(trans1) * std_trans)
 
 
-# --- Motion model ---
 def rotation1(p, rot1):
     theta = (p.getTheta() + rot1 + roterror()) % (2 * np.pi)
     p.setTheta(theta)
@@ -150,7 +164,6 @@ def sample_motion_model(p, rot1, trans, rot2):
     return p
 
 
-# --- Measurement model ---
 def normal_distribution(mu, sigma, x):
     return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(
         -0.5 * ((x - mu) / sigma) ** 2
@@ -212,7 +225,6 @@ try:
         if cv2.waitKey(10) == ord("q"):
             break
 
-        # ----------------- ROBOT LOGIC -----------------
         if onRobot:
             target = (
                 (landmarks[2][0] + landmarks[7][0]) / 2,
@@ -236,12 +248,11 @@ try:
             for i in range(len(particles)):
                 particles[i] = sample_motion_model(particles[i], angle_diff, partial_distance_cm, 0.0)
 
-            # --- Measure landmarks again ---
             colour = cam.get_next_frame()
             objectIDs, dists, angles = cam.detect_aruco_objects(colour)
 
             if objectIDs is not None and len(set(objectIDs)) >= 2:
-                print("✅ Still see two landmarks, re-localizing...")
+                print("Still see two landmarks, re-localizing...")
                 for p in particles:
                     weight = 1.0
                     for i, ID in enumerate(objectIDs):
@@ -275,14 +286,13 @@ try:
                 for i in range(len(particles)):
                     particles[i] = sample_motion_model(particles[i], 0.0, new_distance_cm, 0.0)
             else:
-                print("⚠️ Lost landmark tracking — driving remaining 3/4 without update.")
+                print("Lost landmark tracking — driving remaining 3/4 without update.")
                 remaining_distance_cm = distance_cm * (3.0 / 4.0)
                 remaining_distance_m = remaining_distance_cm / 100.0
                 arlo.drive_forward_meter(remaining_distance_m, 67, 64)
                 for i in range(len(particles)):
                     particles[i] = sample_motion_model(particles[i], 0.0, remaining_distance_cm, 0.0)
 
-        # --------------------------------------------------
 
         colour = cam.get_next_frame()
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
