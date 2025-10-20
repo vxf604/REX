@@ -226,15 +226,36 @@ def predicted_angle(p, landmark):
     return phi
 
 
+def sign(Vector):
+    if Vector[0] >= 0:
+        return 1
+    else:
+        return -1
+
+
 def measurement_model(distance, angle, particle, landmark):
     sigma_d = 15.0
     sigma_a = math.radians(5.0)
-    predicted_dist = predicted_distance(particle, landmark)
-    predicted_ang = predicted_angle(particle, landmark)
-    dist_weight = normal_distribution(distance, sigma_d, predicted_dist)
-    angle_diff = angle - predicted_ang
-    angle_weight = normal_distribution(angle, sigma_a, angle_diff)
-    prob = dist_weight * angle_weight
+
+    x, y = particle.getX(), particle.getY()
+    theta = particle.getTheta()
+    lx, ly = landmark
+    d_i = np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
+    e_l = np.array(lx - x, ly - y).T / d_i
+    e_theta = np.arrat(math.cos(theta), math.sin(theta)).T
+    e_theta_hat = np.array(-math.sin(theta), math.cos(theta)).T
+    fi = sign(np.dot(e_l, e_theta_hat)) * math.acos(np.dot(e_l, e_theta))
+
+    p_distance = (1 / math.sqrt(2 * math.pi * (sigma_d) ** 2)) * math.exp(
+        -1 * ((distance - d_i) ** 2) / (2 * (sigma_d) ** 2)
+    )
+    p_angle = (
+        1
+        / (math.sqrt(2 * math.pi) * (sigma_a) ** 2)
+        * math.exp(-1 * ((angle - fi) ** 2) / (2 * (sigma_a) ** 2))
+    )
+
+    prob = p_angle * p_distance
     return prob
 
 
@@ -310,15 +331,15 @@ try:
                     f"Object ID = {objectIDs[i]}, Distance = {dists[i]:.2f}, Angle = {angles[i]:.2f}"
                 )
 
-            # num_random = int(0.01 * num_particles)
-            # particles.sort(key=lambda p: p.getWeight())
-            # for r in range(num_random):
-            #     particles[r] = particle.Particle(
-            #         600.0 * np.random.ranf() - 100.0,
-            #         600.0 * np.random.ranf() - 250.0,
-            #         np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-            #         1.0 / num_particles,
-            #     )
+            num_random = int(0.01 * num_particles)
+            particles.sort(key=lambda p: p.getWeight())
+            for r in range(num_random):
+                particles[r] = particle.Particle(
+                    600.0 * np.random.ranf() - 100.0,
+                    600.0 * np.random.ranf() - 250.0,
+                    np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
+                    1.0 / num_particles,
+                )
 
             new_particles = []
             p_len = len(particles)
