@@ -26,12 +26,12 @@ try:
     import robot
 
     onRobot = True
+    showGUI = False
 except ImportError:
     print("selflocalize.py: robot module not present - forcing not running on Arlo!")
     onRobot = False
+    showGUI = True
 
-
-running = True
 # Some color constants in BGR format
 
 CRED = (0, 0, 255)
@@ -227,7 +227,7 @@ def predicted_angle(p, landmark):
 
 def measurement_model(distance, angle, particle, landmark):
     sigma_d = 15.0
-    sigma_a = math.radians(70.0)
+    sigma_a = math.radians(3.0)
     predicted_dist = predicted_distance(particle, landmark)
     predicted_ang = predicted_angle(particle, landmark)
     dist_weight = normal_distribution(distance, sigma_d, predicted_dist)
@@ -235,29 +235,6 @@ def measurement_model(distance, angle, particle, landmark):
     angle_weight = normal_distribution(0.0, sigma_a, angle_diff)
     prob = dist_weight * angle_weight
     return prob
-
-
-# def MCL(
-#     particles,
-#     control_rtr,
-#     detections,
-#     LANDMARKS,
-#     sig_d=10.0,
-#     sig_b=math.radians(8.0),
-#     angles_deg=True,
-# ):
-#     for particle in particles:
-#         x = particle.getX()
-#         y = particle.getY()
-#         theta = particle.getTheta()
-
-#         new_x, new_y, new_theta = sample_motion_model((x, y, theta))
-#         weight = measurement_model((x, y, theta), LANDMARKS)
-#         particle.setX(new_x)
-#         particle.setY(new_y)
-#         particle.setTheta(new_theta)
-#         particle.setWeight(weight)
-
 
 try:
     if showGUI:
@@ -359,7 +336,7 @@ try:
                 for p in new_particles:
                     p.setWeight(1.0 / len(new_particles))
 
-            # --- Random sample injection (5%) ---
+            # 5% random particles injection
             num_random = int(0.05 * num_particles)
             new_particles.sort(key=lambda p: p.getWeight())
             for r in range(num_random):
@@ -370,7 +347,6 @@ try:
                     1.0 / num_particles,
                 )
 
-            # --- Systematic resampling ---
             def systematic_resample(particles):
                 N = len(particles)
                 positions = (np.arange(N) + random.random()) / N
@@ -387,7 +363,6 @@ try:
                 return new_particles
 
             particles = systematic_resample(new_particles)
-
             # Draw detected objects
             cam.draw_aruco_objects(colour)
             objectIDs = None
