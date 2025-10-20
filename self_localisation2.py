@@ -1,5 +1,4 @@
 import cv2
-import cv2.aruco as aruco
 from pprint import *
 from time import sleep
 import numpy as np
@@ -32,6 +31,8 @@ except ImportError:
     onRobot = False
     showGUI = True
 
+
+running = True
 # Some color constants in BGR format
 
 CRED = (0, 0, 255)
@@ -43,9 +44,9 @@ CMAGENTA = (255, 0, 255)
 CWHITE = (255, 255, 255)
 CBLACK = (0, 0, 0)
 
-landmarkIDs = [6, 2]
+landmarkIDs = [7, 2]
 landmarks = {
-    6: (0.0, 0.0),  # Coordinates for landmark 1
+    7: (0.0, 0.0),  # Coordinates for landmark 1
     2: (300.0, 0.0),  # Coordinates for landmark 2
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
@@ -143,7 +144,7 @@ def roterror(std_rot=0.2):
     return random.gauss(0.0, std_rot)
 
 
-def transerror(trans1, std_trans=5.0):
+def transerror(std_trans=5.0):
     return random.gauss(0.0, std_trans)
 
 
@@ -227,12 +228,12 @@ def predicted_angle(p, landmark):
 
 def measurement_model(distance, angle, particle, landmark):
     sigma_d = 15.0
-    sigma_a = math.radians(3.0)
+    sigma_a = math.radians(5.0)
     predicted_dist = predicted_distance(particle, landmark)
     predicted_ang = predicted_angle(particle, landmark)
     dist_weight = normal_distribution(distance, sigma_d, predicted_dist)
-    angle_diff = (angle - predicted_ang + np.pi) % (2 * np.pi) - np.pi
-    angle_weight = normal_distribution(0.0, sigma_a, angle_diff)
+    angle_diff = angle - predicted_ang
+    angle_weight = normal_distribution(angle, sigma_a, angle_diff)
     prob = dist_weight * angle_weight
     return prob
 
@@ -309,7 +310,16 @@ try:
                     f"Object ID = {objectIDs[i]}, Distance = {dists[i]:.2f}, Angle = {angles[i]:.2f}"
                 )
 
-            # --- Update weights for all particles ---
+            # num_random = int(0.01 * num_particles)
+            # particles.sort(key=lambda p: p.getWeight())
+            # for r in range(num_random):
+            #     particles[r] = particle.Particle(
+            #         600.0 * np.random.ranf() - 100.0,
+            #         600.0 * np.random.ranf() - 250.0,
+            #         np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
+            #         1.0 / num_particles,
+            #     )
+
             new_particles = []
             p_len = len(particles)
             for j in range(p_len):
@@ -327,7 +337,6 @@ try:
                 new_p.setWeight(total_prob)
                 new_particles.append(new_p)
 
-            # --- Normalize weights once ---
             total_weight = sum(p.getWeight() for p in new_particles)
             if total_weight > 0:
                 for p in new_particles:
@@ -335,17 +344,6 @@ try:
             else:
                 for p in new_particles:
                     p.setWeight(1.0 / len(new_particles))
-
-            # 5% random particles injection
-            num_random = int(0.05 * num_particles)
-            new_particles.sort(key=lambda p: p.getWeight())
-            for r in range(num_random):
-                new_particles[r] = particle.Particle(
-                    600.0 * np.random.ranf() - 100.0,
-                    600.0 * np.random.ranf() - 250.0,
-                    np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-                    1.0 / num_particles,
-                )
 
             def systematic_resample(particles):
                 N = len(particles)
@@ -363,6 +361,7 @@ try:
                 return new_particles
 
             particles = systematic_resample(new_particles)
+
             # Draw detected objects
             cam.draw_aruco_objects(colour)
             objectIDs = None
