@@ -333,7 +333,7 @@ try:
             
             
             #See 2 landmakrs for moving 1/4 distance
-            if objectIDs is not None and len(objectIDs) >= 2:
+            if objectIDs is not None and len(set(objectIDs)) >= 2:
                 print("Seeing 2 landmarks, moving 1/4 distance")
                 partial_distance = distance_cm / 4
                 target_angle= math.atan2(dy, dx)
