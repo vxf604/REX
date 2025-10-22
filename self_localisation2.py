@@ -353,6 +353,10 @@ try:
                 leftspeed = 40.0
                 rightspeed = 40.0
                 arlo.drive_forward_meter(partial_distance/ 100.0, leftspeed, rightspeed)
+
+                #Update estimated pose after moving
+                for i in range (len(particles)):
+                    particles[i] = sample_motion_model(particles[i], angle_diff, partial_distance, 0.0)
             
             #Lost landmarks, move the rest of the distance
             else:
