@@ -334,7 +334,7 @@ try:
             
             colour = cam.get_next_frame()
             
-            cv2.imwrite(f"CurrentFrame_{int(time.time())}.png", colour)
+            cv2.imwrite(f"Cturrent frame_{int(time.time)}.png", WIN_World, world)
             
             objectIDs, dists, angles = cam.detect_aruco_objects(colour)
             
