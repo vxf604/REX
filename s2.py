@@ -328,13 +328,6 @@ try:
                         j += 1
                 return new_particles
 
-            particles = copy.copy(
-                random.choices(
-                    particles,
-                    weights=[p.getWeight() for p in particles],
-                    k=len(particles),
-                )
-            )
             # particles = copy.copy(systematic_resample(particles))
 
             # Draw detected objects
