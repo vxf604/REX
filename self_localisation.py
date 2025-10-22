@@ -13,7 +13,6 @@ onRobot = False  # Whether or not we are running on the Arlo robot
 showGUI = True  # Whether or not to open GUI windows
 
 
-
 def isRunningOnArlo():
     """Return True if we are running on Arlo, otherwise False."""
     return onRobot
@@ -43,10 +42,10 @@ CWHITE = (255, 255, 255)
 
 landmarkIDs = [7, 2]
 landmarks = {
-    7: (0.0, 0.0), #Coordinates of landmark 7
-    2: (200.0, 0.0), #Coordinates of landmark 2
+    7: (0.0, 0.0),  # Coordinates of landmark 7
+    2: (200.0, 0.0),  # Coordinates of landmark 2
 }
-landmark_colors = [CRED, CGREEN] # Colors for drawing landmarks
+landmark_colors = [CRED, CGREEN]  # Colors for drawing landmarks
 
 
 def jet(x):
@@ -76,18 +75,17 @@ def draw_world(est_pose, particles, world):
     # Fix the origin of the coordinate system
     offsetX = 100
     offsetY = 250
-    
+
     # Constant needed for transforming from world coordinates to screen coordinates (flip the y-axis)
     ymax = world.shape[0]
-    
-    world[:] = CWHITE # Clear the background to white
-    
-    #Find the largest weight
+
+    world[:] = CWHITE  # Clear the background to white
+
+    # Find the largest weight
     max_weight = 0
     for particle in particles:
         max_weight = max(max_weight, particle.getWeight())
 
-    
     # Draw particles
     for p in particles:
         x = int(p.getX() + offsetX)
@@ -310,7 +308,6 @@ try:
                     particles[i] = sample_motion_model(
                         particles[i], 0.0, remaining_distance_cm, 0.0
                     )
-
 
         colour = cam.get_next_frame()
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
