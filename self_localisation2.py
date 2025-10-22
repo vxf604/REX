@@ -328,6 +328,10 @@ try:
                 print("Reached target")
                 break
             
+            colour = cam.get_next_frame()
+            objectIDs, dists, angles = cam.detect_aruco_objects(colour)
+            
+            
             #See 2 landmakrs for moving 1/4 distance
             if objectIDs is not None and len(objectIDs) >= 2:
                 print("Seeing 2 landmarks, moving 1/4 distance")
