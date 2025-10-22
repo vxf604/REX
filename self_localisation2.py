@@ -141,11 +141,11 @@ def initialize_particles(num_particles):
 
 
 # Sørg for at standard deviation passer med hvad vores x og y er i (mm eller cm eller m)
-def roterror(std_rot=0.2):
+def roterror(std_rot=0.1):
     return random.gauss(0.0, std_rot)
 
 
-def transerror(std_trans=5.0):
+def transerror(std_trans=2.5):
     return random.gauss(0.0, std_trans)
 
 
@@ -167,7 +167,7 @@ def translation1(p, transl1):
     x = p.getX()
     y = p.getY()
     theta = p.getTheta()
-    d = transl1 + transerror(transl1)
+    d = transl1 + transerror()
     x = x + d * np.cos(theta)
     y = y + d * np.sin(theta)
     p.setX(x)
@@ -231,8 +231,8 @@ def sign(x):
     return 1 if x >= 0 else -1
 
 def measurement_model(distance, angle, particle, landmark):
-    sigma_d = 15.0
-    sigma_a = math.radians(5.0)
+    sigma_d = 15
+    sigma_a = math.radians(2.0)
 
     x, y = particle.getX(), particle.getY()
     theta = particle.getTheta()
@@ -356,6 +356,13 @@ try:
             elif action == ord("d"):  # Right
                 angular_velocity -= 0.2
 
+        if isRunningOnArlo():
+            # Arlo controls
+            pass
+        else:
+            for p in particles:
+                p = sample_motion_model(p, 0.0, 0.0, 0.0)
+
         # Fetch next frame
         colour = cam.get_next_frame()
 
@@ -382,7 +389,7 @@ try:
             p_len = len(particles)
             for j in range(p_len):
                 p = particles[j]
-                new_p = sample_motion_model(p, 0, 0, 0)
+                new_p = copy.copy(p)
 
                 # Combine measurements from all visible landmarks
                 total_prob = 1.0
