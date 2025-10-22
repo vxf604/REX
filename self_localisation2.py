@@ -377,6 +377,7 @@ try:
                 print("Object IDs seen: ", objectIDs)
                 # See 2 landmarks for moving 1/4 distance
                 if len(objectIDs) >= 2:
+                    objectIDs, dists, angles = None, None, None
                     print("Seeing 2 landmarks, moving 1/4 distance")
                     partial_distance = distance_cm / 4
                     target_angle = math.atan2(dy, dx)
@@ -388,6 +389,7 @@ try:
 
                 # Lost landmarks, move the rest of the distance
                 else:
+                    objectIDs, dists, angles = None, None, None
                     print("Not seeing 2 landmarks, moving the rest of distance")
                     target_angle = math.atan2(dy, dx)
                     angle_diff = target_angle - est_pose.getTheta() + math.pi
@@ -468,7 +470,6 @@ try:
 
                 # Draw detected objects
                 cam.draw_aruco_objects(colour)
-                objectIDs = None
             else:
                 # No observation - reset weights to uniform distribution
                 for p in particles:
