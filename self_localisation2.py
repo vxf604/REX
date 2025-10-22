@@ -452,8 +452,8 @@ try:
                     partial_distance = distance_cm / 4
                     target_angle = math.atan2(dy, dx)
                     angle_diff = target_angle - est_pose.getTheta() + math.pi
-                    print("Rotating {angle_diff} radians")
-                    arlo.rotate_robot(math.radians(angle_diff))
+                    print(f"Rotating {angle_diff} radians")
+                    arlo.rotate_robot(math.degrees(angle_diff))
                     sleep(0.5)
                     arlo.drive_forward_meter(partial_distance / 100.0)
 
