@@ -417,9 +417,10 @@ try:
                 for uid in uniqueIDs:
                     indices = [i for i, id in enumerate(objectIDs) if id == uid]
                     closest_id = min(indices, key=lambda i: dists[i])
-                    detectedLandmarks.append(objectIDs[closest_id])
-                    detectedDists.append(dists[closest_id])
-                    detectedAngles.append(angles[closest_id])
+                    if uid in landmarkIDs:
+                        detectedLandmarks.append(objectIDs[closest_id])
+                        detectedDists.append(dists[closest_id])
+                        detectedAngles.append(angles[closest_id])
 
                 objectIDs, dists, angles = (
                     detectedLandmarks,
