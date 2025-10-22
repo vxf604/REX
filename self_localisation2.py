@@ -322,6 +322,12 @@ try:
             distance_cm = np.sqrt(
                 (dx) ** 2 + (dy) ** 2
             )
+            
+            if distance_cm < 5:
+                arlo.stop()
+                print("Reached target")
+                break
+            
             partial_distance = distance_cm / 4
             
             target_angle= math.atan2(dy, dx)
@@ -331,7 +337,7 @@ try:
             arlo.rotate_robot(angle_diff)
             sleep(0.5)
             
-            leftspeed = 43
+            leftspeed = 40.0
             rightspeed = 40.0
             arlo.drive_forward_meter(partial_distance/ 100.0, leftspeed, rightspeed)
             
