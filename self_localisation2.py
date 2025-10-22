@@ -462,6 +462,8 @@ try:
                     arlo.rotate_robot(math.degrees(fi))
                     sleep(0.5)
                     arlo.drive_forward_meter(distance_cm / 100.0)
+                    
+                    est_pose = particle.estimate_pose(particles)
 
                 # Lost landmarks, move the rest of the distance
                 else:
@@ -470,6 +472,7 @@ try:
                     arlo.rotate_robot(math.degrees(fi))
                     sleep(0.5)
                     arlo.drive_forward_meter(distance_cm / 100.0)
+                    est_pose = particle.estimate_pose(particles)
 
                 for p in particles:
                     p = sample_motion_model(p, fi, distance_cm, 0.0)
