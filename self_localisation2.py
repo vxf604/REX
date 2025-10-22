@@ -334,7 +334,6 @@ try:
             
             colour = cam.get_next_frame()
             
-            cv2.imwrite(f"Cturrent frame_{int(time.time())}.png", WIN_World, world)
             
             objectIDs, dists, angles = cam.detect_aruco_objects(colour)
             
@@ -489,6 +488,9 @@ try:
             draw_world(est_pose, particles, world)
             cv2.imshow(WIN_RF1, colour)
             cv2.imshow(WIN_World, world)
+        else:
+            draw_world(est_pose, particles, world)
+            cv2.imwrite(f"Cturrent frame_{int(time.time())}.png", WIN_World, world)
 
 
 finally:
