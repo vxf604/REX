@@ -9,8 +9,9 @@ import particle
 import sys
 import math
 import copy
+import robot
 
-onRobot = True  # Whether or not we are running on the Arlo robot
+onRobot = False  # Whether or not we are running on the Arlo robot
 showGUI = True  # Whether or not to open GUI windows
 
 
@@ -44,10 +45,10 @@ CMAGENTA = (255, 0, 255)
 CWHITE = (255, 255, 255)
 CBLACK = (0, 0, 0)
 
-landmarkIDs = [7, 2]
+landmarkIDs = [7, 6]
 landmarks = {
-    7: (0.0, 0.0),  # Coordinates for landmark 1
-    2: (300.0, 0.0),  # Coordinates for landmark 2
+    7: (0.0, 0.0),  # Coordinates for landmark 1 Red
+    6: (125.0, 0.0),  # Coordinates for landmark 2 Green
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -226,12 +227,8 @@ def predicted_angle(p, landmark):
     return phi
 
 
-def sign(num):
-    if num >= 0:
-        return 1
-    else:
-        return -1
-
+def sign(x):
+    return 1 if x >= 0 else -1
 
 def measurement_model(distance, angle, particle, landmark):
     sigma_d = 15
@@ -240,11 +237,16 @@ def measurement_model(distance, angle, particle, landmark):
     x, y = particle.getX(), particle.getY()
     theta = particle.getTheta()
     lx, ly = landmark
+
     d_i = np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
-    e_l = np.array([lx - x, ly - y]).T / d_i
-    e_theta = np.array([math.cos(theta), math.sin(theta)]).T
-    e_theta_hat = np.array([-math.sin(theta), math.cos(theta)]).T
-    fi = sign(np.dot(e_l, e_theta_hat)) * math.acos(np.dot(e_l, e_theta))
+
+    e_l = np.array([lx - x, ly - y]) / d_i
+    e_theta = np.array([math.cos(theta), math.sin(theta)])
+    e_theta_hat = np.array([-math.sin(theta), math.cos(theta)])
+
+    fi = sign(np.dot(e_l, e_theta_hat)) * math.acos(
+        np.clip(np.dot(e_l, e_theta), -1.0, 1.0)
+    )
 
     p_distance = (1 / math.sqrt(2 * math.pi * (sigma_d) ** 2)) * math.exp(
         -1 * ((distance - d_i) ** 2) / (2 * (sigma_d) ** 2)
@@ -305,6 +307,83 @@ try:
         action = cv2.waitKey(10)
         if action == ord("q"):  # Quit
             break
+        
+        
+        #Moving robot
+        if onRobot:
+            target = (
+                (landmarks[6][0] + landmarks[7][0]) / 2,
+                (landmarks[6][1] + landmarks[7][1]) / 2,
+            )
+            
+            dx = target[0] - est_pose.getX()
+            dy = target[1] - est_pose.getY()
+            
+            distance_cm = np.sqrt(
+                (dx) ** 2 + (dy) ** 2
+            )
+            
+            print ("Distance to target: ", distance_cm)
+            print ("Estimated pose: x=", est_pose.getX(), " y=", est_pose.getY(), " theta=", est_pose.getTheta())
+            
+            if distance_cm < 5:
+                arlo.stop()
+                print("Reached target")
+                break
+            
+            colour = cam.get_next_frame()
+            objectIDs, dists, angles = cam.detect_aruco_objects(colour)
+            
+            #See only unique landmark
+            unique_landmarks = {}
+            for i in range(len(objectIDs)):
+                landmark_id = objectIDs[i]
+                if landmark_id not in unique_landmarks:
+                    unique_landmarks[landmark_id] = (dists[i], angles[i])
+                    
+            
+            
+            #See 2 landmakrs for moving 1/4 distance
+            if len(unique_landmarks) >= 2:
+                print("Seeing 2 landmarks, moving 1/4 distance")
+                partial_distance = distance_cm / 4
+                target_angle= math.atan2(dy, dx)
+                angle_diff = (target_angle - est_pose.getTheta() + math.pi)
+                print("Rotating {angle_diff} radians")
+                arlo.rotate_robot(angle_diff)
+                sleep(0.5)
+            
+                leftspeed = 40.0
+                rightspeed = 40.0
+                arlo.drive_forward_meter(partial_distance/ 100.0, leftspeed, rightspeed)
+
+                #Update estimated pose after moving
+                for i in range (len(particles)):
+                    particles[i] = sample_motion_model(particles[i], angle_diff, partial_distance, 0.0)
+            
+            #Lost landmarks, move the rest of the distance
+            else:
+                print("Not seeing 2 landmarks, moving the rest of distance")
+                target_angle= math.atan2(dy, dx)
+                angle_diff = (target_angle - est_pose.getTheta() + math.pi)
+                print("Rotating {angle_diff} radians")
+                arlo.rotate_robot(angle_diff)
+                sleep(0.5)
+                
+                leftspeed = 40.0
+                rightspeed = 40.0
+                arlo.drive_forward_meter(distance_cm/ 100.0, leftspeed, rightspeed)
+                
+                for i in range (len(particles)):
+                    particles[i] = sample_motion_model(particles[i], angle_diff, distance_cm, 0.0)
+                
+                arlo.stop()
+                print("Reached target")
+                break        
+        
+        
+        
+        
 
         if not isRunningOnArlo():
             if action == ord("w"):  # Forward
