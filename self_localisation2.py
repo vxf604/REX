@@ -374,6 +374,7 @@ try:
                 break
 
             if objectIDs is not None:
+                print("Object IDs seen: ", objectIDs)
                 # See 2 landmarks for moving 1/4 distance
                 if len(objectIDs) >= 2:
                     print("Seeing 2 landmarks, moving 1/4 distance")
