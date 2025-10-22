@@ -402,8 +402,9 @@ try:
         rotated_degrees = 0
         while rotated_degrees < 2 * math.pi:
             rotated_degrees += math.radians(20)
+            print(f"rotated_degrees: {rotated_degrees} radians")
             arlo.rotate_robot(20)
-            sleep(0.2)
+            sleep(1)
             colour = cam.get_next_frame()
             objectIDs, dists, angles = cam.detect_aruco_objects(colour)
             if not isinstance(objectIDs, type(None)):
@@ -418,6 +419,7 @@ try:
                     detectedLandmarks.append(objectIDs[closest_id])
                     detectedDists.append(dists[closest_id])
                     detectedAngles.append(angles[closest_id])
+
                 objectIDs, dists, angles = (
                     detectedLandmarks,
                     detectedDists,
