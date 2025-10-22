@@ -11,6 +11,8 @@ import math
 import copy
 import time
 
+onRobot = False  # Whether or not we are running on the Arlo robot
+showGUI = True  # Whether or not to open GUI windows
 onRobot = None  # Whether or not we are running on the Arlo robot
 showGUI = None  # Whether or not to open GUI windows
 
@@ -24,6 +26,7 @@ def isRunningOnArlo():
 
 try:
     import robot
+
     showGUI = False
     onRobot = True
 except ImportError:
@@ -229,6 +232,7 @@ def predicted_angle(p, landmark):
 def sign(x):
     return 1 if x >= 0 else -1
 
+
 def measurement_model(distance, angle, particle, landmark):
     sigma_d = 15
     sigma_a = math.radians(2.0)
@@ -260,6 +264,22 @@ def measurement_model(distance, angle, particle, landmark):
     return prob
 
 
+def systematic_resample(particles):
+    N = len(particles)
+    positions = (np.arange(N) + random.random()) / N
+    cumulative_sum = np.cumsum([p.getWeight() for p in particles])
+    cumulative_sum[-1] = 1.0
+    i, j = 0, 0
+    new_particles = []
+    while i < N:
+        if positions[i] < cumulative_sum[j]:
+            new_particles.append(copy.copy(particles[j]))
+            i += 1
+        else:
+            j += 1
+    return new_particles
+
+
 try:
     if showGUI:
         # Open windows
@@ -274,6 +294,9 @@ try:
     # Initialize particles
     num_particles = 1000
     particles = initialize_particles(num_particles)
+
+    # initialise landmarks:
+    objectIDs, dists, angles = None, None, None
 
     est_pose = particle.estimate_pose(
         particles
@@ -306,85 +329,6 @@ try:
         action = cv2.waitKey(10)
         if action == ord("q"):  # Quit
             break
-        
-        
-        #Moving robot
-        if onRobot:
-            target = (
-                (landmarks[6][0] + landmarks[7][0]) / 2,
-                (landmarks[6][1] + landmarks[7][1]) / 2,
-            )
-            
-            dx = target[0] - est_pose.getX()
-            dy = target[1] - est_pose.getY()
-            
-            distance_cm = np.sqrt(
-                (dx) ** 2 + (dy) ** 2
-            )
-            
-            print ("Distance to target: ", distance_cm)
-            print ("Estimated pose: x=", est_pose.getX(), " y=", est_pose.getY(), " theta=", est_pose.getTheta())
-            
-            if distance_cm < 5:
-                arlo.stop()
-                print("Reached target")
-                break
-            
-            colour = cam.get_next_frame()
-            
-            
-            objectIDs, dists, angles = cam.detect_aruco_objects(colour)
-            
-            #See only unique landmark
-            unique_landmarks = {}
-            for i in range(len(objectIDs)):
-                landmark_id = objectIDs[i]
-                if landmark_id not in unique_landmarks:
-                    unique_landmarks[landmark_id] = (dists[i], angles[i])
-                    
-            
-            
-            #See 2 landmakrs for moving 1/4 distance
-            if len(unique_landmarks) >= 2:
-                print("Seeing 2 landmarks, moving 1/4 distance")
-                partial_distance = distance_cm / 4
-                target_angle= math.atan2(dy, dx)
-                angle_diff = (target_angle - est_pose.getTheta() + math.pi)
-                print("Rotating {angle_diff} radians")
-                arlo.rotate_robot(angle_diff)
-                sleep(0.5)
-            
-                leftspeed = 40.0
-                rightspeed = 40.0
-                arlo.drive_forward_meter(partial_distance/ 100.0, leftspeed, rightspeed)
-
-                #Update estimated pose after moving
-                for i in range (len(particles)):
-                    particles[i] = sample_motion_model(particles[i], angle_diff, partial_distance, 0.0)
-            
-            #Lost landmarks, move the rest of the distance
-            else:
-                print("Not seeing 2 landmarks, moving the rest of distance")
-                target_angle= math.atan2(dy, dx)
-                angle_diff = (target_angle - est_pose.getTheta() + math.pi)
-                print("Rotating {angle_diff} radians")
-                arlo.rotate_robot(angle_diff)
-                sleep(0.5)
-                
-                leftspeed = 40.0
-                rightspeed = 40.0
-                arlo.drive_forward_meter(distance_cm/ 100.0, leftspeed, rightspeed)
-                
-                for i in range (len(particles)):
-                    particles[i] = sample_motion_model(particles[i], angle_diff, distance_cm, 0.0)
-                
-                arlo.stop()
-                print("Reached target")
-                break        
-        
-        
-        
-        
 
         if not isRunningOnArlo():
             if action == ord("w"):  # Forward
@@ -399,84 +343,144 @@ try:
             elif action == ord("d"):  # Right
                 angular_velocity -= 0.2
 
-        if isRunningOnArlo():
-            # Arlo controls
-            pass
-        else:
             for p in particles:
-                p = sample_motion_model(p, 0.0, 0.0, 0.0)
+                p = sample_motion_model(p, angular_velocity, velocity, 0.0)
+        else:
+            # Arlo controls
 
-        # Fetch next frame
-        colour = cam.get_next_frame()
+            target = (
+                (landmarks[6][0] + landmarks[7][0]) / 2,
+                (landmarks[6][1] + landmarks[7][1]) / 2,
+            )
+
+            dx = target[0] - est_pose.getX()
+            dy = target[1] - est_pose.getY()
+
+            distance_cm = np.sqrt((dx) ** 2 + (dy) ** 2)
+            print("Distance to target: ", distance_cm)
+
+            print(
+                "Estimated pose: x=",
+                est_pose.getX(),
+                " y=",
+                est_pose.getY(),
+                " theta=",
+                est_pose.getTheta(),
+            )
+
+            if distance_cm < 5:
+                arlo.stop()
+                print("Reached target")
+                break
+            
+            found_2_landmarks = False
+            if objectIDs is not None:
+                print("Object IDs seen: ", objectIDs)
+                # See 2 landmarks for moving 1/4 distance
+                if len(objectIDs) >= 2 and not found_2_landmarks:
+                    found_2_landmarks = True
+                    objectIDs, dists, angles = None, None, None
+                    print("Seeing 2 landmarks, moving 1/4 distance")
+                    partial_distance = distance_cm / 4
+                    target_angle = math.atan2(dy, dx)
+                    angle_diff = target_angle - est_pose.getTheta() + math.pi
+                    print("Rotating {angle_diff} radians")
+                    arlo.rotate_robot(math.radians(angle_diff))
+                    sleep(0.5)
+                    arlo.drive_forward_meter(partial_distance / 100.0)
+
+                # Lost landmarks, move the rest of the distance
+                else:
+                    objectIDs, dists, angles = None, None, None
+                    print("Not seeing 2 landmarks, moving the rest of distance")
+                    target_angle = math.atan2(dy, dx)
+                    angle_diff = target_angle - est_pose.getTheta() + math.pi
+                    print("Rotating {angle_diff} radians")
+                    arlo.rotate_robot(angle_diff)
+                    sleep(0.5)
+                    arlo.drive_forward_meter(distance_cm / 100.0)
+
+                for p in particles:
+                    p = sample_motion_model(p, angle_diff, distance_cm, 0.0)
 
         # Detect objects
-        objectIDs, dists, angles = cam.detect_aruco_objects(colour)
-        if not isinstance(objectIDs, type(None)) and len(objectIDs) > 0:
-            # List detected objects
-            for i in range(len(objectIDs)):
-                print(
-                    f"Object ID = {objectIDs[i]}, Distance = {dists[i]:.2f}, Angle = {angles[i]:.2f}"
-                )
+        if not found_2_landmarks:
+            rotated_degrees = 0
+            while rotated_degrees < 2 * math.pi:
+                rotated_degrees += math.radians(20)
+                print(f"rotated_degrees: {rotated_degrees} radians")
+                arlo.rotate_robot(20)
+                sleep(0.6)
+                color = cam.get_next_frame()
+                objectIDs, dists, angles = cam.detect_aruco_objects(color)
+                
+                if not isinstance(objectIDs, type(None)):
+                    uniqueIDs = set(objectIDs)
+                    detectedLandmarks = []
+                    detectedDists = []
+                    detectedAngles = []
+                    
+                    if len(uniqueIDs) >= 2:
+                        print("Detected at least 2 landmarks, dont rotate anymore")
+                        break
 
-            num_random = int(0.01 * num_particles)
-            particles.sort(key=lambda p: p.getWeight())
-            for r in range(num_random):
-                particles[r] = particle.Particle(
-                    600.0 * np.random.ranf() - 100.0,
-                    600.0 * np.random.ranf() - 250.0,
-                    np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-                    1.0 / num_particles,
-                )
+                    for uid in uniqueIDs:
+                        indices = [i for i, id in enumerate(objectIDs) if id == uid]
+                        closest_id = min(indices, key=lambda i: dists[i])
+                        detectedLandmarks.append(objectIDs[closest_id])
+                        detectedDists.append(dists[closest_id])
+                        detectedAngles.append(angles[closest_id])
 
-            new_particles = []
-            p_len = len(particles)
-            for j in range(p_len):
-                p = particles[j]
-                new_p = copy.copy(p)
-
-                # Combine measurements from all visible landmarks
-                total_prob = 1.0
-                for i in range(len(objectIDs)):
-                    landmark_id = objectIDs[i]
-                    total_prob *= measurement_model(
-                        dists[i], angles[i], new_p, landmarks[landmark_id]
+                    objectIDs, dists, angles = (
+                        detectedLandmarks,
+                        detectedDists,
+                        detectedAngles,
                     )
 
-                new_p.setWeight(total_prob)
-                new_particles.append(new_p)
+                    # List detected objects
+                    for i in range(len(objectIDs)):
+                        print(
+                            "Object ID = ",
+                            objectIDs[i],
+                            ", Distance = ",
+                            dists[i],
+                            ", angle = ",
+                            angles[i],
+                        )
 
-            total_weight = sum(p.getWeight() for p in new_particles)
-            if total_weight > 0:
-                for p in new_particles:
-                    p.setWeight(p.getWeight() / total_weight)
-            else:
-                for p in new_particles:
-                    p.setWeight(1.0 / len(new_particles))
+                    new_particles = []
+                    p_len = len(particles)
+                    for j in range(p_len):
+                        p = particles[j]
+                        new_p = copy.copy(p)
 
-            def systematic_resample(particles):
-                N = len(particles)
-                positions = (np.arange(N) + random.random()) / N
-                cumulative_sum = np.cumsum([p.getWeight() for p in particles])
-                cumulative_sum[-1] = 1.0
-                i, j = 0, 0
-                new_particles = []
-                while i < N:
-                    if positions[i] < cumulative_sum[j]:
-                        new_particles.append(copy.copy(particles[j]))
-                        i += 1
+                        # Combine measurements from all visible landmarks
+                        total_prob = 1.0
+                        for i in range(len(objectIDs)):
+                            landmark_id = objectIDs[i]
+                            total_prob *= measurement_model(
+                                dists[i], angles[i], new_p, landmarks[landmark_id]
+                            )
+
+                        new_p.setWeight(total_prob)
+                        new_particles.append(new_p)
+
+                    total_weight = sum(p.getWeight() for p in new_particles)
+                    if total_weight > 0:
+                        for p in new_particles:
+                            p.setWeight(p.getWeight() / total_weight)
                     else:
-                        j += 1
-                return new_particles
+                        for p in new_particles:
+                            p.setWeight(1.0 / len(new_particles))
 
-            particles = systematic_resample(new_particles)
+                    particles = systematic_resample(new_particles)
 
-            # Draw detected objects
-            cam.draw_aruco_objects(colour)
-            objectIDs = None
-        else:
-            # No observation - reset weights to uniform distribution
-            for p in particles:
-                p.setWeight(1.0 / num_particles)
+                    # Draw detected objects
+                    cam.draw_aruco_objects(color)
+                else:
+                    # No observation - reset weights to uniform distribution
+                    for p in particles:
+                        p.setWeight(1.0 / num_particles)
 
         # Estimate robot pose
         est_pose = particle.estimate_pose(particles)
@@ -484,11 +488,11 @@ try:
         # Visualization
         if showGUI:
             draw_world(est_pose, particles, world)
-            cv2.imshow(WIN_RF1, colour)
+            cv2.imshow(WIN_RF1, color)
             cv2.imshow(WIN_World, world)
         else:
             draw_world(est_pose, particles, world)
-            cv2.imwrite(f"Cturrent frame_{int(time.time())}.png", world)
+            cv2.imwrite(f"Current_world_{int(time.time())}.png", world)
 
 
 finally:
