@@ -10,6 +10,7 @@ import sys
 import math
 import copy
 import robot
+import time
 
 onRobot = False  # Whether or not we are running on the Arlo robot
 showGUI = True  # Whether or not to open GUI windows
@@ -332,6 +333,9 @@ try:
                 break
             
             colour = cam.get_next_frame()
+            
+            cv2.imwrite(f"CurrentFrame_{int(time.time())}.png", colour)
+            
             objectIDs, dists, angles = cam.detect_aruco_objects(colour)
             
             #See only unique landmark
