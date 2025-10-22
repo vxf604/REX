@@ -449,21 +449,21 @@ try:
                 # See 2 landmarks for moving 1/4 distance
                 if len(objectIDs) >= 2:
                     print("Seeing 2 landmarks, moving 1/4 distance")
-                    partial_distance = distance_cm / 4
+                    distance_cm = distance_cm / 4
                     target_angle = math.atan2(dy, dx)
-                    angle_diff = target_angle - est_pose.getTheta() + math.pi
+                    angle_diff = target_angle - est_pose.getTheta()
                     print(f"Rotating {angle_diff} radians")
                     arlo.rotate_robot(math.degrees(angle_diff))
                     sleep(0.5)
-                    arlo.drive_forward_meter(partial_distance / 100.0)
+                    arlo.drive_forward_meter(distance_cm / 100.0)
 
                 # Lost landmarks, move the rest of the distance
                 else:
                     print("Not seeing 2 landmarks, moving the rest of distance")
                     target_angle = math.atan2(dy, dx)
-                    angle_diff = target_angle - est_pose.getTheta() + math.pi
-                    print("Rotating {angle_diff} radians")
-                    arlo.rotate_robot(angle_diff)
+                    angle_diff = target_angle - est_pose.getTheta()
+                    print(f"Rotating {angle_diff} radians")
+                    arlo.rotate_robot(math.degrees(angle_diff))
                     sleep(0.5)
                     arlo.drive_forward_meter(distance_cm / 100.0)
 
