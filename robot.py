@@ -224,13 +224,19 @@ class Robot(object):
     def rotate_robot(self, angle):
         leftSpeed = 67
         rightSpeed = 64
+
+        if abs(angle) < 1.0:  # too small to bother
+            print(f"Skipping tiny rotation ({angle:.3f}°)")
+            return
+
         if angle > 0:
             self.go_diff(leftSpeed, rightSpeed, 1, 0)
         else:
             self.go_diff(leftSpeed, rightSpeed, 0, 1)
 
         turn_time = (0.711 / 90) * abs(angle)
-        print("rotating for ", turn_time)
+
+        print(f"Rotating {angle}° for {turn_time}s")
         sleep(turn_time)
         self.stop()
 
