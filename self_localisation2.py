@@ -331,9 +331,17 @@ try:
             colour = cam.get_next_frame()
             objectIDs, dists, angles = cam.detect_aruco_objects(colour)
             
+            #See only unique landmark
+            unique_landmarks = {}
+            for i in range(len(objectIDs)):
+                landmark_id = objectIDs[i]
+                if landmark_id not in unique_landmarks:
+                    unique_landmarks[landmark_id] = (dists[i], angles[i])
+                    
+            
             
             #See 2 landmakrs for moving 1/4 distance
-            if objectIDs is not None and len(set(objectIDs)) >= 2:
+            if len(unique_landmarks) >= 2:
                 print("Seeing 2 landmarks, moving 1/4 distance")
                 partial_distance = distance_cm / 4
                 target_angle= math.atan2(dy, dx)
