@@ -490,7 +490,7 @@ try:
             cv2.imshow(WIN_World, world)
         else:
             draw_world(est_pose, particles, world)
-            cv2.imwrite(f"Cturrent frame_{int(time.time())}.png", WIN_World, world)
+            cv2.imwrite(f"Cturrent frame_{int(time.time())}.png", world)
 
 
 finally:
