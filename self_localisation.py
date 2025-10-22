@@ -9,8 +9,8 @@ import particle
 import math
 import copy
 
-onRobot = True  # Whether or not we are running on the Arlo robot
-showGUI = False  # Whether or not to open GUI windows
+onRobot = False  # Whether or not we are running on the Arlo robot
+showGUI = True  # Whether or not to open GUI windows
 
 
 
