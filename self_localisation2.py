@@ -371,6 +371,9 @@ try:
                 rightspeed = 40.0
                 arlo.drive_forward_meter(distance_cm/ 100.0, leftspeed, rightspeed)
                 
+                for i in range (len(particles)):
+                    particles[i] = sample_motion_model(particles[i], angle_diff, distance_cm, 0.0)
+                
                 arlo.stop()
                 print("Reached target")
                 break        
