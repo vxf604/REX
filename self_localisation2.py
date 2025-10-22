@@ -491,6 +491,7 @@ try:
                 particles, objectIDs, dists, angles = particle_filter(
                     particles, objectIDs, dists, angles
                 )
+                break
 
         init = False
         # Estimate robot pose
