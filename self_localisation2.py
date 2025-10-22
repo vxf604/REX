@@ -9,7 +9,6 @@ import particle
 import sys
 import math
 import copy
-import robot
 import time
 
 onRobot = False  # Whether or not we are running on the Arlo robot
