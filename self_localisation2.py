@@ -323,6 +323,9 @@ try:
                 (dx) ** 2 + (dy) ** 2
             )
             
+            print ("Distance to target: ", distance_cm)
+            print ("Estimated pose: x=", est_pose.getX(), " y=", est_pose.getY(), " theta=", est_pose.getTheta())
+            
             if distance_cm < 5:
                 arlo.stop()
                 print("Reached target")
