@@ -443,6 +443,7 @@ try:
                 print("Reached target")
                 break
 
+            found_2_landmarks = False
             if objectIDs is not None:
                 print("Object IDs seen: ", objectIDs)
                 # See 2 landmarks for moving 1/4 distance
