@@ -48,7 +48,7 @@ CBLACK = (0, 0, 0)
 landmarkIDs = [7, 6]
 landmarks = {
     7: (0.0, 0.0),  # Coordinates for landmark 1 Red
-    6: (300.0, 0.0),  # Coordinates for landmark 2 Green
+    6: (125.0, 0.0),  # Coordinates for landmark 2 Green
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -341,7 +341,7 @@ try:
             
             
             #See 2 landmakrs for moving 1/4 distance
-            if len(unique_landmarks) == 2:
+            if len(unique_landmarks) >= 2:
                 print("Seeing 2 landmarks, moving 1/4 distance")
                 partial_distance = distance_cm / 4
                 target_angle= math.atan2(dy, dx)
