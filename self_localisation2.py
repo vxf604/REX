@@ -10,6 +10,7 @@ import sys
 import math
 import copy
 import robot
+import time
 
 onRobot = False  # Whether or not we are running on the Arlo robot
 showGUI = True  # Whether or not to open GUI windows
@@ -332,6 +333,8 @@ try:
                 break
             
             colour = cam.get_next_frame()
+            
+            
             objectIDs, dists, angles = cam.detect_aruco_objects(colour)
             
             #See only unique landmark
@@ -485,6 +488,9 @@ try:
             draw_world(est_pose, particles, world)
             cv2.imshow(WIN_RF1, colour)
             cv2.imshow(WIN_World, world)
+        else:
+            draw_world(est_pose, particles, world)
+            cv2.imwrite(f"Cturrent frame_{int(time.time())}.png", world)
 
 
 finally:
