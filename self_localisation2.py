@@ -446,7 +446,10 @@ try:
                 t = np.array([dx, dy])
                 t = t / np.linalg.norm(t)
                 v = np.array(math.cos(theta), math.sin(theta))
-                fi = sign(math.acos(np.dot(t, v)))
+
+                dot = np.dot(t, v)
+                cross = v[0] * t[1] - v[1] * t[0]
+                fi = math.acos(dot) * sign(cross)
                 distance_cm = np.sqrt((dx) ** 2 + (dy) ** 2)
                 print("Distance to target: ", distance_cm)
 
