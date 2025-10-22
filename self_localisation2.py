@@ -50,7 +50,7 @@ CBLACK = (0, 0, 0)
 landmarkIDs = [7, 6]
 landmarks = {
     7: (0.0, 0.0),  # Coordinates for landmark 1 Red
-    6: (125.0, 0.0),  # Coordinates for landmark 2 Green
+    6: (153.0, 0.0),  # Coordinates for landmark 2 Green
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -423,12 +423,6 @@ try:
                 (landmarks[6][1] + landmarks[7][1]) / 2,
             )
 
-            dx = target[0] - est_pose.getX()
-            dy = target[1] - est_pose.getY()
-
-            distance_cm = np.sqrt((dx) ** 2 + (dy) ** 2)
-            print("Distance to target: ", distance_cm)
-
             print(
                 "Estimated pose: x=",
                 est_pose.getX(),
@@ -443,9 +437,13 @@ try:
                 print("Reached target")
                 break
 
-            found_2_landmarks = False
             if objectIDs is not None:
                 print("Object IDs seen: ", objectIDs)
+                dx = target[0] - est_pose.getX()
+                dy = target[1] - est_pose.getY()
+
+                distance_cm = np.sqrt((dx) ** 2 + (dy) ** 2)
+                print("Distance to target: ", distance_cm)
                 # See 2 landmarks for moving 1/4 distance
                 if len(objectIDs) >= 2:
                     print("Seeing 2 landmarks, moving 1/4 distance")
