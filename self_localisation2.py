@@ -445,7 +445,7 @@ try:
                 theta = est_pose.getTheta()
                 t = np.array([dx, dy])
                 t = t / np.linalg.norm(t)
-                v = np.array(math.cos(theta), math.sin(theta))
+                v = np.array([math.cos(theta), math.sin(theta)])
 
                 dot = np.dot(t, v)
                 cross = v[0] * t[1] - v[1] * t[0]
