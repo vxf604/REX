@@ -341,7 +341,7 @@ try:
             
             
             #See 2 landmakrs for moving 1/4 distance
-            if len(unique_landmarks) >= 2:
+            if len(unique_landmarks) == 2:
                 print("Seeing 2 landmarks, moving 1/4 distance")
                 partial_distance = distance_cm / 4
                 target_angle= math.atan2(dy, dx)
