@@ -451,7 +451,9 @@ try:
                     print("Seeing 2 landmarks, moving 1/4 distance")
                     distance_cm = distance_cm / 4
                     target_angle = math.atan2(dy, dx)
-                    angle_diff = target_angle - est_pose.getTheta()
+                    angle_diff = (target_angle - est_pose.getTheta() + math.pi) % (
+                        2 * math.pi
+                    ) - math.pi
                     print(f"Rotating {angle_diff} radians")
                     arlo.rotate_robot(math.degrees(angle_diff))
                     sleep(0.5)
@@ -461,7 +463,9 @@ try:
                 else:
                     print("Not seeing 2 landmarks, moving the rest of distance")
                     target_angle = math.atan2(dy, dx)
-                    angle_diff = target_angle - est_pose.getTheta()
+                    angle_diff = (target_angle - est_pose.getTheta() + math.pi) % (
+                        2 * math.pi
+                    ) - math.pi
                     print(f"Rotating {angle_diff} radians")
                     arlo.rotate_robot(math.degrees(angle_diff))
                     sleep(0.5)
