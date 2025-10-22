@@ -393,7 +393,7 @@ try:
         # cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=True)
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
     init = True
-
+    distance_cm = None
     while True:
         # Move the robot according to user input (only for testing)
         action = cv2.waitKey(10)
@@ -432,7 +432,7 @@ try:
                 est_pose.getTheta(),
             )
 
-            if distance_cm < 5:
+            if distance_cm is not None and distance_cm < 5:
                 arlo.stop()
                 print("Reached target")
                 break
