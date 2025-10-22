@@ -9,11 +9,10 @@ import particle
 import sys
 import math
 import copy
-import robot
 import time
 
-onRobot = False  # Whether or not we are running on the Arlo robot
-showGUI = True  # Whether or not to open GUI windows
+onRobot = None  # Whether or not we are running on the Arlo robot
+showGUI = None  # Whether or not to open GUI windows
 
 
 def isRunningOnArlo():
@@ -25,7 +24,6 @@ def isRunningOnArlo():
 
 try:
     import robot
-
     showGUI = False
     onRobot = True
 except ImportError:
