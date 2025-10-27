@@ -502,21 +502,21 @@ try:
                 break
 
         init = False
-        # Estimate robot pose
-        est_pose = particle.estimate_pose(particles)
+    # Estimate robot pose
+    est_pose = particle.estimate_pose(particles)
 
-        # Visualization
-        if showGUI:
-            draw_world(est_pose, particles, world)
-            cv2.imshow(WIN_RF1, colour)
-            cv2.imshow(WIN_World, world)
-        else:
-            draw_world(est_pose, particles, world)
-            folder = "images"
-            os.makedirs(folder, exist_ok=True)
-            cv2.imwrite(
-                os.path.join(folder, f"Current_world_{int(time.time())}.png"), world
-            )
+    # Visualization
+    if showGUI:
+        draw_world(est_pose, particles, world)
+        cv2.imshow(WIN_RF1, colour)
+        cv2.imshow(WIN_World, world)
+    else:
+        draw_world(est_pose, particles, world)
+        folder = "images"
+        os.makedirs(folder, exist_ok=True)
+        cv2.imwrite(
+            os.path.join(folder, f"Current_world_{int(time.time())}.png"), world
+        )
 
 
 finally:
