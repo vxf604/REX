@@ -433,7 +433,7 @@ try:
                 est_pose.getTheta(),
             )
 
-            if distance_cm is not None and distance_cm < 5:
+            if est_pose.x - target[0] < 20.0 and est_pose.y - target[1] < 20.0:
                 arlo.stop()
                 print("Reached target")
                 break
