@@ -362,7 +362,7 @@ try:
         cv2.moveWindow(WIN_World, 500, 50)
 
     # Initialize particles
-    num_particles = 1000
+    num_particles = 2000
     particles = initialize_particles(num_particles)
 
     # initialise landmarks:
