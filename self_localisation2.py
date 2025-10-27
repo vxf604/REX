@@ -477,8 +477,8 @@ try:
 
                 objectIDs, dists, angles = None, None, None
 
-                for p in particles:
-                    p = sample_motion_model(p, fi, distance_cm, 0.0)
+            for p in particles:
+                p = sample_motion_model(p, fi, distance_cm, 0.0)
 
         # Detect objects
         rotated_degrees = 0
