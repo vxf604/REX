@@ -1,3 +1,4 @@
+import os
 import cv2
 from pprint import *
 from time import sleep
@@ -511,7 +512,10 @@ try:
             cv2.imshow(WIN_World, world)
         else:
             draw_world(est_pose, particles, world)
-            cv2.imwrite(f"Current_world_{int(time.time())}.png", world)
+            folder = "/images/"
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            cv2.imwrite(folder + f"Current_world_{int(time.time())}.png", world)
 
 
 finally:
