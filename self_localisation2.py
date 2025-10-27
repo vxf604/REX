@@ -489,13 +489,20 @@ try:
         # Detect objects
         rotated_degrees = 0
         while objectIDs is None or len(objectIDs) < 2:
+            colour = cam.get_next_frame()
             if init:
                 rotated_degrees += math.radians(20)
                 print(f"rotated_degrees: {rotated_degrees} radians")
                 arlo.rotate_robot(20)
                 sleep(0.6)
-                colour = cam.get_next_frame()
-                objectIDs, dists, angles = cam.detect_aruco_objects(colour)
+                if objectIDs is not None:
+                    newObjectIDs, newDists, newAngles = cam.detect_aruco_objects(colour)
+                    objectIDs.append(newObjectIDs)
+                    dists.append(newDists)
+                    angles.append(newAngles)
+                else:
+                    objectIDs, dists, angles = cam.detect_aruco_objects(colour)
+
                 particles, objectIDs, dists, angles = particle_filter(
                     particles, objectIDs, dists, angles
                 )
