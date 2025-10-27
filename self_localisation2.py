@@ -260,7 +260,7 @@ def systematic_resample(particles):
 
 
 def particle_filter(particles, objectIDs, dists, angles, colour):
-    if len(objectIDs) == 0:
+    if objectIDs is None or len(objectIDs) == 0:
         for p in particles:
             p.setWeight(1.0 / len(particles))
         return particles, objectIDs, dists, angles
