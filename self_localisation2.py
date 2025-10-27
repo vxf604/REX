@@ -438,6 +438,8 @@ try:
                 print("Reached target")
                 break
 
+            angle_change = 0.0
+
             if objectIDs is not None:
                 print("Object IDs seen: ", objectIDs)
                 dx = target[0] - est_pose.getX()
@@ -452,6 +454,7 @@ try:
                 cross = v[0] * t[1] - v[1] * t[0]
                 fi = math.acos(dot) * sign(cross)
                 distance_cm = np.sqrt((dx) ** 2 + (dy) ** 2)
+                angle_change = fi
                 print("Distance to target: ", distance_cm)
 
                 # See 2 landmarks for moving 1/4 distance
@@ -478,7 +481,7 @@ try:
                 objectIDs, dists, angles = None, None, None
 
             for p in particles:
-                p = sample_motion_model(p, fi, distance_cm, 0.0)
+                p = sample_motion_model(p, angle_change, distance_cm, 0.0)
 
         # Detect objects
         rotated_degrees = 0
