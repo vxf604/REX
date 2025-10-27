@@ -187,21 +187,6 @@ def sample_motion_model(p, rot1, trans, rot2):
     return p
 
 
-def initialize_particles(num_particles):
-    particles = []
-    for i in range(num_particles):
-        # Random starting points.
-        p = particle.Particle(
-            600.0 * np.random.ranf() - 100.0,
-            600.0 * np.random.ranf() - 250.0,
-            np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-            1.0 / num_particles,
-        )
-        particles.append(p)
-
-    return particles
-
-
 def normal_distribution(mu, sigma, x):
     return (1 / (math.sqrt(2 * math.pi) * sigma)) * math.exp(
         -0.5 * ((x - mu) / sigma) ** 2
@@ -444,6 +429,7 @@ try:
             angle_change = 0.0
 
             if not init and len(objectIDs) > 0:
+                est_pose = particle.estimate_pose(particles)
                 print("Object IDs seen: ", objectIDs)
                 dx = target[0] - est_pose.getX()
                 dy = target[1] - est_pose.getY()
@@ -470,8 +456,6 @@ try:
                     sleep(0.5)
                     arlo.drive_forward_meter(distance_cm / 100.0)
 
-                    est_pose = particle.estimate_pose(particles)
-
                 # Lost landmarks, move the rest of the distance
                 else:
                     print("Not seeing 2 landmarks, moving the rest of distance")
@@ -493,20 +477,15 @@ try:
             arlo.rotate_robot(20)
             sleep(0.6)
             newObjectIDs, newDists, newAngles = cam.detect_aruco_objects(colour)
-            objectIDs.append(newObjectIDs)
-            dists.append(newDists)
-            angles.append(newAngles)
             particles, objectIDs, dists, angles = particle_filter(
                 particles, objectIDs, dists, angles
             )
         else:
             newObjectIDs, newDists, newAngles = cam.detect_aruco_objects(colour)
-            objectIDs.append(newObjectIDs)
-            dists.append(newDists)
-            angles.append(newAngles)
             particles, objectIDs, dists, angles = particle_filter(
                 particles, objectIDs, dists, angles
             )
+
         if objectIDs is not None and len(objectIDs) > 2:
             init = False
     # Estimate robot pose
