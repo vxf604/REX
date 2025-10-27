@@ -259,7 +259,7 @@ def systematic_resample(particles):
     return new_particles
 
 
-def particle_filter(particles, objectIDs, dists, angles):
+def particle_filter(particles, objectIDs, dists, angles, colour):
     if not isinstance(objectIDs, type(None)):
         uniqueIDs = set(objectIDs)
         detectedLandmarks = []
@@ -344,7 +344,7 @@ def init_robot_localization(particles):
             landmarks_seen.update(int(i) for i in objectIDs)
 
         particles, objectIDs, dists, angles = particle_filter(
-            particles, objectIDs, dists, angles
+            particles, objectIDs, dists, angles, colour
         )
 
         for i in range(len(particles)):
@@ -480,7 +480,7 @@ try:
         colour = cam.get_next_frame()
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         particles, objectIDs, dists, angles = particle_filter(
-            particles, objectIDs, dists, angles
+            particles, objectIDs, dists, angles, colour
         )
 
     # Estimate robot pose
