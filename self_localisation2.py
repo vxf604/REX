@@ -475,10 +475,10 @@ try:
                     arlo.drive_forward_meter(distance_cm / 100.0)
                     est_pose = particle.estimate_pose(particles)
 
+                objectIDs, dists, angles = None, None, None
+
                 for p in particles:
                     p = sample_motion_model(p, fi, distance_cm, 0.0)
-
-                objectIDs, dists, angles = None, None, None
 
         # Detect objects
         rotated_degrees = 0
