@@ -12,11 +12,6 @@ import math
 import copy
 import time
 
-onRobot = False  # Whether or not we are running on the Arlo robot
-showGUI = True  # Whether or not to open GUI windows
-onRobot = None  # Whether or not we are running on the Arlo robot
-showGUI = None  # Whether or not to open GUI windows
-
 
 def isRunningOnArlo():
     """Return True if we are running on Arlo, otherwise False.
@@ -237,13 +232,11 @@ def measurement_model(distance, angle, particle, landmark):
         np.clip(np.dot(e_l, e_theta), -1.0, 1.0)
     )
 
-    p_distance = (1 / math.sqrt(2 * math.pi * (sigma_d) ** 2)) * math.exp(
-        -1 * ((distance - d_i) ** 2) / (2 * (sigma_d) ** 2)
+    p_distance = (1.0 / (math.sqrt(2.0 * math.pi) * sigma_d)) * math.exp(
+        -0.5 * ((distance - d_i) ** 2) / (sigma_d**2)
     )
-    p_angle = (
-        1
-        / (math.sqrt(2 * math.pi) * (sigma_a) ** 2)
-        * math.exp(-1 * ((angle - fi) ** 2) / (2 * (sigma_a) ** 2))
+    p_angle = (1.0 / (math.sqrt(2.0 * math.pi) * sigma_a)) * math.exp(
+        -0.5 * ((angle - fi) ** 2) / (sigma_a**2)
     )
 
     prob = p_angle * p_distance
@@ -307,7 +300,9 @@ def particle_filter(particles, objectIDs, dists, angles):
             # Combine measurements from all visible landmarks
             total_prob = 1.0
             for i in range(len(objectIDs)):
-                landmark_id = objectIDs[i]
+                landmark_id = int(objectIDs[i])
+                if landmark_id not in landmarks:
+                    continue
                 total_prob *= measurement_model(
                     dists[i], angles[i], new_p, landmarks[landmark_id]
                 )
@@ -333,6 +328,29 @@ def particle_filter(particles, objectIDs, dists, angles):
             p.setWeight(1.0 / num_particles)
 
     return particles, objectIDs, dists, angles
+
+
+def init_robot_localization(particles):
+    landmarks_seen = set()
+    while len(landmarks_seen) < 2:
+        colour = cam.get_next_frame()
+        rotated_degrees = math.radians(20)
+
+        arlo.rotate_robot(20)
+        sleep(0.6)
+
+        objectIDs, dists, angles = cam.detect_aruco_objects(colour)
+        if objectIDs is not None:
+            landmarks_seen.update(int(i) for i in objectIDs)
+
+        particles, objectIDs, dists, angles = particle_filter(
+            particles, objectIDs, dists, angles
+        )
+
+        for i in range(len(particles)):
+            particles[i] = sample_motion_model(
+                particles[i], math.radians(rotated_degrees), 0.0, 0.0
+            )
 
 
 try:
@@ -380,7 +398,15 @@ try:
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
     init = True
     distance_cm = 0.0
+    if isRunningOnArlo():
+        init_robot_localization(particles)
+    target = (
+        (landmarks[5][0] + landmarks[6][0]) / 2,
+        (landmarks[5][1] + landmarks[6][1]) / 2,
+    )
+
     while True:
+
         # Move the robot according to user input (only for testing)
         action = cv2.waitKey(10)
         if action == ord("q"):  # Quit
@@ -399,16 +425,13 @@ try:
             elif action == ord("d"):  # Right
                 angular_velocity -= 0.2
 
-            for p in particles:
-                p = sample_motion_model(p, angular_velocity, velocity, 0.0)
+            for i in range(len(particles)):
+                particles[i] = sample_motion_model(
+                    particles[i], angular_velocity, velocity, 0.0
+                )
         else:
             # Arlo controls
-
-            target = (
-                (landmarks[5][0] + landmarks[6][0]) / 2,
-                (landmarks[5][1] + landmarks[6][1]) / 2,
-            )
-
+            est_pose = particle.estimate_pose(particles)
             print(
                 "Estimated pose: x=",
                 est_pose.getX(),
@@ -428,66 +451,38 @@ try:
 
             angle_change = 0.0
 
-            if not init and len(objectIDs) > 0:
-                est_pose = particle.estimate_pose(particles)
-                print("Object IDs seen: ", objectIDs)
-                dx = target[0] - est_pose.getX()
-                dy = target[1] - est_pose.getY()
+            dx = target[0] - est_pose.getX()
+            dy = target[1] - est_pose.getY()
 
-                theta = est_pose.getTheta()
-                t = np.array([dx, dy])
-                t = t / np.linalg.norm(t)
-                v = np.array([math.cos(theta), math.sin(theta)])
+            theta = est_pose.getTheta()
+            t = np.array([dx, dy])
+            t = t / np.linalg.norm(t)
+            v = np.array([math.cos(theta), math.sin(theta)])
 
-                dot = np.dot(t, v)
-                cross = v[0] * t[1] - v[1] * t[0]
-                fi = math.acos(dot) * sign(cross)
-                distance_cm = np.sqrt((dx) ** 2 + (dy) ** 2)
-                angle_change = fi
-                print("Distance to target: ", distance_cm)
+            dot = np.dot(t, v)
+            cross = v[0] * t[1] - v[1] * t[0]
+            fi = math.acos(dot) * sign(cross)
+            target_distance = np.sqrt((dx) ** 2 + (dy) ** 2)
+            drive_cm = 30.0
+            angle_change = fi
+            print("Distance to target: ", distance_cm)
+            print(f"Rotating {fi} radians")
+            arlo.rotate_robot(math.degrees(fi))
+            sleep(0.5)
+            arlo.drive_forward_meter(drive_cm / 100.0)
 
-                # See 2 landmarks for moving 1/4 distance
-                if len(objectIDs) >= 2:
-                    print("Seeing 2 landmarks, moving 1/4 distance")
-                    distance_cm = distance_cm / 4
+            for i in range(len(particles)):
+                particles[i] = sample_motion_model(
+                    particles[i], angle_change, drive_cm, 0.0
+                )
 
-                    print(f"Rotating {fi} radians")
-                    arlo.rotate_robot(math.degrees(fi))
-                    sleep(0.5)
-                    arlo.drive_forward_meter(distance_cm / 100.0)
-
-                # Lost landmarks, move the rest of the distance
-                else:
-                    print("Not seeing 2 landmarks, moving the rest of distance")
-                    print(f"Rotating {fi} radians")
-                    arlo.rotate_robot(math.degrees(fi))
-                    sleep(0.5)
-                    arlo.drive_forward_meter(distance_cm / 100.0)
-                    est_pose = particle.estimate_pose(particles)
-
-            for p in particles:
-                p = sample_motion_model(p, angle_change, distance_cm, 0.0)
-
-        # Detect objects
-        rotated_degrees = 0
+        # Get new camera image
         colour = cam.get_next_frame()
-        if init:
-            rotated_degrees += math.radians(20)
-            print(f"rotated_degrees: {rotated_degrees} radians")
-            arlo.rotate_robot(20)
-            sleep(0.6)
-            newObjectIDs, newDists, newAngles = cam.detect_aruco_objects(colour)
-            particles, objectIDs, dists, angles = particle_filter(
-                particles, objectIDs, dists, angles
-            )
-        else:
-            newObjectIDs, newDists, newAngles = cam.detect_aruco_objects(colour)
-            particles, objectIDs, dists, angles = particle_filter(
-                particles, objectIDs, dists, angles
-            )
+        objectIDs, dists, angles = cam.detect_aruco_objects(colour)
+        particles, objectIDs, dists, angles = particle_filter(
+            particles, objectIDs, dists, angles
+        )
 
-        if objectIDs is not None and len(objectIDs) > 2:
-            init = False
     # Estimate robot pose
     est_pose = particle.estimate_pose(particles)
 
@@ -503,7 +498,6 @@ try:
         cv2.imwrite(
             os.path.join(folder, f"Current_world_{int(time.time())}.png"), world
         )
-
 
 finally:
     # Make sure to clean up even if an exception occurred
