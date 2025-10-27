@@ -260,6 +260,11 @@ def systematic_resample(particles):
 
 
 def particle_filter(particles, objectIDs, dists, angles, colour):
+    if not objectIDs:
+        for p in particles:
+            p.setWeight(1.0 / len(particles))
+        return particles, objectIDs, dists, angles
+
     if not isinstance(objectIDs, type(None)):
         uniqueIDs = set(objectIDs)
         detectedLandmarks = []
@@ -348,9 +353,7 @@ def init_robot_localization(particles):
         )
 
         for i in range(len(particles)):
-            particles[i] = sample_motion_model(
-                particles[i], math.radians(rotated_degrees), 0.0, 0.0
-            )
+            particles[i] = sample_motion_model(particles[i], rotated_degrees, 0.0, 0.0)
 
 
 try:
