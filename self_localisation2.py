@@ -419,8 +419,8 @@ try:
             # Arlo controls
 
             target = (
-                (landmarks[6][0] + landmarks[7][0]) / 2,
-                (landmarks[6][1] + landmarks[7][1]) / 2,
+                (landmarks[5][0] + landmarks[6][0]) / 2,
+                (landmarks[5][1] + landmarks[6][1]) / 2,
             )
 
             print(
