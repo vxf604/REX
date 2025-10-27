@@ -47,9 +47,9 @@ CMAGENTA = (255, 0, 255)
 CWHITE = (255, 255, 255)
 CBLACK = (0, 0, 0)
 
-landmarkIDs = [7, 6]
+landmarkIDs = [5, 6]
 landmarks = {
-    7: (0.0, 0.0),  # Coordinates for landmark 1 Red
+    5: (0.0, 0.0),  # Coordinates for landmark 1 Red
     6: (150.0, 0.0),  # Coordinates for landmark 2 Green
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
@@ -462,7 +462,7 @@ try:
                     arlo.rotate_robot(math.degrees(fi))
                     sleep(0.5)
                     arlo.drive_forward_meter(distance_cm / 100.0)
-                    
+
                     est_pose = particle.estimate_pose(particles)
 
                 # Lost landmarks, move the rest of the distance
