@@ -366,7 +366,7 @@ try:
     particles = initialize_particles(num_particles)
 
     # initialise landmarks:
-    objectIDs, dists, angles = None, None, None
+    objectIDs, dists, angles = [], [], []
 
     est_pose = particle.estimate_pose(
         particles
@@ -443,7 +443,7 @@ try:
 
             angle_change = 0.0
 
-            if objectIDs is not None:
+            if not init and len(objectIDs) > 0:
                 print("Object IDs seen: ", objectIDs)
                 dx = target[0] - est_pose.getX()
                 dy = target[1] - est_pose.getY()
@@ -481,40 +481,34 @@ try:
                     arlo.drive_forward_meter(distance_cm / 100.0)
                     est_pose = particle.estimate_pose(particles)
 
-                objectIDs, dists, angles = None, None, None
-
             for p in particles:
                 p = sample_motion_model(p, angle_change, distance_cm, 0.0)
 
         # Detect objects
         rotated_degrees = 0
-        while objectIDs is None or len(objectIDs) < 2:
-            colour = cam.get_next_frame()
-            if init:
-                rotated_degrees += math.radians(20)
-                print(f"rotated_degrees: {rotated_degrees} radians")
-                arlo.rotate_robot(20)
-                sleep(0.6)
-                if objectIDs is not None:
-                    newObjectIDs, newDists, newAngles = cam.detect_aruco_objects(colour)
-                    objectIDs.append(newObjectIDs)
-                    dists.append(newDists)
-                    angles.append(newAngles)
-                else:
-                    objectIDs, dists, angles = cam.detect_aruco_objects(colour)
-
-                particles, objectIDs, dists, angles = particle_filter(
-                    particles, objectIDs, dists, angles
-                )
-            else:
-                colour = cam.get_next_frame()
-                objectIDs, dists, angles = cam.detect_aruco_objects(colour)
-                particles, objectIDs, dists, angles = particle_filter(
-                    particles, objectIDs, dists, angles
-                )
-                break
-
-        init = False
+        colour = cam.get_next_frame()
+        if init:
+            rotated_degrees += math.radians(20)
+            print(f"rotated_degrees: {rotated_degrees} radians")
+            arlo.rotate_robot(20)
+            sleep(0.6)
+            newObjectIDs, newDists, newAngles = cam.detect_aruco_objects(colour)
+            objectIDs.append(newObjectIDs)
+            dists.append(newDists)
+            angles.append(newAngles)
+            particles, objectIDs, dists, angles = particle_filter(
+                particles, objectIDs, dists, angles
+            )
+        else:
+            newObjectIDs, newDists, newAngles = cam.detect_aruco_objects(colour)
+            objectIDs.append(newObjectIDs)
+            dists.append(newDists)
+            angles.append(newAngles)
+            particles, objectIDs, dists, angles = particle_filter(
+                particles, objectIDs, dists, angles
+            )
+        if objectIDs is not None and len(objectIDs) > 2:
+            init = False
     # Estimate robot pose
     est_pose = particle.estimate_pose(particles)
 
