@@ -43,10 +43,10 @@ CMAGENTA = (255, 0, 255)
 CWHITE = (255, 255, 255)
 CBLACK = (0, 0, 0)
 
-landmarkIDs = [5, 6]
+landmarkIDs = [6, 2]
 landmarks = {
-    5: (0.0, 0.0),  # Coordinates for landmark 1 Red
-    6: (150.0, 0.0),  # Coordinates for landmark 2 Green
+    6: (0.0, 0.0),  # Coordinates for landmark 1 Red
+    2: (150.0, 0.0),  # Coordinates for landmark 2 Green
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -139,27 +139,18 @@ def initialize_particles(num_particles):
 
 
 # Sørg for at standard deviation passer med hvad vores x og y er i (mm eller cm eller m)
-def roterror(std_rot=0.1):
+def roterror(std_rot=0.05):
     return random.gauss(0.0, std_rot)
 
-
-def transerror(std_trans=2.5):
+def transerror(std_trans=2):
     return random.gauss(0.0, std_trans)
 
 
-def rotation1(p, rot1):
+def rotation(p, rot):
     theta = p.getTheta()
-    theta = theta + rot1 + roterror()
+    theta = theta + rot + roterror()
     p.setTheta(theta)
     return p
-
-
-def rotation2(p, rot2):
-    theta = p.getTheta()
-    theta = theta + rot2 + roterror()
-    p.setTheta(theta)
-    return p
-
 
 def translation1(p, transl1):
     x = p.getX()
@@ -175,11 +166,16 @@ def translation1(p, transl1):
 
 def sample_motion_model(p, rot1, trans, rot2):
 
-    p = rotation1(p, rot1)
+    p = rotation(p, rot1)
     p = translation1(p, trans)
-    p = rotation2(p, rot2)
+    p = rotation(p, rot2)
 
     return p
+
+def apply_sample_motion_model(particles, rot1, trans, rot2):
+    for i in range(len(particles)):
+        particles[i] = sample_motion_model(particles[i], rot1, trans, rot2)
+    return particles
 
 
 def normal_distribution(mu, sigma, x):
@@ -215,8 +211,8 @@ def sign(x):
 
 
 def measurement_model(distance, angle, particle, landmark):
-    sigma_d = 15
-    sigma_a = math.radians(2.0)
+    sigma_d = 10
+    sigma_a = 0.01
 
     x, y = particle.getX(), particle.getY()
     theta = particle.getTheta()
@@ -239,9 +235,8 @@ def measurement_model(distance, angle, particle, landmark):
         -0.5 * ((angle - fi) ** 2) / (sigma_a**2)
     )
 
-    prob = p_angle * p_distance
+    prob = 1 * p_distance
     return prob
-
 
 def systematic_resample(particles):
     N = len(particles)
@@ -257,48 +252,39 @@ def systematic_resample(particles):
         else:
             j += 1
     return new_particles
+    
 
+def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
+    uniqueIDs = set(objectIDs)
+    detectedLandmarks = []
+    detectedDists = []
+    detectedAngles = []
 
-def particle_filter(particles, objectIDs, dists, angles, colour):
+    for uid in uniqueIDs:
+        indices = [i for i, id in enumerate(objectIDs) if id == uid]
+        closest_id = min(indices, key=lambda i: dists[i])
+        if uid in landmarkIDs:
+            detectedLandmarks.append(objectIDs[closest_id])
+            detectedDists.append(dists[closest_id])
+            detectedAngles.append(angles[closest_id])
+
+    return detectedLandmarks, detectedDists, detectedAngles
+    
+def particle_filter(particles, objectIDs, dists, angles, colour, num_particles):
     if objectIDs is None or len(objectIDs) == 0:
         for p in particles:
             p.setWeight(1.0 / len(particles))
         return particles, objectIDs, dists, angles
 
     if not isinstance(objectIDs, type(None)):
-        uniqueIDs = set(objectIDs)
-        detectedLandmarks = []
-        detectedDists = []
-        detectedAngles = []
 
-        for uid in uniqueIDs:
-            indices = [i for i, id in enumerate(objectIDs) if id == uid]
-            closest_id = min(indices, key=lambda i: dists[i])
-            if uid in landmarkIDs:
-                detectedLandmarks.append(objectIDs[closest_id])
-                detectedDists.append(dists[closest_id])
-                detectedAngles.append(angles[closest_id])
+        objectIDs, dists, angles = get_unique_landmarks(objectIDs, dists, angles, landmarkIDs)
 
-        objectIDs, dists, angles = (
-            detectedLandmarks,
-            detectedDists,
-            detectedAngles,
-        )
-
-        # List detected objects
         for i in range(len(objectIDs)):
-            print(
-                "Object ID = ",
-                objectIDs[i],
-                ", Distance = ",
-                dists[i],
-                ", angle = ",
-                angles[i],
-            )
+            print("Object ID = ", objectIDs[i],", Distance = ", dists[i],", angle = ", angles[i])
 
         new_particles = []
-        p_len = len(particles)
-        for j in range(p_len):
+        for j in range(num_particles):
             p = particles[j]
             new_p = copy.copy(p)
 
@@ -325,6 +311,20 @@ def particle_filter(particles, objectIDs, dists, angles, colour):
 
         particles = systematic_resample(new_particles)
 
+
+        
+        # 5% Injection
+        num_random = int(0.05 * num_particles)
+        particles.sort(key=lambda p: p.getWeight())
+
+        for i in range(num_random):
+            particles[i] = particle.Particle(
+                600.0 * np.random.ranf() - 100.0,
+                600.0 * np.random.ranf() - 250.0,
+                np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
+                1.0 / num_particles,
+            )
+
         # Draw detected objects
         cam.draw_aruco_objects(colour)
     else:
@@ -344,16 +344,16 @@ def init_robot_localization(particles):
         arlo.rotate_robot(20)
         sleep(0.6)
 
+        apply_sample_motion_model(particles, rotated_degrees, 0.0, 0.0)
+
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if objectIDs is not None:
             landmarks_seen.update(int(i) for i in objectIDs)
 
         particles, objectIDs, dists, angles = particle_filter(
-            particles, objectIDs, dists, angles, colour
+            particles, objectIDs, dists, angles, colour, num_particles
         )
 
-        for i in range(len(particles)):
-            particles[i] = sample_motion_model(particles[i], rotated_degrees, 0.0, 0.0)
 
 
 try:
@@ -403,9 +403,10 @@ try:
     distance_cm = 0.0
     if isRunningOnArlo():
         init_robot_localization(particles)
+
     target = (
-        (landmarks[5][0] + landmarks[6][0]) / 2,
-        (landmarks[5][1] + landmarks[6][1]) / 2,
+        (landmarks[6][0] + landmarks[2][0]) / 2,
+        (landmarks[6][1] + landmarks[2][1]) / 2,
     )
 
     while True:
@@ -473,17 +474,14 @@ try:
             arlo.rotate_robot(math.degrees(fi))
             sleep(0.5)
             arlo.drive_forward_meter(drive_cm / 100.0)
-
-            for i in range(len(particles)):
-                particles[i] = sample_motion_model(
-                    particles[i], angle_change, drive_cm, 0.0
-                )
+            
+            apply_sample_motion_model(particles, angle_change, drive_cm, 0.0)
 
         # Get new camera image
         colour = cam.get_next_frame()
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         particles, objectIDs, dists, angles = particle_filter(
-            particles, objectIDs, dists, angles, colour
+            particles, objectIDs, dists, angles, colour, num_particles
         )
 
         # Estimate robot pose
