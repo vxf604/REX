@@ -333,7 +333,7 @@ try:
     print("Opening and initializing camera")
     if isRunningOnArlo():
         # cam = camera.Camera(0, robottype='arlo', useCaptureThread=True)
-        cam = camera.Camera(0, robottype="arlo", useCaptureThread=False)
+        cam = camera.Camera(1, robottype="arlo", useCaptureThread=False)
     else:
         # cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=True)
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
