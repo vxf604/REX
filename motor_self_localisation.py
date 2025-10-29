@@ -350,19 +350,13 @@ try:
     seeing = False
     seen2Landmarks = False
     while True:
-        cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
-        execute_cmd(arlo, cmd)
-        apply_motion_from_cmd(particles, cmd)
-        if state == "forward":
-            landmarks_seen.clear()
         # Fetch next frame
         colour = cam.get_next_frame()
         print("state: ", state)
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-            # List detected objects
-            # XXX: Do something for each detected object - remember, the same ID may appear several times
+
             objectIDs, dists, angles = get_unique_landmarks(
                 objectIDs, dists, angles, landmarkIDs
             )
@@ -427,6 +421,12 @@ try:
         est_pose = particle_class.estimate_pose(particles)
 
         seen2Landmarks = len(landmarks_seen) >= 2
+
+        cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
+        execute_cmd(arlo, cmd)
+        apply_motion_from_cmd(particles, cmd)
+        if cmd and cmd[0] == "forward":
+            landmarks_seen.clear()
 
         if showGUI:
             # Draw map
