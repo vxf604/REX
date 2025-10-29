@@ -353,6 +353,10 @@ try:
     seeing = False
     seen2Landmarks = False
     while True:
+        if state == "forward":
+            landmarks_seen.clear()
+            seen2Landmarks = False
+
         cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
         execute_cmd(arlo, cmd)
         apply_motion_from_cmd(particles, cmd)
@@ -428,9 +432,6 @@ try:
         est_pose = particle_class.estimate_pose(particles)
 
         seen2Landmarks = len(landmarks_seen) >= 2
-
-        if state == "forward":
-            landmarks_seen.clear()
 
         if showGUI:
             # Draw map
