@@ -215,14 +215,14 @@ class Robot(object):
         cmd = "y" + str(turntime) + "\n"
         return self.send_command(cmd)
 
-    def drive_forward_meter(self, meter, leftSpeed=67, rightSpeed=64):
+    def drive_forward_meter(self, meter, leftSpeed=68, rightSpeed=64):
         self.go_diff(leftSpeed, rightSpeed, 1, 1)
         drive_time = 2.45 * meter
         sleep(drive_time)
         self.stop()
 
     def rotate_robot(self, angle):
-        leftSpeed = 67
+        leftSpeed = 68
         rightSpeed = 64
 
         if abs(angle) < 1.0:  # too small to bother

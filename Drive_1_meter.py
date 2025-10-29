@@ -11,7 +11,8 @@ print("Running ...")
 # send a go_diff command to drive forward
 leftSpeed = 68
 rightSpeed = 64
-print(arlo.drive_forward_meter(1, leftSpeed, rightSpeed))
+# print(arlo.drive_forward_meter(1, leftSpeed, rightSpeed))
+print(arlo.rotate_robot(360))
 
 
 # 2m = 4,9 seconds
