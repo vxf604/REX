@@ -318,6 +318,7 @@ try:
 
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
+        print(objectIDs)
         if not isinstance(objectIDs, type(None)):
             # List detected objects
             for i in range(len(objectIDs)):
