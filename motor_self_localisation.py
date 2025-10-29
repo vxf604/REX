@@ -303,16 +303,16 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
 try:
     if showGUI:
         # Open windows
-        WIN_RF1 = "Robot view"
+        # WIN_RF1 = "Robot view"
         WIN_World = "World view"
 
-        cv2.namedWindow(WIN_RF1, cv2.WINDOW_NORMAL)
+        # cv2.namedWindow(WIN_RF1, cv2.WINDOW_NORMAL)
         cv2.namedWindow(WIN_World, cv2.WINDOW_NORMAL)
 
-        cv2.resizeWindow(WIN_RF1, 640, 480)
+        # cv2.resizeWindow(WIN_RF1, 640, 480)
         cv2.resizeWindow(WIN_World, 520, 520)
 
-        cv2.moveWindow(WIN_RF1, 50, 50)
+        # cv2.moveWindow(WIN_RF1, 50, 50)
         cv2.moveWindow(WIN_World, 720, 50)
     if isRunningOnArlo():
         arlo = robot.Robot()
@@ -359,16 +359,6 @@ try:
         # Fetch next frame
         colour = cam.get_next_frame()
         print("state: ", state)
-        h, w = colour.shape[:2]
-        cv2.putText(
-            colour,
-            f"{w}x{h} {time.strftime('%H:%M:%S')}",
-            (10, 25),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            (0, 255, 255),
-            2,
-        )
         cv2.rectangle(colour, (5, 5), (w - 5, h - 5), (0, 255, 0), 2)
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
