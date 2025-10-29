@@ -284,12 +284,12 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
 
     fi = angle_to_target(est_pose, target)
     d = distance_to_target(est_pose, target)
-    align_ok = 1.5
+    align_ok = 4
 
     if state == "rotating":
         # step = max(8.0, min(abs(fi), 35.0))
         # turn = step if fi >= 0 else -step
-        next_state = "forward" if abs(fi) < 1.5 else "rotating"
+        next_state = "forward" if abs(fi) < align_ok else "rotating"
         return ("rotate", fi), next_state
 
     if state == "forward":
