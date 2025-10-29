@@ -335,12 +335,16 @@ try:
         # XXX: Make the robot drive
         # XXX: You do this
         if state == "START_SEARCH":
+            print("State", state)
             state, particles = state_seach(arlo, particles, landmarks_seen)
         elif state == "ROTATE_TO_TARGET":
+            print("State", state)
             state, particles = state_rotate(arlo, particles, est_pose, target)
         elif state == "DRIVE_TO_TARGET":
+            print("State", state)
             state, particles = drive_to_target(arlo, particles, est_pose, target)
         elif state == "DONE":
+            print("State", state)
             print("Reached target - stopping")
             arlo.stop()
             break
