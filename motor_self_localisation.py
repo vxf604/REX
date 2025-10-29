@@ -177,6 +177,16 @@ def apply_sample_motion_model(particles, rot1, trans):
         sample_motion_model(p, rot1, trans)
 
 
+def apply_motion_from_cmd(particles, cmd):
+    if not cmd:
+        return
+    kind, val = cmd
+    if kind == "rotate":
+        apply_sample_motion_model(particles, math.radians(val), 0)
+    elif kind == "forward":
+        apply_sample_motion_model(particles, 0, val)
+
+
 def sign(x):
     return 1 if x >= 0 else -1
 
@@ -225,15 +235,6 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
     return detectedLandmarks, detectedDists, detectedAngles
 
 
-def execute_cmd(arlo, cmd):
-    if cmd is None:
-        return
-    if cmd.kind == "rotate":
-        arlo.rotate_robot(cmd.value)
-    elif cmd.kind == "forward":
-        arlo.drive_forward_meter(cmd.value / 100.0)
-
-
 def angle_to_target(est_pose, target):
     target_x, target_y = target[0], target[1]
     robot_x, robot_y, robot_theta = (
@@ -252,7 +253,7 @@ def angle_to_target(est_pose, target):
     dot = np.dot(t, v)
     cross = v[0] * t[1] - v[1] * t[0]
     fi = math.acos(dot) * sign(cross)
-    return fi
+    return math.degrees(fi)
 
 
 def distance_to_target(est_pose, target):
@@ -272,9 +273,34 @@ def distance_to_target(est_pose, target):
     return distance
 
 
-def forward(arlo, est_pose, target):
-    dist = distance_to_target(est_pose, target)
-    arlo.drive_forward_meter(dist / 100.0)
+def execute_cmd(arlo, cmd):
+    if not cmd:
+        return
+    movement, val = cmd
+    if movement == "rotate":
+        arlo.rotate_robot(val)
+    elif movement == "forward":
+        arlo.drive_forward_meter(val / 100.0)
+
+
+def motor_control(state, est_pose, target, seeing, seen2Landmarks):
+    if state == "searching":
+        state = "rotating" if seen2Landmarks else "searching"
+        return ("rotate", 20.0), state
+
+    fi = angle_to_target(est_pose, target)
+    d = distance_to_target(est_pose, target)
+
+    if state == "rotating":
+        step = max(8.0, min(abs(fi), 35.0))
+        turn = step if fi >= 0 else -step
+        next_state = "forward" if abs(fi) < 5.0 else "rotating"
+        return ("rotate", turn), next_state
+
+    if state == "forward":
+        if not seeing:
+            return ("rotate", 20.0), "searching"
+        return ("forward", min(d, 40.0)), "forward"
 
 
 # Main program #
@@ -319,25 +345,14 @@ try:
     target = (60.0, 0.0)
     landmarks_seen = set()
     targetReached = True
+    seeing = False
+    seen2Landmarks = False
     while True:
-
-        # State machine
-        if state == "searching":
-            searching(arlo, particles)
-        elif state == "rotating":
-            rotating(arlo, est_pose, target)
-        elif state == "forward":
-            forward(est_pose, target)
+        cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
+        execute_cmd(arlo, cmd)
+        apply_motion_from_cmd(particles, cmd)
+        if state == "forward":
             landmarks_seen.clear()
-
-        # update state machine
-        if state == "rotating":
-            state = "forward"
-        elif len(landmarks_seen) < 2:
-            state = "searching"
-        else:
-            state = "move_to_target"
-
         # Fetch next frame
         colour = cam.get_next_frame()
 
@@ -399,12 +414,17 @@ try:
 
             # Draw detected objects
             cam.draw_aruco_objects(colour)
+            seeing = len(objectIDs) > 1
+
         else:
             # No observation - reset weights to uniform distribution
+            seeing = False
             for p in particles:
                 p.setWeight(1.0 / num_particles)
 
         est_pose = particle_class.estimate_pose(particles)
+
+        seen2Landmarks = len(landmarks_seen) >= 2
 
         if showGUI:
             # Draw map
