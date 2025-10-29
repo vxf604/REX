@@ -48,7 +48,7 @@ CBLACK = (0, 0, 0)
 landmarkIDs = [6, 2]
 landmarks = {
     6: (0.0, 0.0),  # Coordinates for landmark 1
-    2: (200.0, 0.0),  # Coordinates for landmark 2
+    2: (120.0, 0.0),  # Coordinates for landmark 2
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -270,7 +270,7 @@ try:
         # cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=True)
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
-    target = (100, 0)
+    target = (60.0, 0.0)
     landmarks_seen = 0
     while True:
 
