@@ -318,7 +318,7 @@ try:
     if isRunningOnArlo():
         arlo = robot.Robot()
     # Initialize particles
-    num_particles = 1000
+    num_particles = 2000
     particles = initialize_particles(num_particles)
     state = "searching"
     est_pose = particle_class.estimate_pose(
