@@ -307,7 +307,7 @@ try:
                 print("Reached target")
                 break
 
-            drive = 30
+            drive = distance
             t = np.array([dx, dy])
             t = t / np.linalg.norm(t)
             v = np.array([math.cos(robot_theta), math.sin(robot_theta)])
