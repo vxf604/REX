@@ -285,8 +285,9 @@ try:
         # XXX: You do this
         print("landmarks seen: ", landmarks_seen)
         if len(landmarks_seen) < 2:
-            arlo.rotate_robot(15)
-            apply_sample_motion_model(particles, math.radians(15), 0)
+            arlo.rotate_robot(20)
+            time.sleep(1)
+            apply_sample_motion_model(particles, math.radians(20), 0)
         else:
             target_x, target_y = target[0], target[1]
             robot_x, robot_y, robot_theta = (
