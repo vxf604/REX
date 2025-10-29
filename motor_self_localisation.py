@@ -357,7 +357,7 @@ try:
             landmarks_seen.clear()
         # Fetch next frame
         colour = cam.get_next_frame()
-
+        print("state: ", state)
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
