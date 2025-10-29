@@ -277,57 +277,33 @@ def execute_cmd(arlo, cmd):
 
 
 def motor_control(state, est_pose, target, seeing, seen2Landmarks):
-    # Hysteresis and tolerances
-    align_enter = 6.0  # enter FORWARD when |fi| < this
-    align_exit = 10.0  # fall back to ROTATING when |fi| >= this
-    goal_tol = 18.0  # [cm] close enough to the target
-    near_dist = 80.0  # [cm] start using smaller forward steps
-    far_step = 40.0  # [cm] your original chunk
-    near_step = 15.0  # [cm] finer chunk near target
-
     if state == "searching":
-        # Don't spin an extra 20° once we already have two landmarks
         if seen2Landmarks:
             return (None, 0), "rotating"
         return ("rotate", 20.0), "searching"
 
-    fi = angle_to_target(est_pose, target)  # degrees
+    fi = angle_to_target(est_pose, target)
     d = distance_to_target(est_pose, target)
-
-    # Done?
-    if d <= goal_tol:
-        return (None, 0), "done"
+    align_ok = 4
 
     if state == "rotating":
-        # Proportional turn with a small deadband
-        if abs(fi) < align_enter:
-            return (None, 0), "forward"
-        # Scale rotation to avoid huge spins; skip tiny jitters
-        k = 0.7
-        turn = fi * k
-        if abs(turn) < 2.0:
-            return (None, 0), "forward"
-        # (Optional cap: prevents wild 90° spins in one command)
-        if turn > 35.0:
-            turn = 35.0
-        if turn < -35.0:
-            turn = -35.0
-        return ("rotate", turn), "rotating"
+        # step = max(8.0, min(abs(fi), 35.0))
+        # turn = step if fi >= 0 else -step
+        next_state = "forward" if abs(fi) < align_ok else "rotating"
+        return ("rotate", fi), next_state
 
     if state == "forward":
-        # Re-align if heading drifts while driving
-        if abs(fi) >= align_exit:
-            return ("rotate", fi * 0.7), "rotating"
 
-        # Keep your original “not seeing” logic EXACTLY:
+        if abs(fi) >= align_ok:
+            return ("rotate", fi), "rotating"
+
         if not seeing and d < 40.0:
+            print("Driving the rest of the distance:", d)
             return ("forward", d), "searching"
         elif not seeing:
             return ("rotate", 20.0), "searching"
 
-        # When seeing, step forward in chunks; smaller near goal
-        step = near_step if d < near_dist else far_step
-        return ("forward", min(d, step)), "forward"
+        return ("forward", min(d, 40.0)), "forward"
 
 
 # Main program #
