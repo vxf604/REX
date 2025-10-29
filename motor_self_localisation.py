@@ -444,7 +444,7 @@ try:
             draw_world(est_pose, particles, world)
 
             # Vis
-            cv2.imshow(WIN_RF1, colour)
+            # cv2.imshow(WIN_RF1, colour)
             cv2.imshow(WIN_World, world)
 
             # VIGTIGT: pump events, ellers opdaterer vinduerne ikke i VNC
