@@ -299,7 +299,7 @@ try:
             dx = target_x - robot_x
             dy = target_y - robot_y
             distance = math.sqrt(dx**2 + dy**2)
-
+            print("driving distance: ", distance)
             t = np.array([dx, dy])
             t = t / np.linalg.norm(t)
             v = np.array([math.cos(robot_theta), math.sin(robot_theta)])
@@ -307,7 +307,7 @@ try:
             dot = np.dot(t, v)
             cross = v[0] * t[1] - v[1] * t[0]
             fi = math.acos(dot) * sign(cross)
-
+            print("angle to rotate towards target", fi)
             arlo.rotate_robot(fi)
             apply_sample_motion_model(particles, fi, 0)
             time.sleep(1)
