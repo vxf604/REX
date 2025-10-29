@@ -329,6 +329,9 @@ try:
 
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
+        objectIDs, dists, angles = get_unique_landmarks(
+            objectIDs, dists, angles, landmarkIDs
+        )
         print(objectIDs)
         if not isinstance(objectIDs, type(None)):
             # List detected objects
@@ -342,9 +345,6 @@ try:
                     angles[i],
                 )
                 # XXX: Do something for each detected object - remember, the same ID may appear several times
-            objectIDs, dists, angles = get_unique_landmarks(
-                objectIDs, dists, angles, landmarkIDs
-            )
 
             for landmark in objectIDs:
                 if landmark not in landmarks_seen:
