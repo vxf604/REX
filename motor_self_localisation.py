@@ -300,8 +300,11 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
         return ("rotate", turn), next_state
 
     if state == "forward":
-        if not seeing:
+        if not seeing and d < 40.0:
+            return ("forward", d), "searching"
+        elif not seeing:
             return ("rotate", 20.0), "searching"
+
         return ("forward", min(d, 40.0)), "forward"
 
 
