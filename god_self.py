@@ -283,9 +283,10 @@ try:
         # Use motor controls to update particles
         # XXX: Make the robot drive
         # XXX: You do this
+        print("landmarks seen: ", landmarks_seen)
         if landmarks_seen < 2:
-            arlo.rotate_robot(20)
-            apply_sample_motion_model(particles, math.radians(20), 0)
+            arlo.rotate_robot(15)
+            apply_sample_motion_model(particles, math.radians(15), 0)
         else:
             target_x, target_y = target[0], target[1]
             robot_x, robot_y, robot_theta = (
@@ -308,7 +309,7 @@ try:
 
             arlo.rotate_robot(fi)
             apply_sample_motion_model(particles, fi, 0)
-            time.sleep(0.5)
+            time.sleep(1)
             arlo.drive_forward_meter(distance)
             apply_sample_motion_model(particles, 0, distance)
 
