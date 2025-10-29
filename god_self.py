@@ -308,7 +308,7 @@ try:
             cross = v[0] * t[1] - v[1] * t[0]
             fi = math.acos(dot) * sign(cross)
             print("angle to rotate towards target", fi)
-            arlo.rotate_robot(fi)
+            arlo.rotate_robot(math.degrees(fi))
             apply_sample_motion_model(particles, fi, 0)
             time.sleep(1)
             arlo.drive_forward_meter(distance / 100.0)
