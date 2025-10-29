@@ -311,7 +311,7 @@ try:
             arlo.rotate_robot(fi)
             apply_sample_motion_model(particles, fi, 0)
             time.sleep(1)
-            arlo.drive_forward_meter(distance)
+            arlo.drive_forward_meter(distance / 100.0)
             apply_sample_motion_model(particles, 0, distance)
 
         # Fetch next frame
