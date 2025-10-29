@@ -9,10 +9,12 @@ import numpy as np
 import time
 from timeit import default_timer as timer
 import sys
+import robot
 
 # Flags
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
+arlo = robot.Robot()
 
 
 def isRunningOnArlo():
