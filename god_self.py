@@ -1,5 +1,6 @@
 import copy
 import math
+import os
 import random
 import cv2
 import particle as particle_class
@@ -391,6 +392,13 @@ try:
 
             # Show world
             cv2.imshow(WIN_World, world)
+        else:
+            draw_world(est_pose, particles, world)
+            folder = "images"
+            os.makedirs(folder, exist_ok=True)
+            cv2.imwrite(
+                os.path.join(folder, f"Current_world_{int(time.time())}.png"), world
+            )
 
 
 finally:
