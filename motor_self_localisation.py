@@ -293,11 +293,13 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
         return ("rotate", fi), next_state
 
     if state == "forward":
-        # Hvis vi IKKE ser markører: kør i 40 cm blokke (eller resten, hvis < 40)
         if not seeing:
-            return ("forward", min(d, 20.0)), "forward"
+            if d < 20.0:
+                print("Driving the rest of the distance:", d)
+                return ("forward", d), "searching"
+            else:
+                return ("rotate", 20.0), "searching"
 
-        # Ser markører: hold kursen stram
         if abs(fi) >= align_ok:
             return ("rotate", fi), "rotating"
 
