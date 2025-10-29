@@ -359,7 +359,6 @@ try:
         # Fetch next frame
         colour = cam.get_next_frame()
         print("state: ", state)
-        cv2.rectangle(colour, (5, 5), (w - 5, h - 5), (0, 255, 0), 2)
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
