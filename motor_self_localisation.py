@@ -293,15 +293,13 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
         return ("rotate", fi), next_state
 
     if state == "forward":
+        # Hvis vi IKKE ser markører: kør i 40 cm blokke (eller resten, hvis < 40)
+        if not seeing:
+            return ("forward", min(d, 20.0)), "forward"
 
+        # Ser markører: hold kursen stram
         if abs(fi) >= align_ok:
             return ("rotate", fi), "rotating"
-
-        if not seeing and d < 40.0:
-            print("Driving the rest of the distance:", d)
-            return ("forward", d), "searching"
-        elif not seeing:
-            return ("rotate", 20.0), "searching"
 
         return ("forward", min(d, 40.0)), "forward"
 
@@ -355,13 +353,6 @@ try:
     seeing = False
     seen2Landmarks = False
     while True:
-        if state == "forward":
-            landmarks_seen.clear()
-            seen2Landmarks = False
-
-        cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
-        execute_cmd(arlo, cmd)
-        apply_motion_from_cmd(particles, cmd)
 
         # Fetch next frame
         colour = cam.get_next_frame()
@@ -434,6 +425,13 @@ try:
         est_pose = particle_class.estimate_pose(particles)
 
         seen2Landmarks = len(landmarks_seen) >= 2
+
+        cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
+        execute_cmd(arlo, cmd)
+        apply_motion_from_cmd(particles, cmd)
+        if state == "forward":
+            landmarks_seen.clear()
+            seen2Landmarks = False
 
         if showGUI:
             # Tegn verden hver gang før visning
