@@ -15,7 +15,7 @@ class Cam:
         self.f = 1226.11  # pixels
         self.X = 145  # mm
         self.cWidth = 1640
-        self.cHeight = 1232
+        self.cHeight = 1282
         self.cx = self.cWidth / 2
         self.cy = self.cHeight / 2
         self.imageSize = (self.cWidth, self.cHeight)
