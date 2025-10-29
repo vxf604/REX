@@ -301,9 +301,13 @@ try:
             dx = target_x - robot_x
             dy = target_y - robot_y
             distance = math.sqrt(dx**2 + dy**2)
-            if distance > 30:
-                distance /= 2
-                targetReached = False
+
+            if distance < 10:
+                arlo.stop()
+                print("Reached target")
+                break
+
+            drive = 30
             t = np.array([dx, dy])
             t = t / np.linalg.norm(t)
             v = np.array([math.cos(robot_theta), math.sin(robot_theta)])
@@ -315,12 +319,10 @@ try:
             arlo.rotate_robot(math.degrees(fi))
             apply_sample_motion_model(particles, fi, 0)
             time.sleep(1)
-            print("driving distance (mm): ", distance)
-            arlo.drive_forward_meter(distance / 100.0)
-            apply_sample_motion_model(particles, 0, distance)
-            if targetReached:
-                arlo.stop()
-                break
+            print("driving distance (mm): ", drive)
+            arlo.drive_forward_meter(drive / 100.0)
+            apply_sample_motion_model(particles, 0, drive)
+            print("distance to target: ", distance)
 
         # Fetch next frame
         colour = cam.get_next_frame()
