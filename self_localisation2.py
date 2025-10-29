@@ -142,6 +142,7 @@ def initialize_particles(num_particles):
 def roterror(std_rot=0.05):
     return random.gauss(0.0, std_rot)
 
+
 def transerror(std_trans=2):
     return random.gauss(0.0, std_trans)
 
@@ -151,6 +152,7 @@ def rotation(p, rot):
     theta = theta + rot + roterror()
     p.setTheta(theta)
     return p
+
 
 def translation1(p, transl1):
     x = p.getX()
@@ -168,9 +170,10 @@ def sample_motion_model(p, rot1, trans, rot2):
 
     p = rotation(p, rot1)
     p = translation1(p, trans)
-    p = rotation(p, rot2)
+    # p = rotation(p, rot2)
 
     return p
+
 
 def apply_sample_motion_model(particles, rot1, trans, rot2):
     for i in range(len(particles)):
@@ -212,7 +215,7 @@ def sign(x):
 
 def measurement_model(distance, angle, particle, landmark):
     sigma_d = 10
-    sigma_a = 0.01
+    sigma_a = 0.2
 
     x, y = particle.getX(), particle.getY()
     theta = particle.getTheta()
@@ -235,8 +238,9 @@ def measurement_model(distance, angle, particle, landmark):
         -0.5 * ((angle - fi) ** 2) / (sigma_a**2)
     )
 
-    prob = 1 * p_distance
+    prob = p_angle * p_distance
     return prob
+
 
 def systematic_resample(particles):
     N = len(particles)
@@ -252,7 +256,7 @@ def systematic_resample(particles):
         else:
             j += 1
     return new_particles
-    
+
 
 def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
     uniqueIDs = set(objectIDs)
@@ -269,7 +273,8 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
             detectedAngles.append(angles[closest_id])
 
     return detectedLandmarks, detectedDists, detectedAngles
-    
+
+
 def particle_filter(particles, objectIDs, dists, angles, colour, num_particles):
     if objectIDs is None or len(objectIDs) == 0:
         for p in particles:
@@ -278,10 +283,19 @@ def particle_filter(particles, objectIDs, dists, angles, colour, num_particles):
 
     if not isinstance(objectIDs, type(None)):
 
-        objectIDs, dists, angles = get_unique_landmarks(objectIDs, dists, angles, landmarkIDs)
+        objectIDs, dists, angles = get_unique_landmarks(
+            objectIDs, dists, angles, landmarkIDs
+        )
 
         for i in range(len(objectIDs)):
-            print("Object ID = ", objectIDs[i],", Distance = ", dists[i],", angle = ", angles[i])
+            print(
+                "Object ID = ",
+                objectIDs[i],
+                ", Distance = ",
+                dists[i],
+                ", angle = ",
+                angles[i],
+            )
 
         new_particles = []
         for j in range(num_particles):
@@ -289,6 +303,7 @@ def particle_filter(particles, objectIDs, dists, angles, colour, num_particles):
             new_p = copy.copy(p)
 
             # Combine measurements from all visible landmarks
+            prior = p.getWeight()
             total_prob = 1.0
             for i in range(len(objectIDs)):
                 landmark_id = int(objectIDs[i])
@@ -298,7 +313,7 @@ def particle_filter(particles, objectIDs, dists, angles, colour, num_particles):
                     dists[i], angles[i], new_p, landmarks[landmark_id]
                 )
 
-            new_p.setWeight(total_prob)
+            new_p.setWeight(prior * total_prob)
             new_particles.append(new_p)
 
         total_weight = sum(p.getWeight() for p in new_particles)
@@ -311,8 +326,6 @@ def particle_filter(particles, objectIDs, dists, angles, colour, num_particles):
 
         particles = systematic_resample(new_particles)
 
-
-        
         # 5% Injection
         num_random = int(0.05 * num_particles)
         particles.sort(key=lambda p: p.getWeight())
@@ -355,7 +368,6 @@ def init_robot_localization(particles):
         )
 
 
-
 try:
     if showGUI:
         # Open windows
@@ -368,7 +380,7 @@ try:
         cv2.moveWindow(WIN_World, 500, 50)
 
     # Initialize particles
-    num_particles = 2000
+    num_particles = 1000
     particles = initialize_particles(num_particles)
 
     # initialise landmarks:
@@ -474,7 +486,7 @@ try:
             arlo.rotate_robot(math.degrees(fi))
             sleep(0.5)
             arlo.drive_forward_meter(drive_cm / 100.0)
-            
+
             apply_sample_motion_model(particles, angle_change, drive_cm, 0.0)
 
         # Get new camera image
@@ -483,9 +495,6 @@ try:
         particles, objectIDs, dists, angles = particle_filter(
             particles, objectIDs, dists, angles, colour, num_particles
         )
-
-        # Estimate robot pose
-        est_pose = particle.estimate_pose(particles)
 
         # Visualization
         if showGUI:
