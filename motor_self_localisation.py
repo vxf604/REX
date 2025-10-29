@@ -350,6 +350,10 @@ try:
     seeing = False
     seen2Landmarks = False
     while True:
+        cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
+        execute_cmd(arlo, cmd)
+        apply_motion_from_cmd(particles, cmd)
+
         # Fetch next frame
         colour = cam.get_next_frame()
         print("state: ", state)
@@ -422,10 +426,7 @@ try:
 
         seen2Landmarks = len(landmarks_seen) >= 2
 
-        cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
-        execute_cmd(arlo, cmd)
-        apply_motion_from_cmd(particles, cmd)
-        if cmd and cmd[0] == "forward":
+        if state == "forward":
             landmarks_seen.clear()
 
         if showGUI:
