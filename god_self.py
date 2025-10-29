@@ -272,7 +272,7 @@ try:
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
     target = (60.0, 0.0)
-    landmarks_seen = 0
+    landmarks_seen = []
     while True:
 
         # Move the robot according to user input (only for testing)
