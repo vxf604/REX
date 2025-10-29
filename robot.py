@@ -225,10 +225,6 @@ class Robot(object):
         leftSpeed = 68
         rightSpeed = 64
 
-        if abs(angle) < 1.0:  # too small to bother
-            print(f"Skipping tiny rotation ({angle:.3f}°)")
-            return
-
         if angle > 0:
             self.go_diff(leftSpeed, rightSpeed, 1, 0)
         else:
