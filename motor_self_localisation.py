@@ -22,17 +22,6 @@ def isRunningOnArlo():
     return onRobot
 
 
-# try:
-#     import robot
-
-#     onRobot = True
-#     showGUI = False
-# except ImportError:
-#     print("selflocalize.py: robot module not present - forcing not running on Arlo!")
-#     onRobot = False
-#     showGUI = True
-
-
 # Some color constants in BGR format
 CRED = (0, 0, 255)
 CGREEN = (0, 255, 0)
