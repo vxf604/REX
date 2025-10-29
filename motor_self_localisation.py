@@ -284,20 +284,27 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
 
     fi = angle_to_target(est_pose, target)
     d = distance_to_target(est_pose, target)
+    align_ok = 1.5
 
     if state == "rotating":
         # step = max(8.0, min(abs(fi), 35.0))
         # turn = step if fi >= 0 else -step
-        next_state = "forward" if abs(fi) < 10.0 else "rotating"
+        next_state = "forward" if abs(fi) < 1.5 else "rotating"
         return ("rotate", fi), next_state
 
     if state == "forward":
+
+        if abs(fi) >= align_ok:
+            return ("rotate", fi), "rotating"
+
+        # Keep your original “not seeing” behavior exactly:
         if not seeing and d < 40.0:
             return ("forward", d), "searching"
         elif not seeing:
             return ("rotate", 20.0), "searching"
 
-        return ("forward", min(d, 30.0)), "forward"
+        # When seeing, step forward in chunks so we can re-check heading often
+        return ("forward", min(d, 40.0)), "forward"
 
 
 # Main program #
