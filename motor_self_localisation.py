@@ -414,7 +414,7 @@ try:
 
             # Draw detected objects
             cam.draw_aruco_objects(colour)
-            seeing = len(objectIDs) > 1
+            seeing = len(objectIDs) >= 1
 
         else:
             # No observation - reset weights to uniform distribution
