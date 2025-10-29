@@ -302,7 +302,7 @@ try:
             dy = target_y - robot_y
             distance = math.sqrt(dx**2 + dy**2)
 
-            if distance < 10:
+            if distance < 5:
                 arlo.stop()
                 print("Reached target")
                 break
