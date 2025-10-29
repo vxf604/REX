@@ -278,8 +278,9 @@ def execute_cmd(arlo, cmd):
 
 def motor_control(state, est_pose, target, seeing, seen2Landmarks):
     if state == "searching":
-        state = "rotating" if seen2Landmarks else "searching"
-        return ("rotate", 20.0), state
+        if seen2Landmarks:
+            return (None, 0), "rotating"
+        return ("rotate", 20.0), "searching"
 
     fi = angle_to_target(est_pose, target)
     d = distance_to_target(est_pose, target)
