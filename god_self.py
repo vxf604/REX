@@ -284,7 +284,7 @@ try:
         # XXX: Make the robot drive
         # XXX: You do this
         print("landmarks seen: ", landmarks_seen)
-        if landmarks_seen < 2:
+        if len(landmarks_seen) < 2:
             arlo.rotate_robot(15)
             apply_sample_motion_model(particles, math.radians(15), 0)
         else:
