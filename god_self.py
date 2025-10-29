@@ -274,40 +274,33 @@ try:
     target = (60.0, 0.0)
     landmarks_seen = []
     targetReached = True
-    while True:
+    rotation_done = False
+    state = "SEARCH"
+    state = "ROTATE_TO_TARGET"
+    state = "DRIVE_TO_TARGET"
+    state = "DONE"
+    
+    state = "START_SEARCH"
+    
+    
+    def state_seach (arlo, particles, landmark_seen):
+            print("landmarks seen: ", landmarks_seen)
+            if len(landmarks_seen) < 2:
+                arlo.rotate_robot(20)
+                time.sleep(0.2)
+                apply_sample_motion_model(particles, math.radians(20), 0)
+                return "SEARCH", particles
+            else:
+                return "ROTATE_TO_TARGET", particles
 
-        # Move the robot according to user input (only for testing)
-        action = cv2.waitKey(10)
-        if action == ord("q"):  # Quit
-            break
-
-        # Use motor controls to update particles
-        # XXX: Make the robot drive
-        # XXX: You do this
-        print("landmarks seen: ", landmarks_seen)
-        if len(landmarks_seen) < 2:
-            arlo.rotate_robot(20)
-            time.sleep(0.2)
-            apply_sample_motion_model(particles, math.radians(20), 0)
-        else:
-            landmarks_seen = []
-            target_x, target_y = target[0], target[1]
+    def state_rotate (arlo, particles, target):
             robot_x, robot_y, robot_theta = (
                 est_pose.getX(),
                 est_pose.getY(),
                 est_pose.getTheta(),
             )
-
-            dx = target_x - robot_x
-            dy = target_y - robot_y
-            distance = math.sqrt(dx**2 + dy**2)
-
-            if distance < 5:
-                arlo.stop()
-                print("Reached target")
-                break
-
-            drive = distance
+            dx = target[0] - robot_x
+            dy = target[1] - robot_y
             t = np.array([dx, dy])
             t = t / np.linalg.norm(t)
             v = np.array([math.cos(robot_theta), math.sin(robot_theta)])
@@ -318,11 +311,39 @@ try:
             print("angle to rotate towards target", fi)
             arlo.rotate_robot(math.degrees(fi))
             apply_sample_motion_model(particles, fi, 0)
-            time.sleep(1)
-            print("driving distance (mm): ", drive)
-            arlo.drive_forward_meter(drive / 100.0)
-            apply_sample_motion_model(particles, 0, drive)
-            print("distance to target: ", distance)
+            
+            return "DRIVE_TO_TARGET", particles
+
+    def drive_to_target (arlo, particles, distance):
+        if distance < 5:
+            arlo.stop()
+            return "DONE", particles
+        arlo.drive_forward_meter(distance/100.0)
+        apply_sample_motion_model(particles, 0, distance)
+        return "SEARCH", particles
+    
+    
+    state = "START_SEARCH"
+    while True:
+
+        # Move the robot according to user input (only for testing)
+        action = cv2.waitKey(10)
+        if action == ord("q"):  # Quit
+            break
+        
+        # Use motor controls to update particles
+        # XXX: Make the robot drive
+        # XXX: You do this
+        if state == "START_SEARCH":
+            state, particles = state_seach(arlo, particles, landmarks_seen)
+        elif state == "ROTATE_TO_TARGET":
+            state, particles = state_rotate(arlo, particles, est_pose, target)
+        elif state == "DRIVE_TO_TARGET":
+            state, particles = drive_to_target(arlo, particles, est_pose, target)
+        elif state == "DONE":
+            print("Reached target - stopping")
+            arlo.stop()
+            break
 
         # Fetch next frame
         colour = cam.get_next_frame()
@@ -410,7 +431,6 @@ try:
             cv2.imwrite(
                 os.path.join(folder, f"Current_world_{int(time.time())}.png"), world
             )
-
 
 finally:
     # Make sure to clean up even if an exception occurred
