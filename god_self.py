@@ -273,6 +273,7 @@ try:
 
     target = (60.0, 0.0)
     landmarks_seen = []
+    targetReached = False
     while True:
 
         # Move the robot according to user input (only for testing)
@@ -286,7 +287,7 @@ try:
         print("landmarks seen: ", landmarks_seen)
         if len(landmarks_seen) < 2:
             arlo.rotate_robot(20)
-            time.sleep(1)
+            time.sleep(0.2)
             apply_sample_motion_model(particles, math.radians(20), 0)
         else:
             target_x, target_y = target[0], target[1]
@@ -299,7 +300,10 @@ try:
             dx = target_x - robot_x
             dy = target_y - robot_y
             distance = math.sqrt(dx**2 + dy**2)
-            print("driving distance: ", distance)
+            if distance > 30:
+                distance /= 2
+                targetReached = True
+            print("driving distance (mm): ", distance)
             t = np.array([dx, dy])
             t = t / np.linalg.norm(t)
             v = np.array([math.cos(robot_theta), math.sin(robot_theta)])
@@ -313,6 +317,9 @@ try:
             time.sleep(1)
             arlo.drive_forward_meter(distance / 100.0)
             apply_sample_motion_model(particles, 0, distance)
+            if targetReached:
+                arlo.stop()
+                break
 
         # Fetch next frame
         colour = cam.get_next_frame()
