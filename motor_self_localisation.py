@@ -184,7 +184,7 @@ def sign(x):
 
 def measurement_model(distance, angle, particle, landmark):
     sigma_d = 15
-    sigma_a = 0.1
+    sigma_a = 0.15
 
     x, y = particle.getX(), particle.getY()
     theta = particle.getTheta()
