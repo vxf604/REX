@@ -296,7 +296,9 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
         return ("rotate", fi), next_state
 
     if state == "forward":
+
         if not seen2Landmarks:
+            print("distance, when not having seen 2 landmarks:", d)
             if d < 30.0:
                 print("Driving the rest of the distance:", d)
                 return ("rotate", fi), "finish_driving"
