@@ -13,7 +13,7 @@ import sys
 
 class Landmark:
     def __init__(self, x, y, color, ID):
-        self.borderWidth = 20
+        self.borderWidth = 30
         self.x = x
         self.y = y
         self.ID = ID
