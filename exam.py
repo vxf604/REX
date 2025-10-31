@@ -313,6 +313,7 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
             print("Driving the rest of the distance:", d)
             return ("rotate", fi), "finish_driving"
         return ("forward", min(d, 40.0)), "forward"
+          
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
