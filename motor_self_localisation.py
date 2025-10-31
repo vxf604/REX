@@ -9,12 +9,15 @@ import numpy as np
 import time
 from timeit import default_timer as timer
 import sys
-import robot
 
 # Flags
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
-arlo = robot.Robot()
+
+if onRobot:
+    import robot
+
+    arlo = robot.Robot()
 
 
 def isRunningOnArlo():
@@ -39,7 +42,7 @@ CBLACK = (0, 0, 0)
 landmarkIDs = [3, 1]
 landmarks = {
     3: (0.0, 0.0),  # Coordinates for landmark 1
-    1: (120.0, 0.0),  # Coordinates for landmark 2
+    1: (150.0, 0.0),  # Coordinates for landmark 2
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -275,9 +278,8 @@ def execute_cmd(arlo, cmd):
         arlo.drive_forward_meter(val / 100.0)
         print(f" Driving forward {val} cm")
         time.sleep(0.5)
-    elif movement== "stop":
+    elif movement == "stop":
         arlo.stop()
-        
 
 
 def motor_control(state, est_pose, target, seeing, seen2Landmarks):
@@ -285,9 +287,18 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
         if seen2Landmarks:
             return (None, 0), "rotating"
         return ("rotate", 20.0), "searching"
-
+    print(
+        f"est_pose: x: {est_pose.getX()}, y: {est_pose.getY()}, theta: {math.degrees(est_pose.getTheta())}"
+    )
     fi = angle_to_target(est_pose, target)
     d = distance_to_target(est_pose, target)
+
+    bearing = math.degrees(
+        math.atan2(target[1] - est_pose.getY(), target[0] - est_pose.getX())
+    )
+    heading = math.degrees(est_pose.getTheta())
+    fi = angle_to_target(est_pose, target)  # your function
+    print(f"bearing={bearing:.1f}°, heading={heading:.1f}°, fi={fi:.1f}°")
     align_ok = 4
 
     if state == "rotating":
@@ -297,41 +308,44 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
         return ("rotate", fi), next_state
 
     if state == "forward":
-        if not seeing:
-            if d < 20.0:
+
+        if not seen2Landmarks:
+            print("distance, when not having seen 2 landmarks:", d)
+            if d < 30.0:
                 print("Driving the rest of the distance:", d)
-                return ("forward", d), "reached_target"
+                return ("rotate", fi), "finish_driving"
             else:
                 return ("rotate", 20.0), "searching"
 
         return ("forward", min(d, 40.0)), "forward"
-    
-    
+
+    if state == "finish_driving":
+        return ("forward", d), "reached_target"
+
     if state == "reached_target":
         return ("stop", None), "reached_target"
-        
-        
 
 
 # Main program #
 try:
     if showGUI:
         # Open windows
-        # WIN_RF1 = "Robot view"
+        if not onRobot:
+            WIN_RF1 = "Robot view"
+            cv2.namedWindow(WIN_RF1, cv2.WINDOW_NORMAL)
+
         WIN_World = "World view"
 
-        # cv2.namedWindow(WIN_RF1, cv2.WINDOW_NORMAL)
+        #
         cv2.namedWindow(WIN_World, cv2.WINDOW_NORMAL)
 
-        # cv2.resizeWindow(WIN_RF1, 640, 480)
         cv2.resizeWindow(WIN_World, 520, 520)
 
-        # cv2.moveWindow(WIN_RF1, 50, 50)
         cv2.moveWindow(WIN_World, 720, 50)
     if isRunningOnArlo():
         arlo = robot.Robot()
     # Initialize particles
-    num_particles = 2000
+    num_particles = 3000
     particles = initialize_particles(num_particles)
     state = "searching"
     est_pose = particle_class.estimate_pose(
@@ -356,7 +370,7 @@ try:
         # cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=True)
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
-    target = (60.0, 0.0)
+    target = (75.0, 0.0)
     landmarks_seen = set()
     targetReached = True
     seeing = False
@@ -434,26 +448,29 @@ try:
         est_pose = particle_class.estimate_pose(particles)
 
         seen2Landmarks = len(landmarks_seen) >= 2
-
-        cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
-        execute_cmd(arlo, cmd)
-        apply_motion_from_cmd(particles, cmd)
-        if state == "forward":
-            landmarks_seen.clear()
-            seen2Landmarks = False
+        if onRobot:
+            cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
+            execute_cmd(arlo, cmd)
+            apply_motion_from_cmd(particles, cmd)
+            if state == "forward":
+                landmarks_seen.clear()
+                seen2Landmarks = False
+        else:
+            apply_sample_motion_model(particles, 0, 0)
 
         if showGUI:
             # Tegn verden hver gang før visning
             draw_world(est_pose, particles, world)
 
             # Vis
-            # cv2.imshow(WIN_RF1, colour)
+            if not onRobot:
+                cv2.imshow(WIN_RF1, colour)
             cv2.imshow(WIN_World, world)
 
-            # VIGTIGT: pump events, ellers opdaterer vinduerne ikke i VNC
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
+            if onRobot:
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord("q"):
+                    break
         else:
             draw_world(est_pose, particles, world)
             folder = "images"
