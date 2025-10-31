@@ -373,6 +373,7 @@ try:
 
     # Draw map
     draw_world(est_pose, particles, world)
+    cv2.imshow(WIN_World, world)
 
     print("Opening and initializing camera")
     if isRunningOnArlo():
