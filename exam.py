@@ -10,6 +10,15 @@ import time
 from timeit import default_timer as timer
 import sys
 
+
+class Landmark:
+    def __init__(self, x, y, color, ID):
+        self.x = x
+        self.y = y
+        self.ID = ID
+        self.color = color
+
+
 # Flags
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
@@ -39,14 +48,17 @@ CBLACK = (0, 0, 0)
 
 # Landmarks.
 # The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
-landmarkIDs = [1,6,8,3]
-landmarks = {
-    1: (0.0, 0.0),  # Coordinates for landmark 1
-    6: (300.0, 0.0),  # Coordinates for landmark 2
-    8: (0, 400.0), # Coordinates for landmark 3
-    3: (300.0, 400.0) # Coordinates for landmark 4
-}
-landmark_colors = [CRED, CGREEN, CYELLOW, CBLUE]  # Colors used when drawing the landmarks
+L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=1)
+L2 = Landmark(x=300.0, y=0.0, color=CGREEN, ID=6)
+L3 = Landmark(x=0.0, y=400.0, color=CYELLOW, ID=8)
+L4 = Landmark(x=300.0, y=400.0, color=CBLUE, ID=3)
+
+landmarks = [L1, L2, L3, L4]
+
+landmarkIDs = [l.ID for l in landmarks]
+landmark_colors = [l.color for l in landmarks]
+
+targets = [L2, L3, L4, L1]
 
 
 def jet(x):
@@ -315,12 +327,12 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
             print("Driving the rest of the distance:", d)
             return ("rotate", fi), "finish_driving"
         return ("forward", min(d, 40.0)), "forward"
-          
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
 
     if state == "reached_target":
+        targets.pop()
         return ("stop", None), "reached_target"
 
 
@@ -368,13 +380,12 @@ try:
         # cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=True)
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
-    target = (75.0, 0.0)
     landmarks_seen = set()
     targetReached = True
     seeing = False
     seen2Landmarks = False
     while True:
-
+        target = targets[0]
         # Fetch next frame
         colour = cam.get_next_frame()
         print("state: ", state)
