@@ -9,12 +9,15 @@ import numpy as np
 import time
 from timeit import default_timer as timer
 import sys
-import robot
 
 # Flags
 showGUI = True  # Whether or not to open GUI windows
-onRobot = True  # Whether or not we are running on the Arlo robot
-arlo = robot.Robot()
+onRobot = False  # Whether or not we are running on the Arlo robot
+
+if onRobot:
+    import robot
+
+    arlo = robot.Robot()
 
 
 def isRunningOnArlo():
@@ -332,7 +335,7 @@ try:
     if isRunningOnArlo():
         arlo = robot.Robot()
     # Initialize particles
-    num_particles = 2000
+    num_particles = 3000
     particles = initialize_particles(num_particles)
     state = "searching"
     est_pose = particle_class.estimate_pose(
@@ -435,13 +438,15 @@ try:
         est_pose = particle_class.estimate_pose(particles)
 
         seen2Landmarks = len(landmarks_seen) >= 2
-
-        cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
-        execute_cmd(arlo, cmd)
-        apply_motion_from_cmd(particles, cmd)
-        if state == "forward":
-            landmarks_seen.clear()
-            seen2Landmarks = False
+        if onRobot:
+            cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
+            execute_cmd(arlo, cmd)
+            apply_motion_from_cmd(particles, cmd)
+            if state == "forward":
+                landmarks_seen.clear()
+                seen2Landmarks = False
+        else:
+            apply_sample_motion_model(particles, 0, 0)
 
         if showGUI:
             # Tegn verden hver gang før visning
@@ -451,7 +456,6 @@ try:
             # cv2.imshow(WIN_RF1, colour)
             cv2.imshow(WIN_World, world)
 
-            # VIGTIGT: pump events, ellers opdaterer vinduerne ikke i VNC
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q"):
                 break
