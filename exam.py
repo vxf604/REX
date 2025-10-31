@@ -50,8 +50,8 @@ CBLACK = (0, 0, 0)
 # The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
 L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=1)
 L2 = Landmark(x=0.0, y=300.0, color=CGREEN, ID=2)
-L3 = Landmark(x=400.0, y=0.0, color=CYELLOW, ID=3)
-L4 = Landmark(x=400.0, y=300.0, color=CBLUE, ID=4)
+L3 = Landmark(x=400.0, y=400.0, color=CYELLOW, ID=3)
+L4 = Landmark(x=300.0, y=400.0, color=CBLUE, ID=4)
 
 landmarks = [L1, L2, L3, L4]
 
@@ -322,6 +322,9 @@ def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
         return ("rotate", fi), next_state
 
     if state == "forward":
+        if 
+        
+        return ("forward", )
 
         if not seen2Landmarks:
             print("Driving the rest of the distance:", d)
