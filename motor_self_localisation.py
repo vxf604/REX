@@ -158,7 +158,7 @@ def translation1(p, transl1, std):
 
 def sample_motion_model(p, rot1, trans):
     if abs(rot1) > 0:
-        rotation(p, rot1, 0.1)
+        rotation(p, rot1, 0.10)
         p.setX(p.getX() + transerror(1))
         p.setY(p.getY() + transerror(1))
     elif trans > 0:
@@ -448,11 +448,11 @@ try:
             cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
-            if state == "forward":
-                landmarks_seen.clear()
-                seen2Landmarks = False
         else:
             apply_sample_motion_model(particles, 0, 0)
+
+        if state == "forward":
+            landmarks_seen.clear()
 
         if showGUI:
             # Tegn verden hver gang før visning
