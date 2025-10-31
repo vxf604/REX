@@ -275,9 +275,8 @@ def execute_cmd(arlo, cmd):
         arlo.drive_forward_meter(val / 100.0)
         print(f" Driving forward {val} mm")
         time.sleep(0.5)
-    elif movement== "stop":
+    elif movement == "stop":
         arlo.stop()
-        
 
 
 def motor_control(state, est_pose, target, seeing, seen2Landmarks):
@@ -297,20 +296,20 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
         return ("rotate", fi), next_state
 
     if state == "forward":
-        if not seeing:
-            if d < 20.0:
+        if not seen2Landmarks:
+            if d < 30.0:
                 print("Driving the rest of the distance:", d)
-                return ("forward", d), "reached_target"
+                return ("rotate", fi), "finish_driving"
             else:
                 return ("rotate", 20.0), "searching"
 
         return ("forward", min(d, 40.0)), "forward"
-    
-    
+
+    if state == "finish_driving":
+        return ("forward", d), "reached_target"
+
     if state == "reached_target":
         return ("stop", None), "reached_target"
-        
-        
 
 
 # Main program #
