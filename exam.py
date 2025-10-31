@@ -296,7 +296,8 @@ def execute_cmd(arlo, cmd):
         arlo.stop()
 
 
-def motor_control(state, est_pose, target, seeing, seen2Landmarks):
+def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
+    target = targets[0]
     if state == "searching":
         if seen2Landmarks:
             return (None, 0), "rotating"
@@ -385,7 +386,6 @@ try:
     seeing = False
     seen2Landmarks = False
     while True:
-        target = targets[0]
         # Fetch next frame
         colour = cam.get_next_frame()
         print("state: ", state)
@@ -458,7 +458,7 @@ try:
 
         seen2Landmarks = len(landmarks_seen) >= 2
         if onRobot:
-            cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
+            cmd, state = motor_control(state, est_pose, targets, seeing, seen2Landmarks)
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
         else:
