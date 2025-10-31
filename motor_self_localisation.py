@@ -12,7 +12,7 @@ import sys
 
 # Flags
 showGUI = True  # Whether or not to open GUI windows
-onRobot = True  # Whether or not we are running on the Arlo robot
+onRobot = False  # Whether or not we are running on the Arlo robot
 
 if onRobot:
     import robot
@@ -287,7 +287,9 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
         if seen2Landmarks:
             return (None, 0), "rotating"
         return ("rotate", 20.0), "searching"
-
+    print(
+        f"est_pose: x: {est_pose.getX()}, y: {est_pose.getY()}, theta: {est_pose.getTheta()}"
+    )
     fi = angle_to_target(est_pose, target)
     d = distance_to_target(est_pose, target)
     align_ok = 4
@@ -321,16 +323,17 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
 try:
     if showGUI:
         # Open windows
-        # WIN_RF1 = "Robot view"
+        if not onRobot:
+            WIN_RF1 = "Robot view"
+            cv2.namedWindow(WIN_RF1, cv2.WINDOW_NORMAL)
+
         WIN_World = "World view"
 
-        # cv2.namedWindow(WIN_RF1, cv2.WINDOW_NORMAL)
+        #
         cv2.namedWindow(WIN_World, cv2.WINDOW_NORMAL)
 
-        # cv2.resizeWindow(WIN_RF1, 640, 480)
         cv2.resizeWindow(WIN_World, 520, 520)
 
-        # cv2.moveWindow(WIN_RF1, 50, 50)
         cv2.moveWindow(WIN_World, 720, 50)
     if isRunningOnArlo():
         arlo = robot.Robot()
@@ -453,12 +456,14 @@ try:
             draw_world(est_pose, particles, world)
 
             # Vis
-            # cv2.imshow(WIN_RF1, colour)
+            if not onRobot:
+                cv2.imshow(WIN_RF1, colour)
             cv2.imshow(WIN_World, world)
 
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
+            if onRobot:
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord("q"):
+                    break
         else:
             draw_world(est_pose, particles, world)
             folder = "images"
