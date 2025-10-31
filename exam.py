@@ -461,7 +461,7 @@ try:
 
         est_pose = particle_class.estimate_pose(particles)
 
-        seen2Landmarks = len(landmarks_seen) >= 4
+        seen2Landmarks = len(landmarks_seen) >= 2
         if onRobot:
             cmd, state = motor_control(state, est_pose, targets, seeing, seen2Landmarks)
             execute_cmd(arlo, cmd)
