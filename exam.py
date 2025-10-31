@@ -55,8 +55,7 @@ L4 = Landmark(x=300.0, y=400.0, color=CBLUE, ID=3)
 
 landmarks = [L1, L2, L3, L4]
 
-landmarkIDs = [l.ID for l in landmarks]
-landmark_colors = [l.color for l in landmarks]
+landmarkIDs = {l.ID: l for l in landmarks}
 
 targets = [L2, L3, L4, L1]
 
@@ -89,7 +88,7 @@ def draw_world(est_pose, particles, world):
 
     # Fix the origin of the coordinate system
     offsetX = 100
-    offsetY = 250
+    offsetY = 50
 
     # Constant needed for transforming from world coordinates to screen coordinates (flip the y-axis)
     ymax = world.shape[0]
@@ -205,7 +204,7 @@ def measurement_model(distance, angle, particle, landmark):
 
     x, y = particle.getX(), particle.getY()
     theta = particle.getTheta()
-    lx, ly = landmark
+    lx, ly = landmark.x, landmark.y
 
     d_i = np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
 
@@ -297,7 +296,7 @@ def execute_cmd(arlo, cmd):
 
 
 def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
-    target = targets[0]
+    target = (targets[0].x, targets[0].y)
     if state == "searching":
         if seen2Landmarks:
             return (None, 0), "rotating"
@@ -333,7 +332,9 @@ def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
         return ("forward", d), "reached_target"
 
     if state == "reached_target":
-        targets.pop()
+        if len(targets) > 0:
+            targets.pop(0)
+            return ("rotate", 20), "searching"
         return ("stop", None), "reached_target"
 
 
@@ -368,10 +369,11 @@ try:
         arlo = robot.Robot()
 
     # Allocate space for world map
-    world = np.zeros((500, 500, 3), dtype=np.uint8)
+    world = np.zeros((700, 700, 3), dtype=np.uint8)
 
     # Draw map
     draw_world(est_pose, particles, world)
+    cv2.imshow(WIN_World, world)
 
     print("Opening and initializing camera")
     if isRunningOnArlo():
@@ -417,7 +419,7 @@ try:
                 likelyhood = 1.0
                 for i in range(len(objectIDs)):
                     likelyhood *= measurement_model(
-                        dists[i], angles[i], particle, landmarks[objectIDs[i]]
+                        dists[i], angles[i], particle, landmarkIDs[objectIDs[i]]
                     )
 
                 particle.setWeight(likelyhood)
