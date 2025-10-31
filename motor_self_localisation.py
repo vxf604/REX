@@ -158,7 +158,7 @@ def translation1(p, transl1, std):
 
 def sample_motion_model(p, rot1, trans):
     if abs(rot1) > 0:
-        rotation(p, rot1, 0.15)
+        rotation(p, rot1, 0.1)
         p.setX(p.getX() + transerror(1))
         p.setY(p.getY() + transerror(1))
     elif trans > 0:
@@ -310,14 +310,10 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
     if state == "forward":
 
         if not seen2Landmarks:
-            print("distance, when not having seen 2 landmarks:", d)
-            if d < 30.0:
-                print("Driving the rest of the distance:", d)
-                return ("rotate", fi), "finish_driving"
-            else:
-                return ("rotate", 20.0), "searching"
-
+            print("Driving the rest of the distance:", d)
+            return ("rotate", fi), "finish_driving"
         return ("forward", min(d, 40.0)), "forward"
+          
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
