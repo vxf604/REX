@@ -48,10 +48,10 @@ CBLACK = (0, 0, 0)
 
 # Landmarks.
 # The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
-L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=1)
-L2 = Landmark(x=300.0, y=0.0, color=CGREEN, ID=6)
-L3 = Landmark(x=0.0, y=400.0, color=CYELLOW, ID=8)
-L4 = Landmark(x=300.0, y=400.0, color=CBLUE, ID=3)
+L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=3)
+L2 = Landmark(x=300.0, y=0.0, color=CGREEN, ID=8)
+L3 = Landmark(x=0.0, y=400.0, color=CYELLOW, ID=6)
+L4 = Landmark(x=300.0, y=400.0, color=CBLUE, ID=1)
 
 landmarks = [L1, L2, L3, L4]
 
