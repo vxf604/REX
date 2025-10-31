@@ -12,8 +12,9 @@ import sys
 
 
 class Landmark:
-    def __init__(self, x, y, color, ID):
-        self.borderWidth = 30
+    def __init__(self, x, y, color, ID, borderWidth_x, borderWidth_y):
+        self.borderWidth_x = borderWidth_x
+        self.borderWidth_y = borderWidth_y
         self.x = x
         self.y = y
         self.ID = ID
@@ -49,10 +50,10 @@ CBLACK = (0, 0, 0)
 
 # Landmarks.
 # The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
-L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=1)
-L2 = Landmark(x=0.0, y=300.0, color=CGREEN, ID=2)
-L3 = Landmark(x=400.0, y=0.0, color=CYELLOW, ID=3)
-L4 = Landmark(x=400.0, y=300.0, color=CBLUE, ID=4)
+L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=1, borderWidth_x = 30, borderWidth_y=30)
+L2 = Landmark(x=0.0, y=300.0, color=CGREEN, ID=2, borderWidth_x= 30, borderWidth_y= -30)
+L3 = Landmark(x=400.0, y=0.0, color=CYELLOW, ID=3, borderWidth_x= -30, borderWidth_y= 30)
+L4 = Landmark(x=400.0, y=300.0, color=CBLUE, ID=4, borderWidth_x= -30, borderWidth_y= -30)
 
 landmarks = [L1, L2, L3, L4]
 
@@ -298,7 +299,7 @@ def execute_cmd(arlo, cmd):
 
 def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
     target = targets[0]
-    target_pos = (target.x + target.borderWidth, target.y + target.borderWidth)
+    target_pos = (target.x + target.borderWidth_x, target.y + target.borderWidth_y)
     if state == "searching":
         if seen2Landmarks:
             return (None, 0), "rotating"
