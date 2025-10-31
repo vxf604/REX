@@ -55,8 +55,7 @@ L4 = Landmark(x=300.0, y=400.0, color=CBLUE, ID=3)
 
 landmarks = [L1, L2, L3, L4]
 
-landmarkIDs = [l.ID for l in landmarks]
-landmark_colors = [l.color for l in landmarks]
+landmarkIDs = {l.ID: l for l in landmarks}
 
 targets = [L2, L3, L4, L1]
 
@@ -205,7 +204,7 @@ def measurement_model(distance, angle, particle, landmark):
 
     x, y = particle.getX(), particle.getY()
     theta = particle.getTheta()
-    lx, ly = landmark
+    lx, ly = landmark.x, landmark.y
 
     d_i = np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
 
@@ -297,7 +296,7 @@ def execute_cmd(arlo, cmd):
 
 
 def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
-    target = targets[0]
+    target = (targets[0].x, targets[0].y)
     if state == "searching":
         if seen2Landmarks:
             return (None, 0), "rotating"
@@ -333,7 +332,9 @@ def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
         return ("forward", d), "reached_target"
 
     if state == "reached_target":
-        targets.pop()
+        if len(targets) > 0:
+            targets.pop(0)
+            return ("rotate", 20), "searching"
         return ("stop", None), "reached_target"
 
 
@@ -417,7 +418,7 @@ try:
                 likelyhood = 1.0
                 for i in range(len(objectIDs)):
                     likelyhood *= measurement_model(
-                        dists[i], angles[i], particle, landmarks[objectIDs[i]]
+                        dists[i], angles[i], particle, landmarkIDs[objectIDs[i]]
                     )
 
                 particle.setWeight(likelyhood)
