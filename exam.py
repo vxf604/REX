@@ -327,7 +327,7 @@ def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
         if d < 40:
             return ("rotate", fi), "finish_driving"
 
-        if abs(fi) < align_ok:
+        if abs(fi) > align_ok:
             return ("rotate", fi), "forward"
         return ("forward", min(d, 40.0)), "forward"
 
