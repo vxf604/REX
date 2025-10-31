@@ -115,10 +115,10 @@ def draw_world(est_pose, particles, world):
         cv2.line(world, (x, y), b, colour, 2)
 
     # Draw landmarks
-    for i in range(len(landmarkIDs)):
-        ID = landmarkIDs[i]
-        lm = (int(landmarks[ID].x + offsetX), int(ymax - (landmarks[ID].y + offsetY)))
-        cv2.circle(world, lm, 5, landmark_colors[i], 2)
+    for landmark in landmarks:
+        ID = landmark.ID
+        lm = (int(landmark.x + offsetX), int(ymax - (landmark.y + offsetY)))
+        cv2.circle(world, lm, 5, landmark.color, 2)
 
     # Draw estimated robot pose
     a = (int(est_pose.getX()) + offsetX, ymax - (int(est_pose.getY()) + offsetY))
