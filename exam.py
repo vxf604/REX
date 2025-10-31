@@ -117,7 +117,7 @@ def draw_world(est_pose, particles, world):
     # Draw landmarks
     for i in range(len(landmarkIDs)):
         ID = landmarkIDs[i]
-        lm = (int(landmarks[ID][0] + offsetX), int(ymax - (landmarks[ID][1] + offsetY)))
+        lm = (int(landmarks[ID].x + offsetX), int(ymax - (landmarks[ID].y + offsetY)))
         cv2.circle(world, lm, 5, landmark_colors[i], 2)
 
     # Draw estimated robot pose
@@ -296,7 +296,8 @@ def execute_cmd(arlo, cmd):
         arlo.stop()
 
 
-def motor_control(state, est_pose, target, seeing, seen2Landmarks):
+def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
+    target = targets[0]
     if state == "searching":
         if seen2Landmarks:
             return (None, 0), "rotating"
@@ -375,7 +376,7 @@ try:
     print("Opening and initializing camera")
     if isRunningOnArlo():
         # cam = camera.Camera(0, robottype='arlo', useCaptureThread=True)
-        cam = camera.Camera(1, robottype="arlo", useCaptureThread=False)
+        cam = camera.Camera(0, robottype="arlo", useCaptureThread=False)
     else:
         # cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=True)
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
@@ -385,7 +386,6 @@ try:
     seeing = False
     seen2Landmarks = False
     while True:
-        target = targets[0]
         # Fetch next frame
         colour = cam.get_next_frame()
         print("state: ", state)
@@ -458,7 +458,7 @@ try:
 
         seen2Landmarks = len(landmarks_seen) >= 2
         if onRobot:
-            cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
+            cmd, state = motor_control(state, est_pose, targets, seeing, seen2Landmarks)
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
         else:
