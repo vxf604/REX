@@ -36,10 +36,10 @@ CBLACK = (0, 0, 0)
 
 # Landmarks.
 # The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
-landmarkIDs = [6, 2]
+landmarkIDs = [3, 1]
 landmarks = {
-    6: (0.0, 0.0),  # Coordinates for landmark 1
-    2: (120.0, 0.0),  # Coordinates for landmark 2
+    3: (0.0, 0.0),  # Coordinates for landmark 1
+    1: (150.0, 0.0),  # Coordinates for landmark 2
 }
 landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
 
@@ -349,7 +349,7 @@ try:
         # cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=True)
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
-    target = (60.0, 0.0)
+    target = (75.0, 0.0)
     landmarks_seen = set()
     targetReached = True
     seeing = False
