@@ -273,7 +273,7 @@ def execute_cmd(arlo, cmd):
         time.sleep(0.5)
     elif movement == "forward":
         arlo.drive_forward_meter(val / 100.0)
-        print(f" Driving forward {val} mm")
+        print(f" Driving forward {val} cm")
         time.sleep(0.5)
     elif movement== "stop":
         arlo.stop()
