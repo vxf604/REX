@@ -13,6 +13,7 @@ import sys
 
 class Landmark:
     def __init__(self, x, y, color, ID):
+        self.borderWidth = 20
         self.x = x
         self.y = y
         self.ID = ID
@@ -296,7 +297,8 @@ def execute_cmd(arlo, cmd):
 
 
 def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
-    target = (targets[0].x, targets[0].y)
+    target = targets[0]
+    target_pos = (target.x + target.borderWidth, target.y + target.borderWidth)
     if state == "searching":
         if seen2Landmarks:
             return (None, 0), "rotating"
@@ -304,14 +306,14 @@ def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
     print(
         f"est_pose: x: {est_pose.getX()}, y: {est_pose.getY()}, theta: {math.degrees(est_pose.getTheta())}"
     )
-    fi = angle_to_target(est_pose, target)
-    d = distance_to_target(est_pose, target)
+    fi = angle_to_target(est_pose, target_pos)
+    d = distance_to_target(est_pose, target_pos)
 
     bearing = math.degrees(
-        math.atan2(target[1] - est_pose.getY(), target[0] - est_pose.getX())
+        math.atan2(target_pos[1] - est_pose.getY(), target_pos[0] - est_pose.getX())
     )
     heading = math.degrees(est_pose.getTheta())
-    fi = angle_to_target(est_pose, target)  # your function
+    fi = angle_to_target(est_pose, target_pos)  # your function
     print(f"bearing={bearing:.1f}°, heading={heading:.1f}°, fi={fi:.1f}°")
     align_ok = 4
 
