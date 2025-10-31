@@ -447,9 +447,6 @@ try:
 
         est_pose = particle_class.estimate_pose(particles)
 
-        if state == "forward":
-            landmarks_seen.clear()
-
         seen2Landmarks = len(landmarks_seen) >= 2
         if onRobot:
             cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
@@ -457,6 +454,9 @@ try:
             apply_motion_from_cmd(particles, cmd)
         else:
             apply_sample_motion_model(particles, 0, 0)
+
+        if state == "forward":
+            landmarks_seen.clear()
 
         if showGUI:
             # Tegn verden hver gang før visning
