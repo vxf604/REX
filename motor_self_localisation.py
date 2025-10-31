@@ -288,10 +288,17 @@ def motor_control(state, est_pose, target, seeing, seen2Landmarks):
             return (None, 0), "rotating"
         return ("rotate", 20.0), "searching"
     print(
-        f"est_pose: x: {est_pose.getX()}, y: {est_pose.getY()}, theta: {est_pose.getTheta()}"
+        f"est_pose: x: {est_pose.getX()}, y: {est_pose.getY()}, theta: {math.degrees(est_pose.getTheta())}"
     )
     fi = angle_to_target(est_pose, target)
     d = distance_to_target(est_pose, target)
+
+    bearing = math.degrees(
+        math.atan2(target[1] - est_pose.getY(), target[0] - est_pose.getX())
+    )
+    heading = math.degrees(est_pose.getTheta())
+    fi = angle_to_target(est_pose, target)  # your function
+    print(f"bearing={bearing:.1f}°, heading={heading:.1f}°, fi={fi:.1f}°")
     align_ok = 4
 
     if state == "rotating":
