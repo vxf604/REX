@@ -225,10 +225,10 @@ class Robot(object):
         leftSpeed = 68
         rightSpeed = 64
 
-        if angle < 0:
-            self.go_diff(leftSpeed, rightSpeed, 0, 1)
-        else:
+        if angle > 0:
             self.go_diff(leftSpeed, rightSpeed, 1, 0)
+        else:
+            self.go_diff(leftSpeed, rightSpeed, 0, 1)
 
         turn_time = (0.712 / 90) * abs(angle)
 

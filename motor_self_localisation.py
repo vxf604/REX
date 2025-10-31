@@ -272,7 +272,7 @@ def execute_cmd(arlo, cmd):
         return
     movement, val = cmd
     if movement == "rotate":
-        arlo.rotate_robot(val)
+        arlo.rotate_robot(val * -1)
         time.sleep(0.5)
     elif movement == "forward":
         arlo.drive_forward_meter(val / 100.0)
