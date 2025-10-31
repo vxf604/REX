@@ -39,12 +39,14 @@ CBLACK = (0, 0, 0)
 
 # Landmarks.
 # The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
-landmarkIDs = [3, 1]
+landmarkIDs = [3, 8, 6, 1]
 landmarks = {
-    3: (0.0, 0.0),  # Coordinates for landmark 1
-    1: (150.0, 0.0),  # Coordinates for landmark 2
+    1: (0.0, 0.0),  # Coordinates for landmark 1
+    6: (300.0, 0.0),  # Coordinates for landmark 2
+    3: (0, 400.0),
+    8: (300.0, 400.0)
 }
-landmark_colors = [CRED, CGREEN]  # Colors used when drawing the landmarks
+landmark_colors = [CRED, CGREEN, CYELLOW, CBLUE]  # Colors used when drawing the landmarks
 
 
 def jet(x):
