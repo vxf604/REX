@@ -322,13 +322,11 @@ def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
         return ("rotate", fi), next_state
 
     if state == "forward":
-        if 
-        
-        return ("forward", )
-
-        if not seen2Landmarks:
-            print("Driving the rest of the distance:", d)
+        if d < 40:
             return ("rotate", fi), "finish_driving"
+
+        if abs(fi) < align_ok:
+            return ("rotate", fi), "forward"
         return ("forward", min(d, 40.0)), "forward"
 
     if state == "finish_driving":
