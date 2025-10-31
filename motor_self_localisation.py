@@ -447,6 +447,9 @@ try:
 
         est_pose = particle_class.estimate_pose(particles)
 
+        if state == "forward":
+            landmarks_seen.clear()
+
         seen2Landmarks = len(landmarks_seen) >= 2
         if onRobot:
             cmd, state = motor_control(state, est_pose, target, seeing, seen2Landmarks)
