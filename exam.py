@@ -9,6 +9,8 @@ import numpy as np
 import time
 from timeit import default_timer as timer
 import sys
+import path_planning as pp
+import print_path
 
 
 class Landmark:
@@ -24,6 +26,7 @@ class Landmark:
 # Flags
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
+printer = print_path.PathPrinter()
 
 if onRobot:
     import robot
@@ -285,7 +288,7 @@ def distance_to_target(est_pose, target):
 def execute_cmd(arlo, cmd):
     if not cmd:
         return
-    movement, val = cmd
+    movement, val, path = cmd
     if movement == "rotate":
         arlo.rotate_robot(val * -1)
         time.sleep(0.5)
@@ -297,12 +300,12 @@ def execute_cmd(arlo, cmd):
         arlo.stop()
 
 
-def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
+def motor_control(state, est_pose, targets, seen2Landmarks, arlo):
     target = targets[0]
     target_pos = (target.x + target.borderWidth_x, target.y + target.borderWidth_y)
     if state == "searching":
         if seen2Landmarks:
-            return (None, 0), "rotating"
+            return (None, 0), "follow_path"
         return ("rotate", 20.0), "searching"
     print(
         f"est_pose: x: {est_pose.getX()}, y: {est_pose.getY()}, theta: {math.degrees(est_pose.getTheta())}"
@@ -331,6 +334,29 @@ def motor_control(state, est_pose, targets, seeing, seen2Landmarks):
         if abs(fi) > align_ok:
             return ("rotate", fi), "forward"
         return ("forward", min(d, 40.0)), "forward"
+
+    if state == "calculate_path":
+
+        return (None, None), "follow_path"
+
+    if state == "follow_path":
+        path, G = pp.pathbuildRRT(landmarks, target)
+        print("Path:", path)
+
+        for i in range(1, len(path)):
+            printer.show_path_image(landmarks, est_pose, target, G, path)
+            target = path[i]
+
+            fi = angle_to_target(est_pose, target)
+            cmd = ("rotate", fi)
+            execute_cmd(arlo, cmd)
+            apply_motion_from_cmd(particles, cmd)
+
+            d = distance_to_target(est_pose, target)
+            cmd = ("forward", d)
+            execute_cmd(arlo, cmd)
+
+        return (None, None), "reached_target"
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
