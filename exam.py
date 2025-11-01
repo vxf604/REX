@@ -30,8 +30,6 @@ printer = print_path.PathPrinter(landmark_radius=200)  # mm
 if onRobot:
     import robot
 
-    arlo = robot.Robot()
-
 
 def isRunningOnArlo():
     """Return True if we are running on Arlo, otherwise False.
