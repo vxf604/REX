@@ -372,7 +372,7 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=300):
     start = (est_pose.getX(), est_pose.getY())
     G = [start]
     parent = {0: None}
-
+    goal_pos = (goal.x, goal.y)
     goal_index = None
     i = 0
 
@@ -388,7 +388,7 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=300):
         G.append(q_new)
         parent[len(G) - 1] = G.index(q_near)
 
-        if distance(q_new, goal) < delta_q:
+        if distance(q_new, goal_pos) < delta_q:
             goal_index = len(G) - 1
 
     path = []
