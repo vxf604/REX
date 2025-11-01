@@ -357,7 +357,7 @@ def NEAREST_VERTEX(v, G):
     return minV
 
 
-def Steer(q_near, q_rand, delta_q=300):
+def Steer(q_near, q_rand, delta_q=40):
     dx, dy = q_rand[0] - q_near[0], q_rand[1] - q_near[1]
     d = distance(q_near, q_rand)
 
