@@ -414,6 +414,43 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=40):
     return path, G
 
 
+
+def avoidance (arlo, est_pose, obstacles_list):
+    if not obstacles_list:
+        return False
+    
+    robot_x, robot_y = est_pose.getX(), est_pose.getY()
+    
+    for close_obstacle in obstacles_list:
+        distance = math.sqrt((close_obstacle.y - robot_y)**2  + (close_obstacle.x - robot_x)**2)
+    
+        if distance < 40:
+            left = arlo.read_left_ping_sensor()
+            right = arlo.read_right_ping_sensor()
+            front = arlo.read_front_ping_sensor()
+            
+            if left < 400 or right < 400 or front < 400: ## mm
+                if right > left:
+                    return "right"
+                else:
+                    return "left"
+    
+    return None
+        
+        
+             
+        
+    
+    
+    
+    
+    
+    
+            
+
+
+
+
 def motor_control(
     state, est_pose, targets, seen2Landmarks, seen4Landmarks, obstacle_list, arlo
 ):
@@ -489,6 +526,11 @@ def motor_control(
 
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
+        
+        direction = avoidance(arlo, est_pose, obstacles_list)
+        
+        if direction:
+            return (direction, 0), "avoidance"
 
         printer.show_path_image(landmarks, obstacles_list, est_pose, target, G, path)
 
@@ -511,6 +553,19 @@ def motor_control(
         return ("forward", step), "follow_path"
 
         return (None, None), "reached_target"
+    
+    
+    
+    
+    if state == "avoidance":
+        if "right" in cmd[0]:
+            return ("rotate", 40), "follow_path"
+        elif "left" in cmd[0]:
+            return ("rotate", -40), "follow_path"
+    
+    
+    
+    
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
