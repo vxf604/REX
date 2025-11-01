@@ -25,7 +25,8 @@ class Landmark:
 # Flags
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
-printer = print_path.PathPrinter(landmark_radius=200)  # cm
+printer = print_path.PathPrinter(landmark_radius=20)  # mm
+
 
 if onRobot:
     import robot
@@ -404,12 +405,24 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=40):
 
 
 def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo):
+
+    if not hasattr(motor_control, "_search_rot"):
+        motor_control._search_rot = 0.0
+
     target = targets[0]
     target_pos = (target.x + target.borderWidth_x, target.y + target.borderWidth_y)
     if state == "searching":
         if seen2Landmarks:
             return (None, 0), "follow_path"
         return ("rotate", 20.0), "searching"
+
+    if state == "fullSearch":
+        motor_control._search_rot += motor_control._search_step
+        if motor_control._search_rot >= 360.0:
+            motor_control._search_rot = 0.0
+            return (None, 0), "follow_path"
+        else:
+            return ("rotate", 20.0), "fullSearch"
     print(
         f"est_pose: x: {est_pose.getX()}, y: {est_pose.getY()}, theta: {math.degrees(est_pose.getTheta())}"
     )
@@ -448,7 +461,9 @@ def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo)
         print("Path:", path)
 
         for i in range(1, len(path)):
-            printer.show_path_image(landmarks, est_pose, target, G, path)
+            printer.show_path_image(
+                landmarks, obstacles_list, est_pose, target, G, path
+            )
             waypoint = path[i]
 
             fi = angle_to_target(est_pose, waypoint)
@@ -496,7 +511,7 @@ try:
     # Initialize particles
     num_particles = 3000
     particles = initialize_particles(num_particles)
-    state = "searching"
+    state = "fullSearch"
     est_pose = particle_class.estimate_pose(
         particles
     )  # The estimate of the robots current pose
