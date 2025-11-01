@@ -248,7 +248,7 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
 
 
 def calcutePos(est_pose, dist_cm, angle_rad):
-    phi = est_pose.getTheta() + angle_rad
+    phi = est_pose.getTheta()
     wx = est_pose.getX() + dist_cm * math.cos(phi)
     wy = est_pose.getY() + dist_cm * math.sin(phi)
     return wx, wy
