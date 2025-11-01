@@ -8,6 +8,7 @@ class PathPrinter:
         plt.ion()
 
     def _draw(self, landmarks, start, goal, G, path, ax):
+        start = (start.getX(), start.getY())
         ax.clear()
 
         if len(G) > 0:
