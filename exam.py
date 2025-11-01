@@ -412,22 +412,23 @@ def buildRRT(est_pose, obstacle_list, goal, delta_q=40):
     return path, G
 
 
-
-def avoidance (arlo, est_pose, obstacles_list):
+def avoidance(arlo, est_pose, obstacles_list):
     if not obstacles_list:
         return False
-    
+
     robot_x, robot_y = est_pose.getX(), est_pose.getY()
-    
+
     for close_obstacle in obstacles_list:
-        distance = math.sqrt((close_obstacle.y - robot_y)**2  + (close_obstacle.x - robot_x)**2)
-    
+        distance = math.sqrt(
+            (close_obstacle.y - robot_y) ** 2 + (close_obstacle.x - robot_x) ** 2
+        )
+
         if distance < 40:
             left = arlo.read_left_ping_sensor()
             right = arlo.read_right_ping_sensor()
             front = arlo.read_front_ping_sensor()
-            
-            if left < 400 or right < 400 or front < 400: ## mm
+
+            if left < 400 or right < 400 or front < 400:  ## mm
                 if right > left:
                     direction = "right"
                 else:
@@ -436,19 +437,6 @@ def avoidance (arlo, est_pose, obstacles_list):
                 print(f"[Avoidance triggered] L={left} F={front} R={right} -> {direction}")
             
     return None
-        
-        
-             
-        
-    
-    
-    
-    
-    
-    
-            
-
-
 
 
 def motor_control(
@@ -525,9 +513,9 @@ def motor_control(
 
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
-        
+
         direction = avoidance(arlo, est_pose, obstacle_list)
-        
+
         if direction:
             return (direction, 0), "avoidance"
 
@@ -552,10 +540,7 @@ def motor_control(
         return ("forward", step), "follow_path"
 
         return (None, None), "reached_target"
-    
-    
-    
-    
+
     if state == "avoidance":
         if "right" in cmd[0]:
             return ("rotate", 60), "avoidance_forward"
@@ -566,8 +551,6 @@ def motor_control(
     
     if state == "avoidance_forward":
         return ("forward", 30), "follow_path"
-    
-
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
@@ -638,9 +621,10 @@ try:
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-            obstacle_list = get_unique_obstacles(
-                obstacle_list, objectIDs, dists, angles, landmarkIDs
-            )
+            if seen2Landmarks:
+                obstacle_list = get_unique_obstacles(
+                    obstacle_list, objectIDs, dists, angles, landmarkIDs
+                )
             for obstacle in obstacle_list:
 
                 print(f"Obstacle {obstacle.ID}: x: {obstacle.x}, y: {obstacle.y}, ")
