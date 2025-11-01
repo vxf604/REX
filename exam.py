@@ -25,7 +25,8 @@ class Landmark:
 # Flags
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
-printer = print_path.PathPrinter(landmark_radius=200)  # mm
+printer = print_path.PathPrinter(landmark_radius=20)  # mm
+
 
 if onRobot:
     import robot
@@ -448,7 +449,7 @@ def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo)
         print("Path:", path)
 
         for i in range(1, len(path)):
-            printer.show_path_image(landmarks, est_pose, target, G, path)
+            printer.show_path_image(landmarks, obstacles_list, est_pose, target, G, path)
             waypoint = path[i]
 
             fi = angle_to_target(est_pose, waypoint)

@@ -7,7 +7,7 @@ class PathPrinter:
         self.fig, self.ax = plt.subplots(figsize=(8, 8))
         plt.ion()
 
-    def _draw(self, landmarks, start, goal, G, path, ax):
+    def _draw(self, landmarks, obstacles, start, goal, G, path, ax):
         start = (start.getX(), start.getY())
         if hasattr(goal, "x"):
             goal = (goal.x, goal.y)
@@ -35,6 +35,23 @@ class PathPrinter:
             )
             ax.add_patch(circle)
             ax.text(lx_mm, ly_mm, f"ID{lid}", color="red")
+            
+        for obstacle in obstacles:
+            oid = obstacle.ID
+            oy = obstacle.y
+            ox = obstacle.x
+            ox_mm = ox
+            oy_mm = oy
+            circle = plt.Circle(
+                (ox_mm, oy_mm),
+                self.landmark_radius,
+                color="black",
+                fill=False,
+                linestyle="--",
+            )
+            ax.add_patch(circle)
+            ax.text(lx_mm, ly_mm, f"ID{oid}", color="black")
+            
 
         ax.scatter(
             start[0],
@@ -71,8 +88,8 @@ class PathPrinter:
         plt.close(fig)
         print(f"Path image saved as {filename}")
 
-    def show_path_image(self, landmarks, start, goal, G, path):
-        self._draw(landmarks, start, goal, G, path, self.ax)
+    def show_path_image(self, landmarks, obstacle,start, goal, G, path):
+        self._draw(landmarks, obstacle, start, goal, G, path, self.ax)
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         plt.pause(0.001)
