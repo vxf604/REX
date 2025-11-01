@@ -247,15 +247,8 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
     return detectedLandmarks, detectedDists, detectedAngles
 
 
-ANGLE_BIAS = 0.0  # radians (e.g. +math.pi/2 if camera is 90° left)
-ANGLE_SIGN = +1  # set to -1 if left/right looks mirrored
-
-
 def calcutePos(est_pose, dist_cm, angle_rad):
-    # world bearing = robot heading + camera bearing (+ optional bias)
-    phi = est_pose.getTheta() + ANGLE_SIGN * angle_rad + ANGLE_BIAS
-
-    # project to world (standard: +x right, +y up; cm)
+    phi = est_pose.getTheta() + angle_rad
     wx = est_pose.getX() + dist_cm * math.cos(phi)
     wy = est_pose.getY() + dist_cm * math.sin(phi)
     return wx, wy
