@@ -247,7 +247,7 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
 
 
 def calcutePos(est_pose, dist, angle):
-    x0, y0 = est_pose.GetX(), est_pose.GetY()
+    x0, y0 = est_pose.getX(), est_pose.getY()
 
     x = x0 + dist * math.cos(angle)
     y = y0 + dist * math.sin(angle)
@@ -269,7 +269,7 @@ def get_unique_obstacles(obstacles_list, objectIDs, dists, angles, landmarkIDs):
             x, y = calcutePos(est_pose, dist, angle)
             obstacle = Landmark(x, y, CBLACK, id, 10, 10)
             obstacles_list.append(obstacle)
-            obstacles_list.append(id)
+            obstaclesListIDs.append(id)
     return obstacles_list
 
 
@@ -449,14 +449,14 @@ def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo)
 
         for i in range(1, len(path)):
             printer.show_path_image(landmarks, est_pose, target, G, path)
-            target = path[i]
+            waypoint = path[i]
 
-            fi = angle_to_target(est_pose, target)
+            fi = angle_to_target(est_pose, waypoint)
             cmd = ("rotate", fi)
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
 
-            d = distance_to_target(est_pose, target)
+            d = distance_to_target(est_pose, waypoint)
             cmd = ("forward", d)
             execute_cmd(arlo, cmd)
 

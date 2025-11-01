@@ -9,7 +9,11 @@ class PathPrinter:
 
     def _draw(self, landmarks, start, goal, G, path, ax):
         start = (start.getX(), start.getY())
-        goal = (goal.x, goal.y)
+        if hasattr(goal, "x"):
+            goal = (goal.x, goal.y)
+        else:
+            gx, gy = goal
+            goal = (gx, gy)
         ax.clear()
 
         if len(G) > 0:
