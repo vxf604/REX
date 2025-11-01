@@ -417,7 +417,7 @@ def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo)
         return ("rotate", 20.0), "searching"
 
     if state == "fullSearch":
-        motor_control._search_rot += motor_control._search_step
+        motor_control._search_rot += 20.0
         if motor_control._search_rot >= 360.0:
             motor_control._search_rot = 0.0
             return (None, 0), "follow_path"
