@@ -314,7 +314,7 @@ def distance_to_target(est_pose, target):
 def execute_cmd(arlo, cmd):
     if not cmd:
         return
-    movement, val, path = cmd
+    movement, val = cmd
     if movement == "rotate":
         arlo.rotate_robot(val * -1)
         time.sleep(0.5)
