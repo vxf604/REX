@@ -247,18 +247,28 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
     return detectedLandmarks, detectedDists, detectedAngles
 
 
-def calcutePos(est_pose, dist, angle):
-    x0, y0 = est_pose.getX(), est_pose.getY()
+FORWARD_IS_Y = True  # True if angle=0 is "straight ahead" along +Y in robot frame
+ANGLE_IN_DEGREES = False  # True if your camera reports degrees, else radians
+ANGLE_SIGN = +1  # flip to -1 if left/right is mirrored
+
+
+def calcutePos(est_pose, dist_cm, angle):
+    # 1) normalize angle
+    a = (math.radians(angle) if ANGLE_IN_DEGREES else angle) * ANGLE_SIGN
+
+    # 2) camera ray in the ROBOT frame
+    if FORWARD_IS_Y:
+        rx = dist_cm * math.sin(a)  # x component
+        ry = dist_cm * math.cos(a)  # y component
+    else:
+        rx = dist_cm * math.cos(a)
+        ry = dist_cm * math.sin(a)
+
+    # 3) rotate robot->world by theta (use your accurate heading)
     theta = est_pose.getTheta()  # radians
-
-    # If angle=0 is along +Y (forward), use SIN for x, COS for y:
-    rx = dist * math.sin(angle)
-    ry = dist * math.cos(angle)
-
-    # rotate from robot to world by theta
     c, s = math.cos(theta), math.sin(theta)
-    wx = x0 + c * rx - s * ry
-    wy = y0 + s * rx + c * ry
+    wx = est_pose.getX() + c * rx - s * ry
+    wy = est_pose.getY() + s * rx + c * ry
     return wx, wy
 
 
