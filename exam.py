@@ -267,6 +267,9 @@ def get_unique_obstacles(obstacles_list, objectIDs, dists, angles, landmarkIDs):
             id = objectIDs[closest_id]
             angle = angles[closest_id]
             dist = dists[closest_id]
+            print(
+                f"obstacle id: {id}, dist: {dist}, est pose: {est_pose.getX()}, {est_pose.getY()}"
+            )
             x, y = calcutePos(est_pose, dist, angle)
             obstacle = Landmark(x, y, CBLACK, id, 10, 10)
             obstacles_list.append(obstacle)
@@ -570,6 +573,9 @@ try:
             obstacles_list = get_unique_obstacles(
                 obstacles_list, objectIDs, dists, angles, landmarkIDs
             )
+            for obstacle in obstacles_list:
+
+                print(f"Obstacle: x: {obstacle.x}, y: {obstacle.y}, ID: {obstacle.ID}")
             objectIDs, dists, angles = get_unique_landmarks(
                 objectIDs, dists, angles, landmarkIDs
             )
