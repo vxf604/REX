@@ -23,6 +23,7 @@ class Landmark:
         self.color = color
 
 
+
 # Flags
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
@@ -64,6 +65,7 @@ landmarkIDs = {l.ID: l for l in landmarks}
 
 targets = [L2, L3, L4, L1]
 
+obstacles_list = []
 
 def jet(x):
     """Colour map for drawing particles. This function determines the colour of
@@ -247,6 +249,40 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
     return detectedLandmarks, detectedDists, detectedAngles
 
 
+def calcutePos(est_pose, dist, angle):
+    x0, y0 = est_pose.GetX(), est_pose.GetY()
+    
+    x = x0 + dist * math.cos(angle)
+    y = y0 + dist * math.sin(angle)
+    
+    return x, y
+    
+    
+    
+    
+
+def get_unique_obstacles(obstacles_list, objectIDs, dists, angles landmarkIDs):
+    uniqueIDs = set(objectIDs)
+    obstaclesListIDs = [o.ID for o in obstacles_list]
+    
+    for uid in uniqueIDs:
+        indices = [i for i, id in enumerate(objectIDs) if id == uid]
+        closest_id = min(indices, key=lambda i: dists[i])
+        if uid not in landmarkIDs and uid not in obstaclesListIDs :
+            id = (objectIDs[closest_id])
+            angle = (angles[closest_id])
+            dist = (dists[closest_id])
+            x, y = calcutePos(est_pose, dist, angle)
+            obstacle = Landmark(x, y, CBLACK, id, 10, 10)
+            obstacles_list.append(obstacle)
+            obstacles_list.append(id)
+    return obstacles_list
+
+
+
+
+
+
 def angle_to_target(est_pose, target):
     target_x, target_y = target[0], target[1]
     robot_x, robot_y, robot_theta = (
@@ -298,6 +334,96 @@ def execute_cmd(arlo, cmd):
         time.sleep(0.5)
     elif movement == "stop":
         arlo.stop()
+
+
+
+
+def distance(p1, p2):
+    return float(np.linalg.norm(np.array(p1) - np.array(p2)))
+
+def in_collision(point, obstacles, robot_radius=150):
+    obstacle_radius = 180
+    x, y = point
+    for obstacle in obstacles:
+        id, map_x, map_y = obstacle
+        obstacle_pos = (map_x, map_y)
+        d = distance(point, obstacle_pos)
+        if d <= (obstacle_radius + robot_radius):
+            return True
+    return False
+
+
+def randConf():
+    return (random.uniform(-1000, 1000), random.uniform(0, 2000))
+
+
+def NEAREST_VERTEX(v, G):
+    min = distance(G[0], v)
+    minV = G[0]
+    for i in range(len(G)):
+        d = distance(v, G[i])
+        if d < min or i == 0:
+            min = d
+            minV = G[i]
+    return minV
+
+
+def Steer(q_near, q_rand, delta_q=300):
+    dx, dy = q_rand[0] - q_near[0], q_rand[1] - q_near[1]
+    d = distance(q_near, q_rand)
+
+    if d < delta_q:
+        return q_rand
+    else:
+        return (q_near[0] + delta_q * dx / d, q_near[1] + delta_q * dy / d)
+
+
+def buildRRT(obstacles, goal, delta_q=300):
+    start = (0, 0)
+    G = [start]
+    parent = {0: None}
+
+    goal_index = None
+    i = 0
+
+    while goal_index is None:
+        i += 1
+        q_rand = randConf()
+        q_near = NEAREST_VERTEX(q_rand, G)
+        q_new = Steer(q_near, q_rand, delta_q)
+
+        if in_collision(q_new, obstacles):
+            continue
+
+        G.append(q_new)
+        parent[len(G) - 1] = G.index(q_near)
+
+        if distance(q_new, goal) < delta_q:
+            goal_index = len(G) - 1
+
+    path = []
+    node = goal_index
+    while node is not None:
+        path.append(G[node])
+        node = parent[node]
+    path.reverse()
+
+    path.append(goal)
+
+    return path, G
+
+
+current_heading = 0
+
+
+
+
+
+
+
+
+
+
 
 
 def motor_control(state, est_pose, targets, seen2Landmarks, arlo):
