@@ -15,7 +15,7 @@ class PathPrinter:
             ax.scatter(Gx, Gy, c="lightgray", s=10, label="RRT nodes")
 
         for landmark in landmarks:
-            lid = landmark.id
+            lid = landmark.ID
             ly = landmark.y
             lx = landmark.x
             lx_mm = lx
