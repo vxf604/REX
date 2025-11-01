@@ -595,7 +595,9 @@ try:
 
         seen2Landmarks = len(landmarks_seen) >= 2
         if onRobot:
-            cmd, state = motor_control(state, est_pose, targets, seeing, seen2Landmarks)
+            cmd, state = motor_control(
+                state, est_pose, targets, seeing, seen2Landmarks, arlo
+            )
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
         else:
