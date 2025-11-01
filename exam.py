@@ -247,28 +247,17 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
     return detectedLandmarks, detectedDists, detectedAngles
 
 
-FORWARD_IS_Y = True  # True if angle=0 is "straight ahead" along +Y in robot frame
-ANGLE_IN_DEGREES = False  # True if your camera reports degrees, else radians
-ANGLE_SIGN = +1  # flip to -1 if left/right is mirrored
+ANGLE_BIAS = 0.0  # radians (e.g. +math.pi/2 if camera is 90° left)
+ANGLE_SIGN = +1  # set to -1 if left/right looks mirrored
 
 
-def calcutePos(est_pose, dist_cm, angle):
-    # 1) normalize angle
-    a = (math.radians(angle) if ANGLE_IN_DEGREES else angle) * ANGLE_SIGN
+def calcutePos(est_pose, dist_cm, angle_rad):
+    # world bearing = robot heading + camera bearing (+ optional bias)
+    phi = est_pose.getTheta() + ANGLE_SIGN * angle_rad + ANGLE_BIAS
 
-    # 2) camera ray in the ROBOT frame
-    if FORWARD_IS_Y:
-        rx = dist_cm * math.sin(a)  # x component
-        ry = dist_cm * math.cos(a)  # y component
-    else:
-        rx = dist_cm * math.cos(a)
-        ry = dist_cm * math.sin(a)
-
-    # 3) rotate robot->world by theta (use your accurate heading)
-    theta = est_pose.getTheta()  # radians
-    c, s = math.cos(theta), math.sin(theta)
-    wx = est_pose.getX() + c * rx - s * ry
-    wy = est_pose.getY() + s * rx + c * ry
+    # project to world (standard: +x right, +y up; cm)
+    wx = est_pose.getX() + dist_cm * math.cos(phi)
+    wy = est_pose.getY() + dist_cm * math.sin(phi)
     return wx, wy
 
 
@@ -490,8 +479,7 @@ def motor_control(
                 est_pose, obstacle_list, target
             )
             motor_control.next_index = 1
-
-        print("Path:", motor_control.path)
+            print("Path:", motor_control.path)
 
         path = motor_control.path
         G = motor_control.G
