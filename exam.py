@@ -429,8 +429,10 @@ def avoidance (arlo, est_pose, obstacles_list):
             
             if left < 400 or right < 400 or front < 400: ## mm
                 if right > left:
+                    print("got right")
                     return "right"
                 else:
+                    print("got left")
                     return "left"
     
     return None
@@ -564,8 +566,7 @@ def motor_control(
     if state == "avoidance_forward":
         return ("forward", 30), "follow_path"
     
-    
-    
+
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 class PathPrinter:
     def __init__(self, landmark_radius):
         self.landmark_radius = landmark_radius
-        self.fig, self.ax = plt.subplots(figsize=(8, 8))
+        self.fig, self.ax = plt.subplots(figsize=(6, 6))
         plt.ion()
 
     def _draw(self, landmarks, obstacles, start, goal, G, path, ax):
