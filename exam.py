@@ -587,10 +587,13 @@ def motor_control(
     
     if state == "avoidance":
         if "right" in cmd[0]:
-            return ("rotate", 40), "follow_path"
+            return ("rotate", 60), "avoidance_forward"
         elif "left" in cmd[0]:
-            return ("rotate", -40), "follow_path"
+            return ("rotate", -60), "avoidance_forward"
     
+    
+    if state == "avoidance_forward":
+        return ("forward", 30), "follow_path"
     
     
     
