@@ -336,7 +336,7 @@ def in_collision(point, obstacles, robot_radius=150):
     for obstacle in obstacles:
         map_x, map_y = obstacle.x, obstacle.y
         obstacle_pos = (map_x, map_y)
-        d = distance(point, obstacle_pos)
+        d = distance((x, y), obstacle_pos)
         if d <= (obstacle_radius + robot_radius):
             return True
     return False
