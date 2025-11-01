@@ -404,7 +404,9 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=40):
     return path, G
 
 
-def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo):
+def motor_control(
+    state, est_pose, targets, seen2Landmarks, seen4Landmarks, obstacle_list, arlo
+):
 
     if not hasattr(motor_control, "_search_rot"):
         motor_control._search_rot = 0.0
@@ -418,7 +420,7 @@ def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo)
 
     if state == "fullSearch":
         motor_control._search_rot += 20.0
-        if motor_control._search_rot >= 360.0:
+        if seen4Landmarks or motor_control._search_rot >= 360.0:
             motor_control._search_rot = 0.0
             return (None, 0), "follow_path"
         else:
@@ -613,9 +615,16 @@ try:
         est_pose = particle_class.estimate_pose(particles)
 
         seen2Landmarks = len(landmarks_seen) >= 2
+        seen4Landmarks = len(landmarks_seen) >= 4
         if onRobot:
             cmd, state = motor_control(
-                state, est_pose, targets, seen2Landmarks, obstacles_list, arlo
+                state,
+                est_pose,
+                targets,
+                seen2Landmarks,
+                seen4Landmarks,
+                obstacles_list,
+                arlo,
             )
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)

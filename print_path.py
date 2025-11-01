@@ -35,7 +35,7 @@ class PathPrinter:
             )
             ax.add_patch(circle)
             ax.text(lx_mm, ly_mm, f"ID{lid}", color="red")
-            
+
         for obstacle in obstacles:
             oid = obstacle.ID
             oy = obstacle.y
@@ -50,8 +50,7 @@ class PathPrinter:
                 linestyle="--",
             )
             ax.add_patch(circle)
-            ax.text(lx_mm, ly_mm, f"ID{oid}", color="black")
-            
+            ax.text(ox_mm, oy_mm, f"ID{oid}", color="black")
 
         ax.scatter(
             start[0],
@@ -74,8 +73,8 @@ class PathPrinter:
             px, py = zip(*[(px, py) for px, py in path])
             ax.plot(px, py, c="black", linewidth=2, label="Path")
 
-        ax.set_xlabel("X [mm]")
-        ax.set_ylabel("Y [mm]")
+        ax.set_xlabel("X [cm]")
+        ax.set_ylabel("Y [cm]")
         ax.set_title("RRT Path Planning")
         ax.legend()
         ax.axis("equal")
@@ -88,7 +87,7 @@ class PathPrinter:
         plt.close(fig)
         print(f"Path image saved as {filename}")
 
-    def show_path_image(self, landmarks, obstacle,start, goal, G, path):
+    def show_path_image(self, landmarks, obstacle, start, goal, G, path):
         self._draw(landmarks, obstacle, start, goal, G, path, self.ax)
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
