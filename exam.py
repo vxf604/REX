@@ -411,6 +411,11 @@ def motor_control(
     if not hasattr(motor_control, "_search_rot"):
         motor_control._search_rot = 0.0
 
+    if not hasattr(motor_control, "path"):
+        motor_control.path = None
+        motor_control.G = None
+        motor_control.next_index = 1
+
     target = targets[0]
     target_pos = (target.x + target.borderWidth_x, target.y + target.borderWidth_y)
     if state == "searching":
@@ -458,28 +463,42 @@ def motor_control(
         return (None, None), "follow_path"
 
     if state == "follow_path":
-
-        path, G = buildRRT(est_pose, obstacles_list, target)
-        print("Path:", path)
-
-        for i in range(1, len(path)):
-            printer.show_path_image(
-                landmarks, obstacles_list, est_pose, target, G, path
+        need_plan = motor_control.path is None or motor_control.next_index >= (
+            len(motor_control.path) if motor_control.path else 0
+        )
+        if need_plan:
+            motor_control.path, motor_control.G = buildRRT(
+                est_pose, obstacle_list, target
             )
-            waypoint = path[i]
+            motor_control.next_index = 1
 
-            fi = angle_to_target(est_pose, waypoint)
-            execute_cmd(arlo, ("rotate", fi))
-            apply_motion_from_cmd(particles, ("rotate", fi))
-            est_pose = particle_class.estimate_pose(particles)
+        print("Path:", motor_control.path)
 
-            while True:
-                d = distance_to_target(est_pose, waypoint)
-                if d < 5:
-                    break
-                execute_cmd(arlo, ("forward", d))
-                apply_motion_from_cmd(particles, ("forward", d))
-                est_pose = particle_class.estimate_pose(particles)
+        path = motor_control.path
+        G = motor_control.G
+
+        if not path or len(path) < 2:
+            return ("rotate", 20.0), "follow_path"
+
+        printer.show_path_image(landmarks, obstacles_list, est_pose, target, G, path)
+
+        waypoint = path[motor_control.next_index]
+
+        fi = angle_to_target(est_pose, waypoint)
+        d = distance_to_target(est_pose, waypoint)
+
+        if d < 5.0:
+            motor_control.next_index += 1
+
+            if motor_control.next_index >= len(path):
+                return (None, 0), "reached_target"
+            return (None, 0), "follow_path"
+
+        if abs(fi) > 4.0:
+            return ("rotate", fi), "follow_path"
+
+        step = min(40.0, d)  # cm
+        return ("forward", step), "follow_path"
 
         return (None, None), "reached_target"
 

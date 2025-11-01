@@ -87,8 +87,8 @@ class PathPrinter:
         plt.close(fig)
         print(f"Path image saved as {filename}")
 
-    def show_path_image(self, landmarks, obstacle, start, goal, G, path):
-        self._draw(landmarks, obstacle, start, goal, G, path, self.ax)
+    def show_path_image(self, landmarks, obstacles, start, goal, G, path):
+        self._draw(landmarks, obstacles, start, goal, G, path, self.ax)
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         plt.pause(0.001)
