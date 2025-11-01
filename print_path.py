@@ -9,6 +9,7 @@ class PathPrinter:
 
     def _draw(self, landmarks, start, goal, G, path, ax):
         start = (start.getX(), start.getY())
+        goal = (goal.x, goal.y)
         ax.clear()
 
         if len(G) > 0:
