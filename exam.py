@@ -330,8 +330,8 @@ def distance(p1, p2):
     return float(np.linalg.norm(np.array(p1) - np.array(p2)))
 
 
-def in_collision(point, obstacles, robot_radius=150):
-    obstacle_radius = 180
+def in_collision(point, obstacles, robot_radius=15):
+    obstacle_radius = 18
     x, y = point
     for obstacle in obstacles:
         map_x, map_y = obstacle.x, obstacle.y
@@ -343,7 +343,7 @@ def in_collision(point, obstacles, robot_radius=150):
 
 
 def randConf():
-    return (random.uniform(0, 4000), random.uniform(0, 3000))
+    return (random.uniform(0, 400), random.uniform(0, 300))
 
 
 def NEAREST_VERTEX(v, G):
@@ -367,7 +367,7 @@ def Steer(q_near, q_rand, delta_q=40):
         return (q_near[0] + delta_q * dx / d, q_near[1] + delta_q * dy / d)
 
 
-def buildRRT(est_pose, obstacles_list, goal, delta_q=300):
+def buildRRT(est_pose, obstacles_list, goal, delta_q=40):
 
     start = (est_pose.getX(), est_pose.getY())
     G = [start]
@@ -452,13 +452,17 @@ def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo)
             waypoint = path[i]
 
             fi = angle_to_target(est_pose, waypoint)
-            cmd = ("rotate", fi)
-            execute_cmd(arlo, cmd)
-            apply_motion_from_cmd(particles, cmd)
+            execute_cmd(arlo, ("rotate", fi))
+            apply_motion_from_cmd(particles, ("rotate", fi))
+            est_pose = particle_class.estimate_pose(particles)
 
-            d = distance_to_target(est_pose, waypoint)
-            cmd = ("forward", d)
-            execute_cmd(arlo, cmd)
+            while True:
+                d = distance_to_target(est_pose, waypoint)
+                if d < 5:
+                    break
+                execute_cmd(arlo, ("forward", d))
+                apply_motion_from_cmd(particles, ("forward", d))
+                est_pose = particle_class.estimate_pose(particles)
 
         return (None, None), "reached_target"
 
