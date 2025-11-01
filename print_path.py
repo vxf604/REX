@@ -2,9 +2,8 @@ import matplotlib.pyplot as plt
 
 
 class PathPrinter:
-    def __init__(self, scale, landmark_radius):
+    def __init__(self, landmark_radius):
         self.landmark_radius = landmark_radius
-        self.SCALE = scale
         self.fig, self.ax = plt.subplots(figsize=(8, 8))
         plt.ion()
 
@@ -12,12 +11,12 @@ class PathPrinter:
         ax.clear()
 
         if len(G) > 0:
-            Gx, Gy = zip(*[(gx * self.SCALE, gy * self.SCALE) for gx, gy in G])
+            Gx, Gy = zip(*[(gx, gy) for gx, gy in G])
             ax.scatter(Gx, Gy, c="lightgray", s=10, label="RRT nodes")
 
         for lid, lx, ly in landmarks:
-            lx_mm = lx * self.SCALE
-            ly_mm = ly * self.SCALE
+            lx_mm = lx
+            ly_mm = ly
             circle = plt.Circle(
                 (lx_mm, ly_mm),
                 self.landmark_radius,
@@ -29,16 +28,16 @@ class PathPrinter:
             ax.text(lx_mm, ly_mm, f"ID{lid}", color="red")
 
         ax.scatter(
-            start[0] * self.SCALE,
-            start[1] * self.SCALE,
+            start[0],
+            start[1],
             c="green",
             s=100,
             marker="o",
             label="Start",
         )
         ax.scatter(
-            goal[0] * self.SCALE,
-            goal[1] * self.SCALE,
+            goal[0],
+            goal[1],
             c="blue",
             s=100,
             marker="*",
@@ -46,7 +45,7 @@ class PathPrinter:
         )
 
         if path is not None and len(path) > 1:
-            px, py = zip(*[(px * self.SCALE, py * self.SCALE) for px, py in path])
+            px, py = zip(*[(px, py) for px, py in path])
             ax.plot(px, py, c="black", linewidth=2, label="Path")
 
         ax.set_xlabel("X [mm]")

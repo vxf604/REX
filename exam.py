@@ -25,7 +25,7 @@ class Landmark:
 # Flags
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
-printer = print_path.PathPrinter()
+printer = print_path.PathPrinter(landmark_radius=200)  # mm
 
 if onRobot:
     import robot
