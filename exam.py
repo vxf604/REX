@@ -405,9 +405,7 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=300):
     return path, G
 
 
-def motor_control(
-    state, est_pose, targets, seen2Landmarks, obstacle_list, obstacles_cam, arlo
-):
+def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo):
     target = targets[0]
     target_pos = (target.x + target.borderWidth_x, target.y + target.borderWidth_y)
     if state == "searching":
@@ -492,8 +490,7 @@ try:
         cv2.resizeWindow(WIN_World, 520, 520)
 
         cv2.moveWindow(WIN_World, 720, 50)
-    if isRunningOnArlo():
-        arlo = robot.Robot()
+
     # Initialize particles
     num_particles = 3000
     particles = initialize_particles(num_particles)
