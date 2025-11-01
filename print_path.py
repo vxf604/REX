@@ -14,7 +14,10 @@ class PathPrinter:
             Gx, Gy = zip(*[(gx, gy) for gx, gy in G])
             ax.scatter(Gx, Gy, c="lightgray", s=10, label="RRT nodes")
 
-        for lid, lx, ly in landmarks:
+        for landmark in landmarks:
+            lid = landmark.id
+            ly = landmark.y
+            lx = landmark.x
             lx_mm = lx
             ly_mm = ly
             circle = plt.Circle(
