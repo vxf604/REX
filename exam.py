@@ -429,12 +429,12 @@ def avoidance (arlo, est_pose, obstacles_list):
             
             if left < 400 or right < 400 or front < 400: ## mm
                 if right > left:
-                    print("got right")
-                    return "right"
+                    direction = "right"
                 else:
-                    print("got left")
-                    return "left"
-    
+                    direction = "left"
+                
+                print(f"[Avoidance triggered] L={left} F={front} R={right} -> {direction}")
+            
     return None
         
         
@@ -561,6 +561,7 @@ def motor_control(
             return ("rotate", 60), "avoidance_forward"
         elif "left" in cmd[0]:
             return ("rotate", -60), "avoidance_forward"
+        
     
     
     if state == "avoidance_forward":
