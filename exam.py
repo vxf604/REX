@@ -248,12 +248,19 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
 
 
 def calcutePos(est_pose, dist, angle):
+    # est_pose in cm; angle in radians (check this!)
     x0, y0 = est_pose.getX(), est_pose.getY()
+    theta = est_pose.getTheta()  # robot heading in radians
 
-    x = x0 + dist * math.cos(angle)
-    y = y0 + dist * math.sin(angle)
+    # ray in robot frame
+    rx = dist * math.cos(angle)
+    ry = dist * math.sin(angle)
 
-    return x, y
+    # rotate robot->world by theta
+    c, s = math.cos(theta), math.sin(theta)
+    wx = x0 + c * rx - s * ry
+    wy = y0 + s * rx + c * ry
+    return wx, wy
 
 
 def get_unique_obstacles(obstacles_list, objectIDs, dists, angles, landmarkIDs):
