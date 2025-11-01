@@ -9,7 +9,6 @@ import numpy as np
 import time
 from timeit import default_timer as timer
 import sys
-import path_planning as pp
 import print_path
 
 
