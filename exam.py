@@ -428,7 +428,7 @@ def avoidance(arlo, est_pose, obstacles_list):
     right = arlo.read_right_ping_sensor()
     front = arlo.read_front_ping_sensor()
 
-    if left < 300 or right < 300 or front < 300:  ## mm
+    if left < 200 or right < 200 or front < 200:  ## mm
         if right > left:
             direction = "right"
         else:
