@@ -413,28 +413,28 @@ def buildRRT(est_pose, obstacle_list, goal, delta_q=40):
 
 
 def avoidance(arlo, est_pose, obstacles_list):
-    if not obstacles_list:
-        return False
+    # if not obstacles_list:
+    #     return False
 
-    robot_x, robot_y = est_pose.getX(), est_pose.getY()
+    # robot_x, robot_y = est_pose.getX(), est_pose.getY()
 
-    for close_obstacle in obstacles_list:
-        distance = math.sqrt(
-            (close_obstacle.y - robot_y) ** 2 + (close_obstacle.x - robot_x) ** 2
-        )
+    # for close_obstacle in obstacles_list:
+    #     distance = math.sqrt(
+    #         (close_obstacle.y - robot_y) ** 2 + (close_obstacle.x - robot_x) ** 2
+    #     )
 
-        if distance < 40:
-            left = arlo.read_left_ping_sensor()
-            right = arlo.read_right_ping_sensor()
-            front = arlo.read_front_ping_sensor()
 
-            if left < 400 or right < 400 or front < 400:  ## mm
-                if right > left:
-                    direction = "right"
-                else:
-                    direction = "left"
-                
-                print(f"[Avoidance triggered] L={left} F={front} R={right} -> {direction}")
+    left = arlo.read_left_ping_sensor()
+    right = arlo.read_right_ping_sensor()
+    front = arlo.read_front_ping_sensor()
+
+    if left < 300 or right < 300 or front < 300:  ## mm
+        if right > left:
+            direction = "right"
+        else:
+            direction = "left"
+        
+        print(f"[Avoidance triggered] L={left} F={front} R={right} -> {direction}")
             
     return None
 
