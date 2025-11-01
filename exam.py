@@ -257,11 +257,7 @@ def calcutePos(est_pose, dist, angle):
     
     return x, y
     
-    
-    
-    
-
-def get_unique_obstacles(obstacles_list, objectIDs, dists, angles landmarkIDs):
+def get_unique_obstacles (obstacles_list, objectIDs, dists, angles, landmarkIDs):
     uniqueIDs = set(objectIDs)
     obstaclesListIDs = [o.ID for o in obstacles_list]
     
@@ -550,7 +546,7 @@ try:
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-
+            obstacles_list = get_unique_obstacles()
             objectIDs, dists, angles = get_unique_landmarks(
                 objectIDs, dists, angles, landmarkIDs
             )
