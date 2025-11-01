@@ -555,7 +555,7 @@ def motor_control(
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
         
-        direction = avoidance(arlo, est_pose, obstacles_list)
+        direction = avoidance(arlo, est_pose, obstacle_list)
         
         if direction:
             return (direction, 0), "avoidance"
