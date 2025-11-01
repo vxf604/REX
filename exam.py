@@ -247,8 +247,15 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
     return detectedLandmarks, detectedDists, detectedAngles
 
 
+# tune these if needed
+ANGLE_SIGN = 1.0  # flip to -1.0 if left/right looks mirrored
+ANGLE_BIAS = 0.0  # small bias in radians if you find a constant offset
+
+
 def calcutePos(est_pose, dist_cm, angle_rad):
-    phi = est_pose.getTheta() + angle_rad
+    # world bearing = robot heading + camera bearing (+ small bias)
+    phi = est_pose.getTheta() + ANGLE_SIGN * angle_rad + ANGLE_BIAS  # radians
+
     wx = est_pose.getX() + dist_cm * math.cos(phi)
     wy = est_pose.getY() + dist_cm * math.sin(phi)
     return wx, wy
