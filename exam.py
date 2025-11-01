@@ -373,7 +373,7 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=40):
     start = (est_pose.getX(), est_pose.getY())
     G = [start]
     parent = {0: None}
-    goal_pos = (goal.x, goal.y)
+    goal_pos = (goal.x + goal.borderWidth_x, goal.y + goal.borderWidth_y)
     goal_index = None
     i = 0
 
