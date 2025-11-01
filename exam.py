@@ -607,7 +607,7 @@ try:
             )
             for obstacle in obstacle_list:
 
-                print(f"Obstacle: x: {obstacle.x}, y: {obstacle.y}, ID: {obstacle.ID}")
+                print(f"Obstacle {obstacle.ID}: x: {obstacle.x}, y: {obstacle.y}, ")
             objectIDs, dists, angles = get_unique_landmarks(
                 objectIDs, dists, angles, landmarkIDs
             )
