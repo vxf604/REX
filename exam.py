@@ -444,7 +444,7 @@ def motor_control(state, est_pose, targets, seen2Landmarks, obstacle_list, arlo)
 
     if state == "follow_path":
 
-        path, G = buildRRT(est_pose, obstacle_list, target)
+        path, G = buildRRT(est_pose, obstacles_list, target)
         print("Path:", path)
 
         for i in range(1, len(path)):
