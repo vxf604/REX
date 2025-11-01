@@ -62,7 +62,7 @@ landmarkIDs = {l.ID: l for l in landmarks}
 
 targets = [L2, L3, L4, L1]
 
-obstacles_list = []
+obstacle_list = []
 
 
 def jet(x):
@@ -248,31 +248,62 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
 
 
 def calcutePos(est_pose, dist_cm, angle_rad):
-    phi = est_pose.getTheta()
+    phi = est_pose.getTheta() + angle_rad
     wx = est_pose.getX() + dist_cm * math.cos(phi)
     wy = est_pose.getY() + dist_cm * math.sin(phi)
     return wx, wy
 
 
-def get_unique_obstacles(obstacles_list, objectIDs, dists, angles, landmarkIDs):
+def get_unique_obstacles(obstacle_list, objectIDs, dists, angles, landmarkIDs):
     uniqueIDs = set(objectIDs)
-    obstaclesListIDs = [o.ID for o in obstacles_list]
+    obstaclesListIDs = [o.ID for o in obstacle_list]
+
+    # simple smoothing + optional replan trigger
+    ALPHA = 0.4  # weight for new measurement (0..1)
+    REPLAN_SHIFT_CM = 25.0  # if an obstacle jumps this much, force RRT rebuild
+    rrt_needs_replan = False
 
     for uid in uniqueIDs:
+        # pick the closest detection for this uid
         indices = [i for i, id in enumerate(objectIDs) if id == uid]
         closest_id = min(indices, key=lambda i: dists[i])
-        if uid not in landmarkIDs and uid not in obstaclesListIDs:
-            id = objectIDs[closest_id]
-            angle = angles[closest_id]
-            dist = dists[closest_id]
-            print(
-                f"obstacle id: {id}, dist: {dist}, est pose: {est_pose.getX()}, {est_pose.getY()}"
-            )
-            x, y = calcutePos(est_pose, dist, angle)
+
+        if uid in landmarkIDs:
+            continue  # skip known landmarks
+
+        id = int(objectIDs[closest_id])
+        angle = float(angles[closest_id])
+        dist = float(dists[closest_id])
+
+        print(
+            f"obstacle id: {id}, dist: {dist}, est pose: {est_pose.getX()}, {est_pose.getY()}"
+        )
+        x, y = calcutePos(est_pose, dist, angle)
+
+        if id not in obstaclesListIDs:
+            # new obstacle
             obstacle = Landmark(x, y, CBLACK, id, 10, 10)
-            obstacles_list.append(obstacle)
+            obstacle_list.append(obstacle)
             obstaclesListIDs.append(id)
-    return obstacles_list
+        else:
+            # update existing obstacle (smoothly)
+            for o in obstacle_list:
+                if o.ID == id:
+                    dx, dy = x - o.x, y - o.y
+                    jump = math.hypot(dx, dy)
+                    # EMA/lerp update
+                    o.x = (1.0 - ALPHA) * o.x + ALPHA * x
+                    o.y = (1.0 - ALPHA) * o.y + ALPHA * y
+                    if jump > REPLAN_SHIFT_CM:
+                        rrt_needs_replan = True
+                    break
+
+    # if a stored obstacle moved a lot, nuke current plan so it’s rebuilt
+    if rrt_needs_replan:
+        motor_control.path = None
+        motor_control.next_index = 1
+
+    return obstacle_list
 
 
 def angle_to_target(est_pose, target):
@@ -369,7 +400,7 @@ def Steer(q_near, q_rand, delta_q=40):
         return (q_near[0] + delta_q * dx / d, q_near[1] + delta_q * dy / d)
 
 
-def buildRRT(est_pose, obstacles_list, goal, delta_q=40):
+def buildRRT(est_pose, obstacle_list, goal, delta_q=40):
 
     start = (est_pose.getX(), est_pose.getY())
     G = [start]
@@ -384,7 +415,7 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=40):
         q_near = NEAREST_VERTEX(q_rand, G)
         q_new = Steer(q_near, q_rand, delta_q)
 
-        if in_collision(q_new, obstacles_list):
+        if in_collision(q_new, obstacle_list):
             continue
 
         G.append(q_new)
@@ -480,7 +511,7 @@ def motor_control(
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
-        printer.show_path_image(landmarks, obstacles_list, est_pose, target, G, path)
+        printer.show_path_image(landmarks, obstacle_list, est_pose, target, G, path)
 
         waypoint = path[motor_control.next_index]
 
@@ -508,6 +539,10 @@ def motor_control(
     if state == "reached_target":
         if len(targets) > 0:
             targets.pop(0)
+            obstacle_list.clear()
+            motor_control.path = None
+            motor_control.next_index = 1
+
             return ("rotate", 20), "searching"
         return ("stop", None), "reached_target"
 
@@ -567,10 +602,10 @@ try:
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-            obstacles_list = get_unique_obstacles(
-                obstacles_list, objectIDs, dists, angles, landmarkIDs
+            obstacle_list = get_unique_obstacles(
+                obstacle_list, objectIDs, dists, angles, landmarkIDs
             )
-            for obstacle in obstacles_list:
+            for obstacle in obstacle_list:
 
                 print(f"Obstacle: x: {obstacle.x}, y: {obstacle.y}, ID: {obstacle.ID}")
             objectIDs, dists, angles = get_unique_landmarks(
@@ -645,7 +680,7 @@ try:
                 targets,
                 seen2Landmarks,
                 seen4Landmarks,
-                obstacles_list,
+                obstacle_list,
                 arlo,
             )
             execute_cmd(arlo, cmd)
