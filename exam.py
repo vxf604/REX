@@ -398,7 +398,7 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=300):
         node = parent[node]
     path.reverse()
 
-    path.append(goal)
+    path.append(goal_pos)
 
     return path, G
 
