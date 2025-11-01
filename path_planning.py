@@ -121,7 +121,7 @@ def buildRRT(landmarks, goal, delta_q=300 / SCALE):
 current_heading = 0
 
 
-def follow_rrt_path(path):
+def follow_rrt_path(path, est_pose, arlo):
     global current_heading
     current_pos = np.array([0.0, 0.0])
 

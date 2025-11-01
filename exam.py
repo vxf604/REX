@@ -23,7 +23,6 @@ class Landmark:
         self.color = color
 
 
-
 # Flags
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
@@ -66,6 +65,7 @@ landmarkIDs = {l.ID: l for l in landmarks}
 targets = [L2, L3, L4, L1]
 
 obstacles_list = []
+
 
 def jet(x):
     """Colour map for drawing particles. This function determines the colour of
@@ -251,32 +251,29 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
 
 def calcutePos(est_pose, dist, angle):
     x0, y0 = est_pose.GetX(), est_pose.GetY()
-    
+
     x = x0 + dist * math.cos(angle)
     y = y0 + dist * math.sin(angle)
-    
+
     return x, y
-    
-def get_unique_obstacles (obstacles_list, objectIDs, dists, angles, landmarkIDs):
+
+
+def get_unique_obstacles(obstacles_list, objectIDs, dists, angles, landmarkIDs):
     uniqueIDs = set(objectIDs)
     obstaclesListIDs = [o.ID for o in obstacles_list]
-    
+
     for uid in uniqueIDs:
         indices = [i for i, id in enumerate(objectIDs) if id == uid]
         closest_id = min(indices, key=lambda i: dists[i])
-        if uid not in landmarkIDs and uid not in obstaclesListIDs :
-            id = (objectIDs[closest_id])
-            angle = (angles[closest_id])
-            dist = (dists[closest_id])
+        if uid not in landmarkIDs and uid not in obstaclesListIDs:
+            id = objectIDs[closest_id]
+            angle = angles[closest_id]
+            dist = dists[closest_id]
             x, y = calcutePos(est_pose, dist, angle)
             obstacle = Landmark(x, y, CBLACK, id, 10, 10)
             obstacles_list.append(obstacle)
             obstacles_list.append(id)
     return obstacles_list
-
-
-
-
 
 
 def angle_to_target(est_pose, target):
@@ -332,16 +329,15 @@ def execute_cmd(arlo, cmd):
         arlo.stop()
 
 
-
-
 def distance(p1, p2):
     return float(np.linalg.norm(np.array(p1) - np.array(p2)))
+
 
 def in_collision(point, obstacles, robot_radius=150):
     obstacle_radius = 180
     x, y = point
     for obstacle in obstacles:
-        id, map_x, map_y = obstacle
+        map_x, map_y = obstacle.x, obstacle.y
         obstacle_pos = (map_x, map_y)
         d = distance(point, obstacle_pos)
         if d <= (obstacle_radius + robot_radius):
@@ -374,8 +370,9 @@ def Steer(q_near, q_rand, delta_q=300):
         return (q_near[0] + delta_q * dx / d, q_near[1] + delta_q * dy / d)
 
 
-def buildRRT(obstacles, goal, delta_q=300):
-    start = (0, 0)
+def buildRRT(est_pose, obstacles_list, goal, delta_q=300):
+
+    start = (est_pose.getX(), est_pose.getY())
     G = [start]
     parent = {0: None}
 
@@ -388,7 +385,7 @@ def buildRRT(obstacles, goal, delta_q=300):
         q_near = NEAREST_VERTEX(q_rand, G)
         q_new = Steer(q_near, q_rand, delta_q)
 
-        if in_collision(q_new, obstacles):
+        if in_collision(q_new, obstacles_list):
             continue
 
         G.append(q_new)
@@ -409,20 +406,9 @@ def buildRRT(obstacles, goal, delta_q=300):
     return path, G
 
 
-current_heading = 0
-
-
-
-
-
-
-
-
-
-
-
-
-def motor_control(state, est_pose, targets, seen2Landmarks, arlo):
+def motor_control(
+    state, est_pose, targets, seen2Landmarks, obstacle_list, obstacles_cam, arlo
+):
     target = targets[0]
     target_pos = (target.x + target.borderWidth_x, target.y + target.borderWidth_y)
     if state == "searching":
@@ -462,7 +448,8 @@ def motor_control(state, est_pose, targets, seen2Landmarks, arlo):
         return (None, None), "follow_path"
 
     if state == "follow_path":
-        path, G = pp.pathbuildRRT(landmarks, target)
+
+        path, G = buildRRT(est_pose, obstacle_list, target)
         print("Path:", path)
 
         for i in range(1, len(path)):
@@ -546,7 +533,9 @@ try:
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-            obstacles_list = get_unique_obstacles()
+            obstacles_list = get_unique_obstacles(
+                obstacles_list, objectIDs, dists, angles, landmarkIDs
+            )
             objectIDs, dists, angles = get_unique_landmarks(
                 objectIDs, dists, angles, landmarkIDs
             )
