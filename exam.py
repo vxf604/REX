@@ -338,6 +338,11 @@ def execute_cmd(arlo, cmd):
         time.sleep(0.5)
     elif movement == "stop":
         arlo.stop()
+    elif movement == "forward_sensor":
+        max_cm = val if (val and val > 0) else None
+        result = forward_with_avoid(arlo, max_cm=max_cm)
+        if result == "relocalize":
+            STATE_OVERRIDE = "fullSearch"
 
 
 MIN_FRONT = 300
@@ -593,7 +598,7 @@ def motor_control(
             return ("rotate", fi), "follow_path"
 
         step = min(40.0, d)  # cm
-        return ("forward_sensor", step), "follow_path"
+        return ("forward", step), "follow_path"
 
     if state == "avoidance":
         if getattr(motor_control, "_avoid_dir", None) == "right":
@@ -602,6 +607,9 @@ def motor_control(
         elif getattr(motor_control, "_avoid_dir", None) == "left":
             print("Avoidance: rotating 60° to the left")
             return ("rotate", 60), "avoidance_forward"
+        elif getattr (motor_control, "_avoid_dir", None) == "front":
+            print ("Avoidance: rotating 90° to the left")
+            return ("rotate", 90), "avoidance_forward"
 
     if state == "forward_with_sensor":
         left = arlo.read_left_ping_sensor()
@@ -620,7 +628,6 @@ def motor_control(
         motor_control.G = None
         motor_control.next_index = 1
         motor_control._search_rot = 0.0
-        obstacle_list.clear()
         return (None, None), "full_search"
 
     if state == "avoidance_forward":
