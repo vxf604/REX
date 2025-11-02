@@ -338,6 +338,11 @@ def execute_cmd(arlo, cmd):
         time.sleep(0.5)
     elif movement == "stop":
         arlo.stop()
+    elif movement == "forward_sensor":
+        max_cm = val if (val and val > 0) else None
+        result = forward_with_avoid(arlo, max_cm=max_cm)
+        if result == "relocalise":
+            STATE_OVERRIDE = "relocalise"
 
 
 MIN_FRONT = 300
@@ -392,7 +397,7 @@ def forward_with_avoid(arlo, max_cm=None):
 
                 time.sleep(0.6)
                 arlo.stop()
-                return "relocalize"
+                return "relocalise"
 
             time.sleep(POLL)
     finally:
@@ -483,7 +488,7 @@ def avoidance(arlo):
     right = arlo.read_right_ping_sensor()
     front = arlo.read_front_ping_sensor()
 
-    if left < 300 or right < 300 or front < 400:  ## mm
+    if left < 200 or right < 200 or front < 300:  ## mm
         if right > left:
             direction = "right"
         else:
@@ -566,9 +571,6 @@ def motor_control(
         path = motor_control.path
         G = motor_control.G
 
-        if not path or len(path) < 2:
-            return ("rotate", 20.0), "follow_path"
-
         if motor_control.next_index < len(path) - 2:
             direction = avoidance(arlo)
 
@@ -620,7 +622,7 @@ def motor_control(
         motor_control.path = None
         motor_control.G = None
         motor_control.next_index = 1
-        motor_control._search_rot = 0.0
+        motor_control._search_rot = 0
         motor_control._avoid_dir = None
         obstacle_list.clear()
         return ("stop", None), "fullSearch"
@@ -792,6 +794,7 @@ try:
             apply_motion_from_cmd(particles, cmd)
             if state == "relocalise":
                 landmarks_seen.clear()
+                
         else:
             apply_sample_motion_model(particles, 0, 0)
 
