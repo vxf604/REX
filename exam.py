@@ -593,7 +593,7 @@ def motor_control(
             return ("rotate", fi), "follow_path"
 
         step = min(40.0, d)  # cm
-        return ("forward_sensor", step), "follow_path"
+        return ("forward", step), "follow_path"
 
     if state == "avoidance":
         if getattr(motor_control, "_avoid_dir", None) == "right":
