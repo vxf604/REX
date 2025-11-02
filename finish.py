@@ -439,6 +439,27 @@ def avoidance(arlo, est_pose, obstacles_list):
     return None
 
 
+def read_front_cm(arlo):
+    try:
+        return arlo.read_front_ping_sensor() / 10.0
+    except Exception:
+        return 9999.0
+
+
+def read_left_cm(arlo):
+    try:
+        return arlo.read_left_ping_sensor() / 10.0
+    except Exception:
+        return 9999.0
+
+
+def read_right_cm(arlo):
+    try:
+        return arlo.read_right_ping_sensor() / 10.0
+    except Exception:
+        return 9999.0
+
+
 def motor_control(
     state, est_pose, targets, seen2Landmarks, seen4Landmarks, obstacle_list, arlo
 ):
@@ -494,12 +515,12 @@ def motor_control(
         MAX_TURN = 35.0
 
         SIDE_ENTER = 12.0
-        SIDE_EXIT = 16.0
-        FRONT_PAD = 4.0
+        SIDE_EXIT = 20.0
+        FRONT_PAD = 8.0
         NUDGE_DEG = 10.0
 
-        CLEAR_STEP = 20.0
-        CLEAR_DIST = 15.0
+        CLEAR_STEP = 30.0
+        CLEAR_DIST = 25.0
         SKIP_AFTER_HITS = 2
 
         # plan
@@ -511,8 +532,7 @@ def motor_control(
                 est_pose, obstacle_list, target
             )
             motor_control.next_index = 1
-
-        print("Path:", motor_control.path)
+            print("Path:", motor_control.path)
 
         path = motor_control.path
         if not path or len(path) < 2:
@@ -641,7 +661,6 @@ def motor_control(
         if last and d <= STEP_CM:
             return ("forward", d), "reached_target"
 
-        step = min(40.0, d)  # cm
         return ("forward", step), "follow_path"
 
     # fallbacks
