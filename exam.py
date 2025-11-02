@@ -26,7 +26,7 @@ class Landmark:
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
 printer = print_path.PathPrinter(landmark_radius=20)  # mm
-STATE_OVERRIDE =None
+STATE_OVERRIDE = None
 
 
 if onRobot:
@@ -696,7 +696,7 @@ try:
         if not isinstance(objectIDs, type(None)):
             if seen2Landmarks:
                 obstacle_list = get_unique_obstacles(
-                    obstacle_list, objectIDs, dists, angles, landmarkIDs
+                    obstacle_list, objectIDs, dists, angles, landmarkIDs, est_pose
                 )
             for obstacle in obstacle_list:
 
