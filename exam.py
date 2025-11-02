@@ -795,6 +795,9 @@ try:
             )
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
+            if state == "relocalise":
+                landmarks.clear()
+                
         else:
             apply_sample_motion_model(particles, 0, 0)
 
