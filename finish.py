@@ -578,9 +578,9 @@ def motor_control(
         if front < block_front:
             motor_control._await_clear = True
             if left < right:
-                return ("rotate", NUDGE_DEG), "follow_path"  # drej lidt mod højre
+                return ("rotate", -NUDGE_DEG), "follow_path"  # drej lidt mod højre
             elif right < left:
-                return ("rotate", -NUDGE_DEG), "follow_path"  # drej lidt mod venstre
+                return ("rotate", NUDGE_DEG), "follow_path"  # drej lidt mod venstre
             else:
                 return ("rotate", NUDGE_DEG), "follow_path"
 
