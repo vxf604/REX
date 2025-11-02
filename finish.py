@@ -570,7 +570,8 @@ def motor_control(
 
         FRONT_MARGIN = MARGIN  # keep your existing MARGIN for front
         SIDE_SAFE = 10.0  # tighter side clearance in cm (tune 15–25)
-        NUDGE_DEG = 10.0  # small steer away from a close side
+        NUDGE_DEG = 30.0  # small steer away from a close side
+        FRONT_NUDGE = 10.0
 
         block_front = min(d, STEP_CM) + MARGIN
 
@@ -578,22 +579,22 @@ def motor_control(
         if front < block_front:
             motor_control._await_clear = True
             if left < right:
-                return ("rotate", -NUDGE_DEG), "follow_path"  # drej lidt mod højre
+                return ("rotate", -FRONT_NUDGE), "follow_path"  # drej lidt mod højre
             elif right < left:
-                return ("rotate", NUDGE_DEG), "follow_path"  # drej lidt mod venstre
+                return ("rotate", FRONT_NUDGE), "follow_path"  # drej lidt mod venstre
             else:
-                return ("rotate", NUDGE_DEG), "follow_path"
+                return ("rotate", FRONT_NUDGE), "follow_path"
 
         # Selvom front er klar, kør ikke hvis en side er farligt tæt
         if left < SIDE_SAFE and right >= SIDE_SAFE:
             motor_control._await_clear = True
-            return ("rotate", NUDGE_DEG), "follow_path"
+            return ("rotate", -NUDGE_DEG), "follow_path"
         if right < SIDE_SAFE and left >= SIDE_SAFE:
             motor_control._await_clear = True
-            return ("rotate", -NUDGE_DEG), "follow_path"
+            return ("rotate", NUDGE_DEG), "follow_path"
         if left < SIDE_SAFE and right < SIDE_SAFE:
             motor_control._await_clear = True
-            return ("rotate", NUDGE_DEG), "follow_path"
+            return ("rotate", -NUDGE_DEG), "follow_path"
 
         # tæt på mellem-waypoint? hop videre uden at køre
         if d < 5.0 and not last:
