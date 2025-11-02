@@ -331,7 +331,7 @@ def execute_cmd(arlo, cmd):
     movement, val = cmd
     if movement == "rotate":
         arlo.rotate_robot(val * -1)
-        time.sleep(0.5)
+        time.sleep(0.3)
     elif movement == "forward":
         arlo.drive_forward_meter(val / 100.0)
         print(f" Driving forward {val} cm")
@@ -574,11 +574,12 @@ def motor_control(
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
-        direction = avoidance(arlo)
+        if motor_control.next_index < len(path) - 2:
+            direction = avoidance(arlo)
 
-        if direction:
-            motor_control._avoid_dir = direction
-            return ("stop", 0), "avoidance"
+            if direction:
+                motor_control._avoid_dir = direction
+                return ("stop", 0), "avoidance"
 
         printer.show_path_image(landmarks, obstacle_list, est_pose, target, G, path)
 
@@ -628,10 +629,16 @@ def motor_control(
         motor_control.G = None
         motor_control.next_index = 1
         motor_control._search_rot = 0.0
+<<<<<<< HEAD
         return (None, None), "full_search"
+=======
+        motor_control._avoid_dir = None
+        obstacle_list.clear()
+        return ("stop", None), "fullSearch"
+>>>>>>> 86dcb18ca8779f3dd038d81600629c590ab6f687
 
     if state == "avoidance_forward":
-        return ("forward", 30), "follow_path"
+        return ("forward", 30), "relocalise"
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
@@ -795,6 +802,8 @@ try:
             )
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
+            if state in ("relocalise", "fullSearch"):
+                landmarks_seen.clear()
         else:
             apply_sample_motion_model(particles, 0, 0)
 
