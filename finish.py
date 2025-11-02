@@ -168,7 +168,7 @@ def apply_motion_from_cmd(particles, cmd):
         return
     kind, val = cmd
     if kind == "rotate":
-        apply_sample_motion_model(particles, math.radians(val), 0)
+        apply_sample_motion_model(particles, math.radians(-val), 0)
     elif kind == "forward":
         apply_sample_motion_model(particles, 0, val)
 
@@ -278,7 +278,7 @@ def execute_cmd(arlo, cmd):
         return
     movement, val = cmd
     if movement == "rotate":
-        arlo.rotate_robot(-1 * val)
+        arlo.rotate_robot(val)
         time.sleep(0.5)
     elif movement == "forward":
         arlo.drive_forward_meter(val / 100.0)
