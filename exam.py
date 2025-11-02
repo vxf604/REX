@@ -599,10 +599,10 @@ def motor_control(
     if state == "avoidance":
         if getattr(motor_control, "_avoid_dir", None) == "right":
             print("Avoidance: rotating 60° to the right")
-            return ("rotate", -60), "avoidance_forward"
+            return ("rotate", 60), "avoidance_forward"
         elif getattr(motor_control, "_avoid_dir", None) == "left":
             print("Avoidance: rotating 60° to the left")
-            return ("rotate", 60), "avoidance_forward"
+            return ("rotate", -60), "avoidance_forward"
 
     if state == "forward_with_sensor":
         left = arlo.read_left_ping_sensor()
@@ -790,7 +790,7 @@ try:
             )
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
-            if state in ("relocalise", "fullSearch"):
+            if state == "relocalise":
                 landmarks_seen.clear()
         else:
             apply_sample_motion_model(particles, 0, 0)
