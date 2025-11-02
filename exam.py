@@ -333,6 +333,13 @@ def execute_cmd(arlo, cmd):
         time.sleep(0.5)
     elif movement == "stop":
         arlo.stop()
+    elif movement == "forward_sensor":
+        driving = True
+        arlo.drive_forward_meter(val / 100)
+        left = arlo.read_left_ping_sensor()
+        right = arlo.read_right_ping_sensor()
+        front = arlo.read_front_ping_sensor()
+        print(f"{left}")
 
 
 def distance(p1, p2):
@@ -551,7 +558,18 @@ def motor_control(
         elif getattr(motor_control, "_avoid_dir", None) == "left":
             print("Avoidance: rotating 60° to the left")
             return ("rotate", -60), "avoidance_forward"
+    
+    if state == "forward_with_sensor":
+        left = arlo.read_left_ping_sensor()
+        right = arlo.read_right_ping_sensor()
+        front = arlo.read_front_ping_sensor()
         
+        if d < 40:
+            return ("rotate", fi), "finish_driving"
+
+        if abs(fi) > align_ok:
+            return ("rotate", fi), "forward"
+        return ("forward", min(d, 40.0)), "forward"    
     
     
     if state == "avoidance_forward":
