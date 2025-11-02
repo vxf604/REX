@@ -569,7 +569,7 @@ def motor_control(
         right = read_right_cm(arlo)
 
         FRONT_MARGIN = MARGIN  # keep your existing MARGIN for front
-        SIDE_SAFE = 18.0  # tighter side clearance in cm (tune 15–25)
+        SIDE_SAFE = 10.0  # tighter side clearance in cm (tune 15–25)
         NUDGE_DEG = 10.0  # small steer away from a close side
 
         block_front = min(d, STEP_CM) + MARGIN
