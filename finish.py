@@ -501,7 +501,7 @@ def motor_control(
     heading = math.degrees(est_pose.getTheta())
     fi = angle_to_target(est_pose, target_pos)  # your function
     print(f"bearing={bearing:.1f}°, heading={heading:.1f}°, fi={fi:.1f}°")
-    align_ok = 4
+    align_ok = 5
 
     if state == "rotating":
         # step = max(8.0, min(abs(fi), 35.0))
