@@ -442,17 +442,27 @@ def avoidance(arlo, est_pose, obstacles_list):
 def motor_control(
     state, est_pose, targets, seen2Landmarks, seen4Landmarks, obstacle_list, arlo
 ):
-
+    # interne tilstande
     if not hasattr(motor_control, "_search_rot"):
         motor_control._search_rot = 0.0
-
     if not hasattr(motor_control, "path"):
         motor_control.path = None
         motor_control.G = None
         motor_control.next_index = 1
 
+    # ingen targets tilbage
+    if not targets:
+        return ("stop", None), "reached_target"
+
     target = targets[0]
     target_pos = (target.x + target.borderWidth_x, target.y + target.borderWidth_y)
+
+    # simple debug
+    print(
+        f"est_pose: x: {est_pose.getX():.3f}, y: {est_pose.getY():.3f}, theta: {math.degrees(est_pose.getTheta()):.1f}"
+    )
+
+    # high level states for at komme i gang
     if state == "searching":
         if seen2Landmarks:
             return (None, 0), "follow_path"
@@ -465,39 +475,30 @@ def motor_control(
             return (None, 0), "follow_path"
         else:
             return ("rotate", 20.0), "fullSearch"
-    print(
-        f"est_pose: x: {est_pose.getX()}, y: {est_pose.getY()}, theta: {math.degrees(est_pose.getTheta())}"
-    )
-    fi = angle_to_target(est_pose, target_pos)
-    d = distance_to_target(est_pose, target_pos)
-
-    bearing = math.degrees(
-        math.atan2(target_pos[1] - est_pose.getY(), target_pos[0] - est_pose.getX())
-    )
-    heading = math.degrees(est_pose.getTheta())
-    fi = angle_to_target(est_pose, target_pos)  # your function
-    print(f"bearing={bearing:.1f}°, heading={heading:.1f}°, fi={fi:.1f}°")
-    align_ok = 4
-
-    if state == "rotating":
-        # step = max(8.0, min(abs(fi), 35.0))
-        # turn = step if fi >= 0 else -step
-        next_state = "forward" if abs(fi) < align_ok else "rotating"
-        return ("rotate", fi), next_state
-
-    if state == "forward":
-        if d < 40:
-            return ("rotate", fi), "finish_driving"
-
-        if abs(fi) > align_ok:
-            return ("rotate", fi), "forward"
-        return ("forward", min(d, 40.0)), "forward"
 
     if state == "calculate_path":
+        # vi beregner ruten i follow_path
+        return (None, 0), "follow_path"
 
-        return (None, None), "follow_path"
+    if state == "rotating":
+        # denne bruges ikke aktivt i den simple kontrol, men beholdes for kompatibilitet
+        return (None, 0), "follow_path"
+
+    if state == "forward":
+        # denne bruges heller ikke aktivt i den simple kontrol
+        return (None, 0), "follow_path"
 
     if state == "follow_path":
+        # konstanter
+        ALIGN_DEG = 10.0  # større giver færre ryk
+        MAX_TURN = 30.0  # maks pr rotate kommando
+        STEP_CM = 30.0  # frem i små hop
+        GOAL_TOL = 12.0  # hvornår sidste waypoint er nået
+        MARGIN = 5.0  # sikkerhed på frontafstand
+        SIDE_ENTER = 12.0  # sideafstand der udløser nudge
+        NUDGE_DEG = 10.0  # lille nudge vinkel
+
+        # plan
         need_plan = motor_control.path is None or motor_control.next_index >= (
             len(motor_control.path) if motor_control.path else 0
         )
@@ -510,32 +511,67 @@ def motor_control(
         print("Path:", motor_control.path)
 
         path = motor_control.path
-        G = motor_control.G
+        plen = len(path) if path else 0
+        print(f"[path] idx={motor_control.next_index} len={plen}")
 
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
-        # direction = avoidance(arlo, est_pose, obstacles_list)
+        # aktuel waypoint
+        i = motor_control.next_index
+        wp = path[i]
+        fi = angle_to_target(est_pose, wp)
+        d = distance_to_target(est_pose, wp)
+        last = i == len(path) - 1
 
-        # if direction:
-        #     return (direction, 0), "avoidance"
+        # er vi i mål ved sidste punkt
+        if last and d <= GOAL_TOL:
+            return (None, 0), "reached_target"
 
-        printer.show_path_image(landmarks, obstacles_list, est_pose, target, G, path)
+        # 1) Align altid først, så vi undgår ryk
+        if abs(fi) > ALIGN_DEG:
+            turn = max(-MAX_TURN, min(MAX_TURN, fi))
+            return ("rotate", turn), "follow_path"
 
-        waypoint = path[motor_control.next_index]
+        # 2) Sensor check
+        front = read_front_cm(arlo)
+        left = read_left_cm(arlo)
+        right = read_right_cm(arlo)
 
-        fi = angle_to_target(est_pose, waypoint)
-        d = distance_to_target(est_pose, waypoint)
+        block_front = min(d, STEP_CM) + MARGIN
 
-        if d < 5.0:
-            motor_control.next_index += 1
+        # hvis der er noget foran, drej en smule væk fra den nærmeste side
+        if front < block_front:
+            if left < right:
+                return ("rotate", NUDGE_DEG), "follow_path"  # drej mod højre
+            elif right < left:
+                return ("rotate", -NUDGE_DEG), "follow_path"  # drej mod venstre
+            else:
+                return ("rotate", NUDGE_DEG), "follow_path"
 
-            if motor_control.next_index >= len(path):
-                return (None, 0), "reached_target"
+        # hvis en side er tæt, lav en lille nudge væk fra den
+        if left < SIDE_ENTER and right >= SIDE_ENTER:
+            return ("rotate", NUDGE_DEG), "follow_path"
+        if right < SIDE_ENTER and left >= SIDE_ENTER:
+            return ("rotate", -NUDGE_DEG), "follow_path"
+        if left < SIDE_ENTER and right < SIDE_ENTER:
+            return ("rotate", NUDGE_DEG), "follow_path"
+
+        # 3) Waypoint hop hvis vi allerede er lige ved det
+        if d < 5.0 and not last:
+            motor_control.next_index = i + 1
             return (None, 0), "follow_path"
 
-        if abs(fi) > 4.0:
-            return ("rotate", fi), "follow_path"
+        # 4) Kør frem i et step
+        step = min(STEP_CM, d)
+
+        # hvis næste hop vil ramme waypointet, bump index nu, men kør stadig step
+        if d <= STEP_CM + 2.0 and not last:
+            motor_control.next_index = i + 1
+
+        # hvis vi er på sidste punkt og det er inden for step, så afslut efter kørslen
+        if last and d <= STEP_CM:
+            return ("forward", d), "reached_target"
 
         step = min(40.0, d)  # cm
         return ("forward", step), "follow_path"
@@ -543,18 +579,21 @@ def motor_control(
         return (None, None), "reached_target"
 
     if state == "avoidance":
-        if "right" in cmd[0]:
-            return ("rotate", 40), "follow_path"
-        elif "left" in cmd[0]:
-            return ("rotate", -40), "follow_path"
+        # ikke brugt i denne simple udgave
+        return (None, 0), "follow_path"
 
     if state == "finish_driving":
-        return ("forward", d), "reached_target"
+        # ikke brugt i denne simple udgave
+        return (None, 0), "follow_path"
 
     if state == "reached_target":
         if len(targets) > 0:
             targets.pop(0)
-            return ("rotate", 20), "searching"
+            # reset plan og index for næste target
+            motor_control.path = None
+            motor_control.G = None
+            motor_control.next_index = 1
+            return ("rotate", 20.0), "fullSearch"
         return ("stop", None), "reached_target"
 
 
