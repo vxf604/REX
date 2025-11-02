@@ -263,10 +263,10 @@ def calcutePos(est_pose, dist_cm, angle_rad):
 
 
 def get_unique_obstacles(
-    obstacles_list, objectIDs, dists, angles, landmarkIDs, est_pose
+    obstacle_list, objectIDs, dists, angles, landmarkIDs, est_pose
 ):
     uniqueIDs = set(objectIDs)
-    obstaclesListIDs = [o.ID for o in obstacles_list]
+    obstaclesListIDs = [o.ID for o in obstacle_list]
 
     for uid in uniqueIDs:
         indices = [i for i, id in enumerate(objectIDs) if id == uid]
@@ -280,9 +280,9 @@ def get_unique_obstacles(
             )
             x, y = calcutePos(est_pose, dist, angle)
             obstacle = Landmark(x, y, CBLACK, id, 10, 10)
-            obstacles_list.append(obstacle)
+            obstacle_list.append(obstacle)
             obstaclesListIDs.append(id)
-    return obstacles_list
+    return obstacle_list
 
 
 def angle_to_target(est_pose, target):
@@ -324,6 +324,8 @@ def distance_to_target(est_pose, target):
 
 
 def execute_cmd(arlo, cmd):
+    global STATE_OVERRIDE
+
     if not cmd:
         return
     movement, val = cmd
@@ -337,17 +339,10 @@ def execute_cmd(arlo, cmd):
     elif movement == "stop":
         arlo.stop()
     elif movement == "forward_sensor":
-        driving = True
-        drive_m = val / 100.0
-        while driving:
-            arlo.go_diff(68, 64, 1, 1)
-            drive_time = 2.45 * drive_m
-            time.sleep(drive_time)
-            leftSensor = arlo.read_left_ping_sensor()
-            rightSensor = arlo.read_right_ping_sensor()
-            frontSensor = arlo.read_front_ping_sensor()
-            print("Front Sensor: ", frontSensor)
-        arlo.drive_forward_meter(val / 100)
+        max_cm = val if (val and val > 0) else None
+        result = forward_with_avoid(arlo, max_cm=max_cm)
+        if result == "relocalize":
+            STATE_OVERRIDE = "fullSearch"
 
 
 MIN_FRONT = 300
@@ -579,11 +574,11 @@ def motor_control(
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
-        direction = avoidance(arlo)
+        # direction = avoidance(arlo)
 
-        if direction:
-            motor_control._avoid_dir = direction
-            return (direction, 0), "avoidance"
+        # if direction:
+        #     motor_control._avoid_dir = direction
+        #     return (direction, 0), "avoidance"
 
         printer.show_path_image(landmarks, obstacle_list, est_pose, target, G, path)
 
@@ -623,7 +618,7 @@ def motor_control(
 
         if abs(fi) > align_ok:
             return ("rotate", fi), "forward"
-        return ("forward", min(d, 40.0)), "forward"
+        return ("forward_sensor", min(d, 40.0)), "forward"
 
     if state == "avoidance_forward":
         return ("forward", 30), "follow_path"
