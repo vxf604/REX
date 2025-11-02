@@ -26,7 +26,6 @@ class Landmark:
 showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
 printer = print_path.PathPrinter(landmark_radius=20)  # mm
-STATE_OVERRIDE = None
 
 
 if onRobot:
@@ -53,9 +52,9 @@ CBLACK = (0, 0, 0)
 # Landmarks.
 # The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
 L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=1, borderWidth_x=30, borderWidth_y=30)
-L2 = Landmark(x=0.0, y=300.0, color=CGREEN, ID=6, borderWidth_x=30, borderWidth_y=-30)
+L2 = Landmark(x=0.0, y=300.0, color=CGREEN, ID=2, borderWidth_x=30, borderWidth_y=-30)
 L3 = Landmark(x=400.0, y=0.0, color=CYELLOW, ID=3, borderWidth_x=-30, borderWidth_y=30)
-L4 = Landmark(x=400.0, y=300.0, color=CBLUE, ID=8, borderWidth_x=-30, borderWidth_y=-30)
+L4 = Landmark(x=400.0, y=300.0, color=CBLUE, ID=4, borderWidth_x=-30, borderWidth_y=-30)
 
 landmarks = [L1, L2, L3, L4]
 
@@ -175,7 +174,7 @@ def translation1(p, transl1, std):
     p.setY(y)
 
 
-def sample_motion_model(p, rot1, trans):  # Prediction
+def sample_motion_model(p, rot1, trans):
     if abs(rot1) > 0:
         rotation(p, rot1, 0.10)
         p.setX(p.getX() + transerror(1))
@@ -196,7 +195,7 @@ def apply_motion_from_cmd(particles, cmd):
     kind, val = cmd
     if kind == "rotate":
         apply_sample_motion_model(particles, math.radians(val), 0)
-    elif kind in ("forward", "forward_sensor"):
+    elif kind == "forward":
         apply_sample_motion_model(particles, 0, val)
 
 
@@ -204,7 +203,7 @@ def sign(x):
     return 1 if x >= 0 else -1
 
 
-def measurement_model(distance, angle, particle, landmark):  # Correction
+def measurement_model(distance, angle, particle, landmark):
     sigma_d = 15
     sigma_a = 0.15
 
@@ -254,6 +253,7 @@ ANGLE_BIAS = 0.0  # small bias in radians if you find a constant offset
 
 
 def calcutePos(est_pose, dist_cm, angle_rad):
+    phi = est_pose.getTheta() + angle_rad
     # world bearing = robot heading + camera bearing (+ small bias)
     phi = est_pose.getTheta() + ANGLE_SIGN * angle_rad + ANGLE_BIAS  # radians
 
@@ -262,26 +262,55 @@ def calcutePos(est_pose, dist_cm, angle_rad):
     return wx, wy
 
 
-def get_unique_obstacles(
-    obstacle_list, objectIDs, dists, angles, landmarkIDs, est_pose
-):
+def get_unique_obstacles(obstacle_list, objectIDs, dists, angles, landmarkIDs):
     uniqueIDs = set(objectIDs)
     obstaclesListIDs = [o.ID for o in obstacle_list]
 
+    # simple smoothing + optional replan trigger
+    ALPHA = 0.4  # weight for new measurement (0..1)
+    REPLAN_SHIFT_CM = 25.0  # if an obstacle jumps this much, force RRT rebuild
+    rrt_needs_replan = False
+
     for uid in uniqueIDs:
+        # pick the closest detection for this uid
         indices = [i for i, id in enumerate(objectIDs) if id == uid]
         closest_id = min(indices, key=lambda i: dists[i])
-        if uid not in landmarkIDs and uid not in obstaclesListIDs:
-            id = objectIDs[closest_id]
-            angle = angles[closest_id]
-            dist = dists[closest_id]
-            print(
-                f"obstacle id: {id}, dist: {dist}, est pose: {est_pose.getX()}, {est_pose.getY()}"
-            )
-            x, y = calcutePos(est_pose, dist, angle)
+
+        if uid in landmarkIDs:
+            continue  # skip known landmarks
+
+        id = int(objectIDs[closest_id])
+        angle = float(angles[closest_id])
+        dist = float(dists[closest_id])
+
+        print(
+            f"obstacle id: {id}, dist: {dist}, est pose: {est_pose.getX()}, {est_pose.getY()}"
+        )
+        x, y = calcutePos(est_pose, dist, angle)
+
+        if id not in obstaclesListIDs:
+            # new obstacle
             obstacle = Landmark(x, y, CBLACK, id, 10, 10)
             obstacle_list.append(obstacle)
             obstaclesListIDs.append(id)
+        else:
+            # update existing obstacle (smoothly)
+            for o in obstacle_list:
+                if o.ID == id:
+                    dx, dy = x - o.x, y - o.y
+                    jump = math.hypot(dx, dy)
+                    # EMA/lerp update
+                    o.x = (1.0 - ALPHA) * o.x + ALPHA * x
+                    o.y = (1.0 - ALPHA) * o.y + ALPHA * y
+                    if jump > REPLAN_SHIFT_CM:
+                        rrt_needs_replan = True
+                    break
+
+    # if a stored obstacle moved a lot, nuke current plan so it’s rebuilt
+    if rrt_needs_replan:
+        motor_control.path = None
+        motor_control.next_index = 1
+
     return obstacle_list
 
 
@@ -324,78 +353,17 @@ def distance_to_target(est_pose, target):
 
 
 def execute_cmd(arlo, cmd):
-    global STATE_OVERRIDE
-
     if not cmd:
         return
     movement, val = cmd
     if movement == "rotate":
         arlo.rotate_robot(val * -1)
-        time.sleep(0.3)
+        time.sleep(0.5)
     elif movement == "forward":
         arlo.drive_forward_meter(val / 100.0)
         print(f" Driving forward {val} cm")
         time.sleep(0.5)
     elif movement == "stop":
-        arlo.stop()
-
-
-MIN_FRONT = 300
-MIN_SIDE = 80
-
-TURN_SPEED = 60
-CLEAR_FRONT = 180
-POLL = 0.05
-MAX_TURN_S = 2.5
-SPEED_CM_S = 40.82
-
-
-def _read_sensors(arlo):
-    ls = arlo.read_left_ping_sensor() or 9999
-    rs = arlo.read_right_ping_sensor() or 9999
-    fs = arlo.read_front_ping_sensor() or 9999
-    return ls, rs, fs
-
-
-def forward_with_avoid(arlo, max_cm=None):
-    try:
-        arlo.go_diff(68, 64, 1, 1)
-        remaining = float(max_cm) if max_cm else None
-        last_t = time.time()
-
-        while True:
-            if remaining is not None:
-                now = time.time()
-                dt = now - last_t
-                last_t = now
-                remaining -= SPEED_CM_S * dt
-                if remaining <= 0:
-                    arlo.stop()
-                    return "ok"
-
-            ls, rs, fs = _read_sensors(arlo)
-            print(f"L={ls} F={fs} R={rs}")
-
-            if fs < MIN_FRONT or rs < MIN_SIDE or ls < MIN_SIDE:
-                print(f"[Sensor trigger] FS={fs:.1f}, LS={ls:.1f}, RS={rs:.1f}")
-                arlo.stop()
-                arlo.go_diff(60, 60, 0, 0)
-                time.sleep(0.35)
-                arlo.stop()
-
-                if rs > ls:
-                    print("[Action] Turning right (right side clearer)")
-                    arlo.go_diff(TURN_SPEED, TURN_SPEED, 1, 0)
-                else:
-                    print("[Action] Turning left (left side clearer)")
-                    arlo.go_diff(TURN_SPEED, TURN_SPEED, 0, 1)
-
-                time.sleep(0.6)
-                arlo.stop()
-                return "relocalize"
-
-            time.sleep(POLL)
-    finally:
         arlo.stop()
 
 
@@ -440,7 +408,7 @@ def Steer(q_near, q_rand, delta_q=40):
         return (q_near[0] + delta_q * dx / d, q_near[1] + delta_q * dy / d)
 
 
-def buildRRT(est_pose, obstacle_list, goal, delta_q=40):  # Path planning
+def buildRRT(est_pose, obstacle_list, goal, delta_q=40):
 
     start = (est_pose.getX(), est_pose.getY())
     G = [start]
@@ -474,24 +442,6 @@ def buildRRT(est_pose, obstacle_list, goal, delta_q=40):  # Path planning
     path.append(goal_pos)
 
     return path, G
-
-
-def avoidance(arlo):
-
-    direction = None
-    left = arlo.read_left_ping_sensor()
-    right = arlo.read_right_ping_sensor()
-    front = arlo.read_front_ping_sensor()
-
-    if left < 300 or right < 300 or front < 400:  ## mm
-        if right > left:
-            direction = "right"
-        else:
-            direction = "left"
-
-        print(f"[Avoidance triggered] L={left} F={front} R={right} -> {direction}")
-
-    return direction
 
 
 def motor_control(
@@ -569,13 +519,6 @@ def motor_control(
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
-        if motor_control.next_index < len(path) - 2:
-            direction = avoidance(arlo)
-
-            if direction:
-                motor_control._avoid_dir = direction
-                return ("stop", 0), "avoidance"
-
         printer.show_path_image(landmarks, obstacle_list, est_pose, target, G, path)
 
         waypoint = path[motor_control.next_index]
@@ -596,37 +539,7 @@ def motor_control(
         step = min(40.0, d)  # cm
         return ("forward", step), "follow_path"
 
-    if state == "avoidance":
-        if getattr(motor_control, "_avoid_dir", None) == "right":
-            print("Avoidance: rotating 60° to the left")
-            return ("rotate", -60), "avoidance_forward"
-        elif getattr(motor_control, "_avoid_dir", None) == "left":
-            print("Avoidance: rotating 60° to the right")
-            return ("rotate", 60), "avoidance_forward"
-
-    if state == "forward_with_sensor":
-        left = arlo.read_left_ping_sensor()
-        right = arlo.read_right_ping_sensor()
-        front = arlo.read_front_ping_sensor()
-
-        if d < 40:
-            return ("rotate", fi), "finish_driving"
-
-        if abs(fi) > align_ok:
-            return ("rotate", fi), "forward"
-        return ("forward_sensor", min(d, 40.0)), "forward"
-
-    if state == "relocalise":
-        motor_control.path = None
-        motor_control.G = None
-        motor_control.next_index = 1
-        motor_control._search_rot = 0.0
-        motor_control._avoid_dir = None
-        obstacle_list.clear()
-        return ("stop", None), "fullSearch"
-
-    if state == "avoidance_forward":
-        return ("forward", 30), "relocalise"
+        return (None, None), "reached_target"
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
@@ -697,10 +610,9 @@ try:
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-            if seen2Landmarks:
-                obstacle_list = get_unique_obstacles(
-                    obstacle_list, objectIDs, dists, angles, landmarkIDs, est_pose
-                )
+            obstacle_list = get_unique_obstacles(
+                obstacle_list, objectIDs, dists, angles, landmarkIDs
+            )
             for obstacle in obstacle_list:
 
                 print(f"Obstacle {obstacle.ID}: x: {obstacle.x}, y: {obstacle.y}, ")
@@ -769,15 +681,6 @@ try:
 
         seen2Landmarks = len(landmarks_seen) >= 2
         seen4Landmarks = len(landmarks_seen) >= 4
-        if STATE_OVERRIDE:
-            state = STATE_OVERRIDE
-            STATE_OVERRIDE = None
-            landmarks_seen.clear()
-            obstacle_list.clear()
-            if hasattr(motor_control, "path"):
-                motor_control.path = None
-                motor_control.next_index = 1
-
         if onRobot:
             cmd, state = motor_control(
                 state,
@@ -790,8 +693,6 @@ try:
             )
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
-            if state == "relocalise":
-                landmarks_seen.clear()
         else:
             apply_sample_motion_model(particles, 0, 0)
 
