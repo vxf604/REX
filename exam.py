@@ -488,7 +488,7 @@ def avoidance(arlo):
     right = arlo.read_right_ping_sensor()
     front = arlo.read_front_ping_sensor()
 
-    if left < 300 or right < 300 or front < 400:  ## mm
+    if left < 200 or right < 200 or front < 300:  ## mm
         if right > left:
             direction = "right"
         else:
@@ -571,9 +571,6 @@ def motor_control(
         path = motor_control.path
         G = motor_control.G
 
-        if not path or len(path) < 2:
-            return ("rotate", 20.0), "follow_path"
-
         if motor_control.next_index < len(path) - 2:
             direction = avoidance(arlo)
 
@@ -603,18 +600,14 @@ def motor_control(
 
     if state == "avoidance":
         if getattr(motor_control, "_avoid_dir", None) == "right":
-            print("Avoidance: rotating 60° to the right")
-            return ("rotate", 60), "avoidance_forward"
-        elif getattr(motor_control, "_avoid_dir", None) == "left":
             print("Avoidance: rotating 60° to the left")
-<<<<<<< HEAD
+            return ("rotate", -60), "avoidance_forward"
+        elif getattr(motor_control, "_avoid_dir", None) == "left":
+            print("Avoidance: rotating 60° to the right")
             return ("rotate", 60), "avoidance_forward"
         elif getattr (motor_control, "_avoid_dir", None) == "front":
             print ("Avoidance: rotating 90° to the left")
             return ("rotate", 90), "avoidance_forward"
-=======
-            return ("rotate", -60), "avoidance_forward"
->>>>>>> 7ec6f1c628cab77d5d9da9d7692bbb0290817ad5
 
     if state == "forward_with_sensor":
         left = arlo.read_left_ping_sensor()
@@ -632,17 +625,13 @@ def motor_control(
         motor_control.path = None
         motor_control.G = None
         motor_control.next_index = 1
-        motor_control._search_rot = 0.0
-<<<<<<< HEAD
-        return (None, None), "full_search"
-=======
+        motor_control._search_rot = 0
         motor_control._avoid_dir = None
         obstacle_list.clear()
         return ("stop", None), "fullSearch"
->>>>>>> 86dcb18ca8779f3dd038d81600629c590ab6f687
 
     if state == "avoidance_forward":
-        return ("forward", 30), "relocalise"
+        return ("forward", 30), "follow_path"
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
@@ -806,8 +795,6 @@ try:
             )
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
-            if state == "relocalise":
-                landmarks_seen.clear()
         else:
             apply_sample_motion_model(particles, 0, 0)
 
