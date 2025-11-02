@@ -27,7 +27,6 @@ showGUI = True  # Whether or not to open GUI windows
 onRobot = True  # Whether or not we are running on the Arlo robot
 printer = print_path.PathPrinter(landmark_radius=20)  # mm
 
-STATE_OVERRIDE = None
 
 if onRobot:
     import robot
@@ -175,7 +174,7 @@ def translation1(p, transl1, std):
     p.setY(y)
 
 
-def sample_motion_model(p, rot1, trans):
+def sample_motion_model(p, rot1, trans):  # Prediction
     if abs(rot1) > 0:
         rotation(p, rot1, 0.10)
         p.setX(p.getX() + transerror(1))
@@ -199,16 +198,12 @@ def apply_motion_from_cmd(particles, cmd):
     elif kind == "forward":
         apply_sample_motion_model(particles, 0, val)
 
-    elif kind == "forward_sensor":
-        if val:
-            apply_sample_motion_model(particles, 0, val)
-
 
 def sign(x):
     return 1 if x >= 0 else -1
 
 
-def measurement_model(distance, angle, particle, landmark):
+def measurement_model(distance, angle, particle, landmark):  # Correction
     sigma_d = 15
     sigma_a = 0.15
 
@@ -328,7 +323,6 @@ def distance_to_target(est_pose, target):
 
 
 def execute_cmd(arlo, cmd):
-    global STATE_OVERRIDE
     if not cmd:
         return
     movement, val = cmd
@@ -342,10 +336,17 @@ def execute_cmd(arlo, cmd):
     elif movement == "stop":
         arlo.stop()
     elif movement == "forward_sensor":
-        max_cm = val if (val and val > 0) else None
-        result = forward_with_avoid(arlo, max_cm=max_cm)
-        if result == "relocalize":
-            STATE_OVERRIDE = "fullSearch"
+        driving = True
+        drive_m = val / 100.0
+        while driving:
+            arlo.go_diff(68, 64, 1, 1)
+            drive_time = 2.45 * drive_m
+            time.sleep(drive_time)
+            leftSensor = arlo.read_left_ping_sensor()
+            rightSensor = arlo.read_right_ping_sensor()
+            frontSensor = arlo.read_front_ping_sensor()
+            print("Front Sensor: ", frontSensor)
+        arlo.drive_forward_meter(val / 100)
 
 
 MIN_FRONT = 300
@@ -445,7 +446,7 @@ def Steer(q_near, q_rand, delta_q=40):
         return (q_near[0] + delta_q * dx / d, q_near[1] + delta_q * dy / d)
 
 
-def buildRRT(est_pose, obstacle_list, goal, delta_q=40):
+def buildRRT(est_pose, obstacle_list, goal, delta_q=40):  # Path planning
 
     start = (est_pose.getX(), est_pose.getY())
     G = [start]
@@ -482,15 +483,6 @@ def buildRRT(est_pose, obstacle_list, goal, delta_q=40):
 
 
 def avoidance(arlo):
-    # if not obstacles_list:
-    #     return False
-
-    # robot_x, robot_y = est_pose.getX(), est_pose.getY()
-
-    # for close_obstacle in obstacles_list:
-    #     distance = math.sqrt(
-    #         (close_obstacle.y - robot_y) ** 2 + (close_obstacle.x - robot_x) ** 2
-    #     )
 
     direction = None
     left = arlo.read_left_ping_sensor()
@@ -560,7 +552,7 @@ def motor_control(
 
         if abs(fi) > align_ok:
             return ("rotate", fi), "forward"
-        return ("forward_sensor", min(d, 40.0)), "forward"
+        return ("forward", min(d, 40.0)), "forward"
 
     if state == "calculate_path":
 
@@ -616,6 +608,18 @@ def motor_control(
         elif getattr(motor_control, "_avoid_dir", None) == "left":
             print("Avoidance: rotating 60° to the left")
             return ("rotate", -60), "avoidance_forward"
+
+    if state == "forward_with_sensor":
+        left = arlo.read_left_ping_sensor()
+        right = arlo.read_right_ping_sensor()
+        front = arlo.read_front_ping_sensor()
+
+        if d < 40:
+            return ("rotate", fi), "finish_driving"
+
+        if abs(fi) > align_ok:
+            return ("rotate", fi), "forward"
+        return ("forward", min(d, 40.0)), "forward"
 
     if state == "avoidance_forward":
         return ("forward", 30), "follow_path"
@@ -689,6 +693,13 @@ try:
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
+            if seen2Landmarks:
+                obstacle_list = get_unique_obstacles(
+                    obstacle_list, objectIDs, dists, angles, landmarkIDs
+                )
+            for obstacle in obstacle_list:
+
+                print(f"Obstacle {obstacle.ID}: x: {obstacle.x}, y: {obstacle.y}, ")
             objectIDs, dists, angles = get_unique_landmarks(
                 objectIDs, dists, angles, landmarkIDs
             )
@@ -751,13 +762,6 @@ try:
                 p.setWeight(1.0 / num_particles)
 
         est_pose = particle_class.estimate_pose(particles)
-
-        seen2Landmarks = len(landmarks_seen) >= 2
-
-        if not isinstance(objectIDs, type(None)) and seen2Landmarks:
-            obstacle_list = get_unique_obstacles(
-                obstacle_list, objectIDs, dists, angles, landmarkIDs, est_pose
-            )
 
         seen2Landmarks = len(landmarks_seen) >= 2
         seen4Landmarks = len(landmarks_seen) >= 4
