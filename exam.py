@@ -631,7 +631,7 @@ def motor_control(
         return ("stop", None), "fullSearch"
 
     if state == "avoidance_forward":
-        return ("forward", 30), "follow_path"
+        return ("forward", 30), "relocalise"
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
