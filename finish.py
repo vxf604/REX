@@ -446,6 +446,20 @@ def read_front_cm(arlo):
         return 9999.0
 
 
+def read_left_cm(arlo):
+    try:
+        return arlo.read_left_ping_sensor() / 10.0
+    except Exception:
+        return 9999.0
+
+
+def read_right_cm(arlo):
+    try:
+        return arlo.read_right_ping_sensor() / 10.0
+    except Exception:
+        return 9999.0
+
+
 def motor_control(
     state, est_pose, targets, seen2Landmarks, seen4Landmarks, obstacle_list, arlo
 ):
@@ -505,6 +519,7 @@ def motor_control(
         return (None, None), "follow_path"
 
     if state == "follow_path":
+        print(motor_control.next_index)
         # simple konstanter
         ALIGN_DEG = 4.0  # hvor lige vi vil sigte før frem
         STEP_CM = 30.0  # korte frem-hop
@@ -546,13 +561,26 @@ def motor_control(
 
         # simpel sensor-gate
         front = read_front_cm(arlo)
-        if front < min(d, STEP_CM) + MARGIN:
+        left = read_left_cm(arlo)
+        right = read_right_cm(arlo)
+
+        block_dist = min(d, STEP_CM) + MARGIN
+
+        # hvis én af siderne/foran er for tæt, så kør ikke frem
+        if min(front, left, right) < block_dist:
             # prøv næste waypoint i stedet for at køre ind i noget
             if i + 1 < len(path):
                 motor_control.next_index = i + 1
                 return (None, 0), "follow_path"
             else:
-                return ("rotate", 20.0), "follow_path"
+                # hvis der ikke er et næste waypoint, lav en lille undvigelse væk fra den tætteste side
+                # (drejesignalet kan evt. vendes hvis jeres robot roterer omvendt)
+                if left < right:
+                    return ("rotate", 12.0), "follow_path"  # drej lidt mod højre
+                elif right < left:
+                    return ("rotate", -12.0), "follow_path"  # drej lidt mod venstre
+                else:
+                    return ("rotate", 12.0), "follow_path"
 
         # tæt på mellem-waypoint? hop videre uden at køre
         if d < 5.0 and not last:
