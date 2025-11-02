@@ -620,6 +620,7 @@ def motor_control(
         motor_control.G = None
         motor_control.next_index = 1
         motor_control._search_rot = 0.0
+        motor_control._avoid_dir = None
         obstacle_list.clear()
         return ("stop", None), "fullSearch"
 
@@ -788,6 +789,8 @@ try:
             )
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
+            if state in ("relocalise", "fullSearch"):
+                landmarks_seen.clear()
         else:
             apply_sample_motion_model(particles, 0, 0)
 
