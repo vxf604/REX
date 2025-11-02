@@ -812,6 +812,3 @@ finally:
 
     # Clean-up capture thread
     cam.terminateCaptureThread()
-
-
-So good now?
