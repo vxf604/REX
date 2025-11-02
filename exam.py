@@ -619,13 +619,6 @@ try:
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-            if seen2Landmarks:
-                obstacle_list = get_unique_obstacles(
-                    obstacle_list, objectIDs, dists, angles, landmarkIDs
-                )
-            for obstacle in obstacle_list:
-
-                print(f"Obstacle {obstacle.ID}: x: {obstacle.x}, y: {obstacle.y}, ")
             objectIDs, dists, angles = get_unique_landmarks(
                 objectIDs, dists, angles, landmarkIDs
             )
@@ -688,6 +681,13 @@ try:
                 p.setWeight(1.0 / num_particles)
 
         est_pose = particle_class.estimate_pose(particles)
+
+        seen2Landmarks = len(landmarks_seen) >= 2
+
+        if not isinstance(objectIDs, type(None)) and seen2Landmarks:
+            obstacle_list = get_unique_obstacles(
+                obstacle_list, objectIDs, dists, angles, landmarkIDs, est_pose
+            )
 
         seen2Landmarks = len(landmarks_seen) >= 2
         seen4Landmarks = len(landmarks_seen) >= 4
