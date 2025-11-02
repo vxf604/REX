@@ -620,6 +620,13 @@ def motor_control(
             return ("rotate", fi), "forward"
         return ("forward_sensor", min(d, 40.0)), "forward"
 
+    if state == "relocalise":
+        motor_control.path = None
+        motor_control.G = None
+        motor_control.next_index = 1
+        motor_control._search_rot = 0.0
+        return (None, None), "full_search"
+
     if state == "avoidance_forward":
         return ("forward", 30), "follow_path"
 
@@ -690,7 +697,7 @@ try:
         colour = cam.get_next_frame()
         print("state: ", state)
         # Detect objects
-        objectIDs, dists, angles = cam.detect_aruco_objects(colour)     
+        objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
             if seen2Landmarks:
                 obstacle_list = get_unique_obstacles(
