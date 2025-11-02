@@ -487,7 +487,7 @@ def motor_control(
 
     # follow the path
     if state == "follow_path":
-        ALIGN_DEG = 4.0
+        ALIGN_DEG = 6.0
         STEP_CM = 30.0
         GOAL_TOL = 12.0
         MARGIN = 5.0
