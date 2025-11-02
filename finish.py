@@ -150,12 +150,12 @@ def translation1(p, transl1, std):
 
 def sample_motion_model(p, rot1, trans):
     if abs(rot1) > 0:
-        rotation(p, rot1, 0.10)  # gentler noise
+        rotation(p, rot1, 0.03)  # gentler noise
         p.setX(p.getX() + transerror(0.3))
         p.setY(p.getY() + transerror(0.3))
     elif trans > 0:
-        translation1(p, trans, 2)
-        p.setTheta(p.getTheta() + roterror(0.05))
+        translation1(p, trans, 0.8)
+        p.setTheta(p.getTheta() + roterror(0.02))
 
 
 def apply_sample_motion_model(particles, rot1, trans):
@@ -168,7 +168,7 @@ def apply_motion_from_cmd(particles, cmd):
         return
     kind, val = cmd
     if kind == "rotate":
-        apply_sample_motion_model(particles, math.radians(-val), 0)
+        apply_sample_motion_model(particles, math.radians(ROTATE_CMD_SIGN * val), 0)
     elif kind == "forward":
         apply_sample_motion_model(particles, 0, val)
 
@@ -278,7 +278,7 @@ def execute_cmd(arlo, cmd):
         return
     movement, val = cmd
     if movement == "rotate":
-        arlo.rotate_robot(val)
+        arlo.rotate_robot(ROTATE_CMD_SIGN * val)
         time.sleep(0.5)
     elif movement == "forward":
         arlo.drive_forward_meter(val / 100.0)
