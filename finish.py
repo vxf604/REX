@@ -499,21 +499,21 @@ def motor_control(
         math.atan2(target_pos[1] - est_pose.getY(), target_pos[0] - est_pose.getX())
     )
     heading = math.degrees(est_pose.getTheta())
-    fi = angle_to_target(est_pose, target_pos)  # your function
-    print(f"bearing={bearing:.1f}°, heading={heading:.1f}°, fi={fi:.1f}°")
-    align_ok = 5
+    ALIGN_DEG = 10.0  # større = færre “ryk”
+    MAX_TURN = 30.0  # cap pr. kommando
 
-    if state == "rotating":
-        # step = max(8.0, min(abs(fi), 35.0))
-        # turn = step if fi >= 0 else -step
-        next_state = "forward" if abs(fi) < align_ok else "rotating"
-        return ("rotate", fi), next_state
+    fi = angle_to_target(est_pose, wp)
+    d = distance_to_target(est_pose, wp)
+
+    if abs(fi) > ALIGN_DEG:
+        turn = max(-MAX_TURN, min(MAX_TURN, fi))
+        return ("rotate", turn), "follow_path"
 
     if state == "forward":
         if d < 40:
             return ("rotate", fi), "finish_driving"
 
-        if abs(fi) > align_ok:
+        if abs(fi) > ALIGN_DEG:
             return ("rotate", fi), "forward"
         return ("forward", min(d, 40.0)), "forward"
 
@@ -563,49 +563,57 @@ def motor_control(
         if abs(fi) > ALIGN_DEG:
             return ("rotate", fi), "follow_path"
 
-        # simpel sensor-gate
+        # 1) Læs sensorer
         front = read_front_cm(arlo)
         left = read_left_cm(arlo)
         right = read_right_cm(arlo)
 
-        FRONT_MARGIN = MARGIN  # keep your existing MARGIN for front
-        SIDE_SAFE = 10.0  # tighter side clearance in cm (tune 15–25)
-        NUDGE_DEG = 30.0  # small steer away from a close side
-        FRONT_NUDGE = 10.0
+        # Tærskler med hysterese
+        SIDE_ENTER = 12.0  # tæt ift. side, start undvigelse
+        SIDE_EXIT = 16.0  # lidt løsere for at forlade undvigelse
+        FRONT_ENTER = min(d, STEP_CM) + MARGIN
+        FRONT_EXIT = FRONT_ENTER + 4.0
 
-        block_front = min(d, STEP_CM) + MARGIN
+        # init engangslagre
+        if not hasattr(motor_control, "_avoid_dir"):
+            motor_control._avoid_dir = 0  # -1=venstre, +1=højre, 0=ingen
+        if not hasattr(motor_control, "_in_avoid"):
+            motor_control._in_avoid = False
 
-        # hvis én af siderne/foran er for tæt, så kør ikke frem
-        if front < block_front:
-            motor_control._await_clear = True
-            return ("rotate", -FRONT_NUDGE), "follow_path"  # drej lidt mod højre
+        # 2) Opdater undvigelsesmode (ind/ud med hysterese)
+        # ind i undvigelse?
+        if front < FRONT_ENTER or left < SIDE_ENTER or right < SIDE_ENTER:
+            motor_control._in_avoid = True
+            # vælg konsistent retning væk fra den tætteste side
+            if left < right:
+                motor_control._avoid_dir = +1  # drej mod højre
+            elif right < left:
+                motor_control._avoid_dir = -1  # drej mod venstre
+            elif motor_control._avoid_dir == 0:
+                motor_control._avoid_dir = +1  # default
+        # ud af undvigelse?
+        elif front > FRONT_EXIT and left > SIDE_EXIT and right > SIDE_EXIT:
+            motor_control._in_avoid = False
 
-        # Selvom front er klar, kør ikke hvis en side er farligt tæt
-        if left < SIDE_SAFE and right >= SIDE_SAFE:
-            motor_control._await_clear = True
-            return ("rotate", -NUDGE_DEG), "follow_path"
-        if right < SIDE_SAFE and left >= SIDE_SAFE:
-            motor_control._await_clear = True
-            return ("rotate", NUDGE_DEG), "follow_path"
-        if left < SIDE_SAFE and right < SIDE_SAFE:
-            motor_control._await_clear = True
-            return ("rotate", -NUDGE_DEG), "follow_path"
+        # 3) Hvis vi er i undvigelse: KUN nudge – ingen alignment endnu
+        if motor_control._in_avoid:
+            NUDGE_DEG = 10.0
+            return ("rotate", NUDGE_DEG * motor_control._avoid_dir), "follow_path"
 
-        # tæt på mellem-waypoint? hop videre uden at køre
+        # 4) Nu må vi align’e (kun når klart)
+        fi = angle_to_target(est_pose, wp)
+        if abs(fi) > ALIGN_DEG:
+            return ("rotate", fi), "follow_path"
+
+        # 5) Waypoint-håndtering og kørsel
         if d < 5.0 and not last:
             motor_control.next_index = i + 1
             return (None, 0), "follow_path"
 
-        # kør kort frem; hvis vi alligevel rammer punktet, bump index nu
         step = min(STEP_CM, d)
-
-        if motor_control._await_clear:
-            motor_control._await_clear = False
-            return ("forward", step), "follow_path"
         if d <= STEP_CM + 2.0 and not last:
             motor_control.next_index = i + 1
 
-        # hvis sidste hop til sidste punkt er kort, så afslut efter kørslen
         if last and d <= STEP_CM:
             return ("forward", d), "reached_target"
 
@@ -626,6 +634,9 @@ def motor_control(
             motor_control.path = None
             motor_control.G = None
             motor_control.next_index = 1
+            motor_control._in_avoid = False
+            motor_control._avoid_dir = 0
+
             return ("rotate", 20), "fullSearch"
         return ("stop", None), "reached_target"
 
