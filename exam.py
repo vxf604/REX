@@ -621,7 +621,7 @@ def motor_control(
         motor_control.next_index = 1
         motor_control._search_rot = 0.0
         obstacle_list.clear()
-        return ("stop", None), "full_search"
+        return ("stop", None), "fullSearch"
 
     if state == "avoidance_forward":
         return ("forward", 30), "relocalise"
