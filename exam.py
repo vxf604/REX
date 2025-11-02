@@ -412,31 +412,33 @@ def buildRRT(est_pose, obstacle_list, goal, delta_q=40):
     return path, G
 
 
-def avoidance(arlo, est_pose, obstacles_list):
-    if not obstacles_list:
-        return False
 
-    robot_x, robot_y = est_pose.getX(), est_pose.getY()
+def avoidance(arlo):
+    # if not obstacles_list:
+    #     return False
 
-    for close_obstacle in obstacles_list:
-        distance = math.sqrt(
-            (close_obstacle.y - robot_y) ** 2 + (close_obstacle.x - robot_x) ** 2
-        )
+    # robot_x, robot_y = est_pose.getX(), est_pose.getY()
 
-        if distance < 40:
-            left = arlo.read_left_ping_sensor()
-            right = arlo.read_right_ping_sensor()
-            front = arlo.read_front_ping_sensor()
+    # for close_obstacle in obstacles_list:
+    #     distance = math.sqrt(
+    #         (close_obstacle.y - robot_y) ** 2 + (close_obstacle.x - robot_x) ** 2
+    #     )
 
-            if left < 400 or right < 400 or front < 400:  ## mm
-                if right > left:
-                    print("got right")
-                    return "right"
-                else:
-                    print("got left")
-                    return "left"
+    direction = None
+    left = arlo.read_left_ping_sensor()
+    right = arlo.read_right_ping_sensor()
+    front = arlo.read_front_ping_sensor()
+    
 
-    return None
+    if left < 200 or right < 200 or front < 300:  ## mm
+        if right > left:
+            direction = "right"
+        else:
+            direction = "left"
+        
+        print(f"[Avoidance triggered] L={left} F={front} R={right} -> {direction}")
+            
+    return direction
 
 
 def motor_control(
@@ -514,9 +516,10 @@ def motor_control(
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
-        direction = avoidance(arlo, est_pose, obstacle_list)
+        direction = avoidance(arlo)
 
         if direction:
+            motor_control._avoid_dir = direction
             return (direction, 0), "avoidance"
 
         printer.show_path_image(landmarks, obstacle_list, est_pose, target, G, path)
@@ -542,11 +545,15 @@ def motor_control(
         return (None, None), "reached_target"
 
     if state == "avoidance":
-        if "right" in cmd[0]:
+        if getattr(motor_control, "_avoid_dir", None) == "right":
+            print("Avoidance: rotating 60° to the right")
             return ("rotate", 60), "avoidance_forward"
-        elif "left" in cmd[0]:
+        elif getattr(motor_control, "_avoid_dir", None) == "left":
+            print("Avoidance: rotating 60° to the left")
             return ("rotate", -60), "avoidance_forward"
-
+        
+    
+    
     if state == "avoidance_forward":
         return ("forward", 30), "follow_path"
 
