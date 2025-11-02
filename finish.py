@@ -610,6 +610,9 @@ def motor_control(
     if state == "reached_target":
         if len(targets) > 0:
             targets.pop(0)
+            motor_control.path = None
+            motor_control.G = None
+            motor_control.next_index = 1
             return ("rotate", 20), "searching"
         return ("stop", None), "reached_target"
 
