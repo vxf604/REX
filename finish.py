@@ -34,6 +34,11 @@ def isRunningOnArlo():
     return onRobot
 
 
+# Keep robot and particles in sync for rotations
+# If your robot API turns left for negative values, keep -1.0
+# If it turns left for positive values, set to +1.0
+ROTATE_CMD_SIGN = -1.0
+
 CRED = (0, 0, 255)
 CGREEN = (0, 255, 0)
 CBLUE = (255, 0, 0)
@@ -43,10 +48,10 @@ CMAGENTA = (255, 0, 255)
 CWHITE = (255, 255, 255)
 CBLACK = (0, 0, 0)
 
-L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=1, borderWidth_x=30, borderWidth_y=30)
-L2 = Landmark(x=0.0, y=300.0, color=CGREEN, ID=6, borderWidth_x=30, borderWidth_y=-30)
+L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=9, borderWidth_x=30, borderWidth_y=30)
+L2 = Landmark(x=0.0, y=300.0, color=CGREEN, ID=7, borderWidth_x=30, borderWidth_y=-30)
 L3 = Landmark(x=400.0, y=0.0, color=CYELLOW, ID=3, borderWidth_x=-30, borderWidth_y=30)
-L4 = Landmark(x=400.0, y=300.0, color=CBLUE, ID=8, borderWidth_x=-30, borderWidth_y=-30)
+L4 = Landmark(x=400.0, y=300.0, color=CBLUE, ID=6, borderWidth_x=-30, borderWidth_y=-30)
 
 landmarks = [L1, L2, L3, L4]
 landmarkIDs = {l.ID: l for l in landmarks}
@@ -85,7 +90,7 @@ def draw_world(est_pose, particles, world):
     for particle in particles:
         x = int(particle.getX() + offsetX)
         y = ymax - (int(particle.getY() + offsetY))
-        colour = jet(particle.getWeight() / max_weight)
+        colour = jet(particle.getWeight() / max_weight if max_weight > 0 else 0.0)
         cv2.circle(world, (x, y), 2, colour, 2)
         b = (
             int(particle.getX() + 15.0 * np.cos(particle.getTheta())) + offsetX,
@@ -94,7 +99,6 @@ def draw_world(est_pose, particles, world):
         )
         cv2.line(world, (x, y), b, colour, 2)
     for landmark in landmarks:
-        ID = landmark.ID
         lm = (int(landmark.x + offsetX), int(ymax - (landmark.y + offsetY)))
         cv2.circle(world, lm, 5, landmark.color, 2)
     a = (int(est_pose.getX()) + offsetX, ymax - (int(est_pose.getY()) + offsetY))
@@ -146,12 +150,12 @@ def translation1(p, transl1, std):
 
 def sample_motion_model(p, rot1, trans):
     if abs(rot1) > 0:
-        rotation(p, rot1, 0.10)
-        p.setX(p.getX() + transerror(1))
-        p.setY(p.getY() + transerror(1))
+        rotation(p, rot1, 0.03)  # gentler noise
+        p.setX(p.getX() + transerror(0.3))
+        p.setY(p.getY() + transerror(0.3))
     elif trans > 0:
-        translation1(p, trans, 2)
-        p.setTheta(p.getTheta() + roterror(0.05))
+        translation1(p, trans, 0.8)
+        p.setTheta(p.getTheta() + roterror(0.02))
 
 
 def apply_sample_motion_model(particles, rot1, trans):
@@ -164,7 +168,7 @@ def apply_motion_from_cmd(particles, cmd):
         return
     kind, val = cmd
     if kind == "rotate":
-        apply_sample_motion_model(particles, math.radians(val), 0)
+        apply_sample_motion_model(particles, math.radians(ROTATE_CMD_SIGN * val), 0)
     elif kind == "forward":
         apply_sample_motion_model(particles, 0, val)
 
@@ -180,7 +184,7 @@ def measurement_model(distance, angle, particle, landmark):
     theta = particle.getTheta()
     lx, ly = landmark.x, landmark.y
     d_i = np.sqrt((lx - x) ** 2 + (ly - y) ** 2)
-    e_l = np.array([lx - x, ly - y]) / d_i
+    e_l = np.array([lx - x, ly - y]) / d_i if d_i > 0 else np.array([0.0, 0.0])
     e_theta = np.array([math.cos(theta), math.sin(theta)])
     e_theta_hat = np.array([-math.sin(theta), math.cos(theta)])
     dot = float(np.clip(np.dot(e_l, e_theta), -1.0, 1.0))
@@ -213,8 +217,8 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
 def calcutePos(est_pose, dist, angle):
     x0, y0 = est_pose.getX(), est_pose.getY()
     theta = est_pose.getTheta()
-    rx = dist * math.sin(angle)
-    ry = dist * math.cos(angle)
+    rx = dist * math.sin(angle)  # x left
+    ry = dist * math.cos(angle)  # y forward
     c, s = math.cos(theta), math.sin(theta)
     wx = x0 + c * rx - s * ry
     wy = y0 + s * rx + c * ry
@@ -251,7 +255,10 @@ def angle_to_target(est_pose, target):
     dx = target_x - robot_x
     dy = target_y - robot_y
     t = np.array([dx, dy])
-    t = t / np.linalg.norm(t)
+    n = np.linalg.norm(t)
+    if n == 0:
+        return 0.0
+    t = t / n
     v = np.array([math.cos(robot_theta), math.sin(robot_theta)])
     dot = float(np.clip(np.dot(t, v), -1.0, 1.0))
     cross = v[0] * t[1] - v[1] * t[0]
@@ -261,15 +268,9 @@ def angle_to_target(est_pose, target):
 
 def distance_to_target(est_pose, target):
     target_x, target_y = target[0], target[1]
-    robot_x, robot_y, robot_theta = (
-        est_pose.getX(),
-        est_pose.getY(),
-        est_pose.getTheta(),
-    )
-    dx = target_x - robot_x
-    dy = target_y - robot_y
-    distance = math.sqrt(dx**2 + dy**2)
-    return distance
+    dx = target_x - est_pose.getX()
+    dy = target_y - est_pose.getY()
+    return math.sqrt(dx**2 + dy**2)
 
 
 def execute_cmd(arlo, cmd):
@@ -277,7 +278,7 @@ def execute_cmd(arlo, cmd):
         return
     movement, val = cmd
     if movement == "rotate":
-        arlo.rotate_robot(val * -1)
+        arlo.rotate_robot(ROTATE_CMD_SIGN * val)
         time.sleep(0.5)
     elif movement == "forward":
         arlo.drive_forward_meter(val / 100.0)
@@ -291,8 +292,8 @@ def distance(p1, p2):
     return float(np.linalg.norm(np.array(p1) - np.array(p2)))
 
 
-def in_collision(point, obstacles, robot_radius=15):
-    obstacle_radius = 18
+def in_collision(point, obstacles, robot_radius=18):  # more conservative
+    obstacle_radius = 22
     x, y = point
     for obstacle in obstacles:
         map_x, map_y = obstacle.x, obstacle.y
@@ -356,24 +357,24 @@ def buildRRT(est_pose, obstacles_list, goal, delta_q=40):
 
 
 def front_clear(arlo, dist_ok_cm=40):
-    vals = []
+    fl = ff = fr = None
     try:
-        vals.append(arlo.read_front_ping())
+        fl = arlo.read_left_ping()
     except Exception:
         pass
     try:
-        vals.append(arlo.read_left_ping())
+        ff = arlo.read_front_ping()
     except Exception:
         pass
     try:
-        vals.append(arlo.read_right_ping())
+        fr = arlo.read_right_ping()
     except Exception:
         pass
-    vals = [v for v in vals if v is not None]
+    vals = [v for v in [ff, fl, fr] if v is not None]
     if not vals:
-        return True, 9999
+        return True, 9999, fl, ff, fr
     m = min(vals)
-    return (m >= dist_ok_cm), m
+    return (m >= dist_ok_cm), m, fl, ff, fr
 
 
 def nearest_path_index(est_pose, path, start_idx):
@@ -427,9 +428,6 @@ def motor_control(
         else:
             return ("rotate", 20.0), "fullSearch"
 
-    print(
-        f"est_pose: x: {est_pose.getX()}, y: {est_pose.getY()}, theta: {math.degrees(est_pose.getTheta())}"
-    )
     fi = angle_to_target(est_pose, target_pos)
     d = distance_to_target(est_pose, target_pos)
     bearing = math.degrees(
@@ -449,7 +447,7 @@ def motor_control(
             return ("rotate", fi), "finish_driving"
         if abs(fi) > align_ok:
             return ("rotate", fi), "forward"
-        return ("forward", min(d, 40.0)), "forward"
+        return ("forward", min(d, 20.0)), "forward"  # shorter chunks
 
     if state == "calculate_path":
         return (None, None), "follow_path"
@@ -477,10 +475,14 @@ def motor_control(
         fi = angle_to_target(est_pose, waypoint)
         d = distance_to_target(est_pose, waypoint)
 
-        clear, mind = front_clear(arlo, 40)
+        clear, mind, fl, ff, fr = front_clear(arlo, 40)
         if not clear:
             motor_control._avoid_until = time.time() + 3.0
-            motor_control._avoid_side = getattr(motor_control, "_avoid_side", 1)
+            # turn away from the tighter side
+            if fl is not None and fr is not None:
+                motor_control._avoid_side = -1 if fl < fr else 1
+            else:
+                motor_control._avoid_side = getattr(motor_control, "_avoid_side", 1)
             return ("rotate", 20.0 * motor_control._avoid_side), "avoid"
 
         if d < 5.0:
@@ -492,18 +494,21 @@ def motor_control(
         if abs(fi) > 4.0:
             return ("rotate", small_rotate_step(fi)), "follow_path"
 
-        step = min(40.0, d)
+        step = min(20.0, d)  # shorter chunks for safety
         return ("forward", step), "follow_path"
 
     if state == "avoid":
-        clear, mind = front_clear(arlo, 40)
+        clear, mind, fl, ff, fr = front_clear(arlo, 40)
         if clear:
             motor_control._avoid_hits = getattr(motor_control, "_avoid_hits", 0) + 1
-            return ("forward", 20.0), "rejoin"
+            return ("forward", 15.0), "rejoin"
         if time.time() > getattr(motor_control, "_avoid_until", 0):
-            motor_control._avoid_side = -getattr(motor_control, "_avoid_side", 1)
-            motor_control._avoid_until = time.time() + 3.0
-        return ("rotate", 15.0 * getattr(motor_control, "_avoid_side", 1)), "avoid"
+            if fl is not None and fr is not None:
+                motor_control._avoid_side = -1 if fl < fr else 1
+            else:
+                motor_control._avoid_side = -getattr(motor_control, "_avoid_side", 1)
+            motor_control._avoid_until = time.time() + 2.0
+        return ("rotate", 12.0 * getattr(motor_control, "_avoid_side", 1)), "avoid"
 
     if state == "rejoin":
         path = motor_control.path
@@ -536,7 +541,8 @@ def motor_control(
             motor_control.path = None
             motor_control.next_index = 1
             obstacles_list.clear()
-            return ("rotate", 20), "searching"
+            # force fresh perception before new plan
+            return (None, 0), "fullSearch"
         return ("stop", None), "reached_target"
 
 
@@ -581,8 +587,6 @@ try:
             obstacles_list = get_unique_obstacles(
                 obstacles_list, objectIDs, dists, angles, landmarkIDs
             )
-            for obstacle in obstacles_list:
-                print(f"Obstacle: x: {obstacle.x}, y: {obstacle.y}, ID: {obstacle.ID}")
             objectIDs, dists, angles = get_unique_landmarks(
                 objectIDs, dists, angles, landmarkIDs
             )
