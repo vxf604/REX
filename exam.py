@@ -387,14 +387,17 @@ def forward_with_avoid(arlo, max_cm=None):
             print(f"L={ls} F={fs} R={rs}")
 
             if fs < MIN_FRONT or rs < MIN_SIDE or ls < MIN_SIDE:
+                print(f"[Sensor trigger] FS={fs:.1f}, LS={ls:.1f}, RS={rs:.1f}")
                 arlo.stop()
                 arlo.go_diff(60, 60, 0, 0)
                 time.sleep(0.35)
                 arlo.stop()
 
                 if rs > ls:
+                    print("[Action] Turning right (right side clearer)")
                     arlo.go_diff(TURN_SPEED, TURN_SPEED, 1, 0)
                 else:
+                    print("[Action] Turning left (left side clearer)")
                     arlo.go_diff(TURN_SPEED, TURN_SPEED, 0, 1)
 
                 time.sleep(0.6)
@@ -490,7 +493,7 @@ def avoidance(arlo):
     right = arlo.read_right_ping_sensor()
     front = arlo.read_front_ping_sensor()
 
-    if left < 200 or right < 200 or front < 300:  ## mm
+    if left < 300 or right < 300 or front < 400:  ## mm
         if right > left:
             direction = "right"
         else:
@@ -692,7 +695,7 @@ try:
         colour = cam.get_next_frame()
         print("state: ", state)
         # Detect objects
-        objectIDs, dists, angles = cam.detect_aruco_objects(colour)
+        objectIDs, dists, angles = cam.detect_aruco_objects(colour)     
         if not isinstance(objectIDs, type(None)):
             if seen2Landmarks:
                 obstacle_list = get_unique_obstacles(
