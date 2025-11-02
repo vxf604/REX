@@ -439,6 +439,13 @@ def avoidance(arlo, est_pose, obstacles_list):
     return None
 
 
+def read_front_cm(arlo):
+    try:
+        return arlo.read_front_ping_sensor() / 10.0
+    except Exception:
+        return 9999.0
+
+
 def motor_control(
     state, est_pose, targets, seen2Landmarks, seen4Landmarks, obstacle_list, arlo
 ):
@@ -486,6 +493,7 @@ def motor_control(
         return ("rotate", fi), next_state
 
     if state == "forward":
+        front = read_front_cm(arlo)
         if d < 40:
             return ("rotate", fi), "finish_driving"
 
@@ -498,6 +506,13 @@ def motor_control(
         return (None, None), "follow_path"
 
     if state == "follow_path":
+        # simple konstanter
+        ALIGN_DEG = 4.0  # hvor lige vi vil sigte før frem
+        STEP_CM = 30.0  # korte frem-hop
+        GOAL_TOL = 12.0  # hvornår sidste waypoint er "nået"
+        MARGIN = 5.0  # sikkerhed oveni step ift. sensor
+
+        # plan
         need_plan = motor_control.path is None or motor_control.next_index >= (
             len(motor_control.path) if motor_control.path else 0
         )
@@ -506,41 +521,55 @@ def motor_control(
                 est_pose, obstacle_list, target
             )
             motor_control.next_index = 1
-
-        print("Path:", motor_control.path)
+            print("Path:", motor_control.path)
 
         path = motor_control.path
-        G = motor_control.G
-
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
-        # direction = avoidance(arlo, est_pose, obstacles_list)
+        printer.show_path_image(
+            landmarks, obstacle_list, est_pose, target, motor_control.G, path
+        )
 
-        # if direction:
-        #     return (direction, 0), "avoidance"
+        i = motor_control.next_index
+        wp = path[i]
+        fi = angle_to_target(est_pose, wp)
+        d = distance_to_target(est_pose, wp)
+        last = i == len(path) - 1
 
-        printer.show_path_image(landmarks, obstacles_list, est_pose, target, G, path)
+        # mål nået?
+        if last and d <= GOAL_TOL:
+            return (None, 0), "reached_target"
 
-        waypoint = path[motor_control.next_index]
-
-        fi = angle_to_target(est_pose, waypoint)
-        d = distance_to_target(est_pose, waypoint)
-
-        if d < 5.0:
-            motor_control.next_index += 1
-
-            if motor_control.next_index >= len(path):
-                return (None, 0), "reached_target"
-            return (None, 0), "follow_path"
-
-        if abs(fi) > 4.0:
+        # sigt først
+        if abs(fi) > ALIGN_DEG:
             return ("rotate", fi), "follow_path"
 
-        step = min(40.0, d)  # cm
-        return ("forward", step), "follow_path"
+        # simpel sensor-gate
+        front = read_front_cm(arlo)
+        if front < min(d, STEP_CM) + MARGIN:
+            # prøv næste waypoint i stedet for at køre ind i noget
+            if i + 1 < len(path):
+                motor_control.next_index = i + 1
+                return (None, 0), "follow_path"
+            else:
+                return ("rotate", 20.0), "follow_path"
 
-        return (None, None), "reached_target"
+        # tæt på mellem-waypoint? hop videre uden at køre
+        if d < 5.0 and not last:
+            motor_control.next_index = i + 1
+            return (None, 0), "follow_path"
+
+        # kør kort frem; hvis vi alligevel rammer punktet, bump index nu
+        step = min(STEP_CM, d)
+        if d <= STEP_CM + 2.0 and not last:
+            motor_control.next_index = i + 1
+
+        # hvis sidste hop til sidste punkt er kort, så afslut efter kørslen
+        if last and d <= STEP_CM:
+            return ("forward", d), "reached_target"
+
+        return ("forward", step), "follow_path"
 
     if state == "avoidance":
         if "right" in cmd[0]:
