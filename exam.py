@@ -574,11 +574,11 @@ def motor_control(
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
-        # direction = avoidance(arlo)
+        direction = avoidance(arlo)
 
-        # if direction:
-        #     motor_control._avoid_dir = direction
-        #     return (direction, 0), "avoidance"
+        if direction:
+            motor_control._avoid_dir = direction
+            return (direction, 0), "avoidance"
 
         printer.show_path_image(landmarks, obstacle_list, est_pose, target, G, path)
 
