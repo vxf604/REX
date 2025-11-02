@@ -341,8 +341,8 @@ def execute_cmd(arlo, cmd):
     elif movement == "forward_sensor":
         max_cm = val if (val and val > 0) else None
         result = forward_with_avoid(arlo, max_cm=max_cm)
-        if result == "relocalize":
-            STATE_OVERRIDE = "fullSearch"
+        if result == "relocalise":
+            STATE_OVERRIDE = "relocalise"
 
 
 MIN_FRONT = 300
@@ -397,7 +397,7 @@ def forward_with_avoid(arlo, max_cm=None):
 
                 time.sleep(0.6)
                 arlo.stop()
-                return "relocalize"
+                return "relocalise"
 
             time.sleep(POLL)
     finally:
@@ -605,9 +605,6 @@ def motor_control(
         elif getattr(motor_control, "_avoid_dir", None) == "left":
             print("Avoidance: rotating 60° to the right")
             return ("rotate", 60), "avoidance_forward"
-        elif getattr (motor_control, "_avoid_dir", None) == "front":
-            print ("Avoidance: rotating 90° to the left")
-            return ("rotate", 90), "avoidance_forward"
 
     if state == "forward_with_sensor":
         left = arlo.read_left_ping_sensor()
@@ -796,7 +793,7 @@ try:
             execute_cmd(arlo, cmd)
             apply_motion_from_cmd(particles, cmd)
             if state == "relocalise":
-                landmarks.clear()
+                landmarks_seen.clear()
                 
         else:
             apply_sample_motion_model(particles, 0, 0)
