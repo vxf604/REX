@@ -196,7 +196,7 @@ def apply_motion_from_cmd(particles, cmd):
     kind, val = cmd
     if kind == "rotate":
         apply_sample_motion_model(particles, math.radians(val), 0)
-    elif kind == "forward":
+    elif kind in ("forward", "forward_sensor"):
         apply_sample_motion_model(particles, 0, val)
 
 
@@ -578,7 +578,7 @@ def motor_control(
 
         if direction:
             motor_control._avoid_dir = direction
-            return (direction, 0), "avoidance"
+            return ("stop", 0), "avoidance"
 
         printer.show_path_image(landmarks, obstacle_list, est_pose, target, G, path)
 
