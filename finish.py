@@ -467,6 +467,9 @@ def motor_control(
     if not hasattr(motor_control, "_search_rot"):
         motor_control._search_rot = 0.0
 
+    if not hasattr(motor_control, "_await_clear"):
+        motor_control._await_clear = False
+
     if not hasattr(motor_control, "path"):
         motor_control.path = None
         motor_control.G = None
@@ -519,7 +522,8 @@ def motor_control(
         return (None, None), "follow_path"
 
     if state == "follow_path":
-        print(motor_control.next_index)
+        plen = len(motor_control.path) if motor_control.path else 0
+        print(f"[path] idx={motor_control.next_index} len={plen}")
         # simple konstanter
         ALIGN_DEG = 4.0  # hvor lige vi vil sigte før frem
         STEP_CM = 30.0  # korte frem-hop
@@ -564,23 +568,32 @@ def motor_control(
         left = read_left_cm(arlo)
         right = read_right_cm(arlo)
 
-        block_dist = min(d, STEP_CM) + MARGIN
+        FRONT_MARGIN = MARGIN  # keep your existing MARGIN for front
+        SIDE_SAFE = 18.0  # tighter side clearance in cm (tune 15–25)
+        NUDGE_DEG = 10.0  # small steer away from a close side
+
+        block_front = min(d, STEP_CM) + MARGIN
 
         # hvis én af siderne/foran er for tæt, så kør ikke frem
-        if min(front, left, right) < block_dist:
-            # prøv næste waypoint i stedet for at køre ind i noget
-            if i + 1 < len(path):
-                motor_control.next_index = i + 1
-                return (None, 0), "follow_path"
+        if front < block_front:
+            motor_control._await_clear = True
+            if left < right:
+                return ("rotate", NUDGE_DEG), "follow_path"  # drej lidt mod højre
+            elif right < left:
+                return ("rotate", -NUDGE_DEG), "follow_path"  # drej lidt mod venstre
             else:
-                # hvis der ikke er et næste waypoint, lav en lille undvigelse væk fra den tætteste side
-                # (drejesignalet kan evt. vendes hvis jeres robot roterer omvendt)
-                if left < right:
-                    return ("rotate", 12.0), "follow_path"  # drej lidt mod højre
-                elif right < left:
-                    return ("rotate", -12.0), "follow_path"  # drej lidt mod venstre
-                else:
-                    return ("rotate", 12.0), "follow_path"
+                return ("rotate", NUDGE_DEG), "follow_path"
+
+        # Selvom front er klar, kør ikke hvis en side er farligt tæt
+        if left < SIDE_SAFE and right >= SIDE_SAFE:
+            motor_control._await_clear = True
+            return ("rotate", NUDGE_DEG), "follow_path"
+        if right < SIDE_SAFE and left >= SIDE_SAFE:
+            motor_control._await_clear = True
+            return ("rotate", -NUDGE_DEG), "follow_path"
+        if left < SIDE_SAFE and right < SIDE_SAFE:
+            motor_control._await_clear = True
+            return ("rotate", NUDGE_DEG), "follow_path"
 
         # tæt på mellem-waypoint? hop videre uden at køre
         if d < 5.0 and not last:
@@ -589,6 +602,10 @@ def motor_control(
 
         # kør kort frem; hvis vi alligevel rammer punktet, bump index nu
         step = min(STEP_CM, d)
+
+        if motor_control._await_clear:
+            motor_control._await_clear = False
+            return ("forward", step), "follow_path"
         if d <= STEP_CM + 2.0 and not last:
             motor_control.next_index = i + 1
 
@@ -613,7 +630,7 @@ def motor_control(
             motor_control.path = None
             motor_control.G = None
             motor_control.next_index = 1
-            return ("rotate", 20), "searching"
+            return ("rotate", 20), "fullSearch"
         return ("stop", None), "reached_target"
 
 
