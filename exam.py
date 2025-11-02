@@ -366,25 +366,12 @@ def _read_sensors(arlo):
 
 
 def forward_with_avoid(arlo, max_cm=None):
-    try:def apply_motion_from_cmd(particles, cmd):
-    if not cmd:
-        return
-    kind, val = cmd
-    if kind == "rotate":
-        apply_sample_motion_model(particles, math.radians(val), 0)
-    elif kind == "forward":
-        apply_sample_motion_model(particles, 0, val)
-    elif kind == "forward_sensor":
-        # brug samme distance som forward. Hvis val er None, giv et lille skridt
-        trans = val if val else 5.0
-        apply_sample_motion_model(particles, 0, trans)
-
+    try:
         arlo.go_diff(68, 64, 1, 1)
         remaining = float(max_cm) if max_cm else None
         last_t = time.time()
 
         while True:
-            # distance-budget
             if remaining is not None:
                 now = time.time()
                 dt = now - last_t
@@ -399,13 +386,10 @@ def forward_with_avoid(arlo, max_cm=None):
 
             if fs < MIN_FRONT or rs < MIN_SIDE or ls < MIN_SIDE:
                 arlo.stop()
-
-                # lille backup
                 arlo.go_diff(60, 60, 0, 0)
                 time.sleep(0.35)
                 arlo.stop()
 
-                # drej mod mest plads
                 if rs > ls:
                     arlo.go_diff(TURN_SPEED, TURN_SPEED, 1, 0)
                 else:
@@ -624,7 +608,7 @@ def motor_control(
 
         step = min(40.0, d)  # cm
         return ("forward_sensor", step), "follow_path"
-    
+
     if state == "avoidance":
         if getattr(motor_control, "_avoid_dir", None) == "right":
             print("Avoidance: rotating 60° to the right")
@@ -782,6 +766,9 @@ try:
             STATE_OVERRIDE = None
             landmarks_seen.clear()
             obstacle_list.clear()
+            if hasattr(motor_control, "path"):
+                motor_control.path = None
+                motor_control.next_index = 1
 
         if onRobot:
             cmd, state = motor_control(
