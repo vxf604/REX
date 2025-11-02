@@ -695,7 +695,7 @@ try:
         if not isinstance(objectIDs, type(None)):
             if seen2Landmarks:
                 obstacle_list = get_unique_obstacles(
-                    obstacle_list, objectIDs, dists, angles, landmarkIDs
+                    obstacle_list, objectIDs, dists, angles, landmarkIDs, est_pose
                 )
             for obstacle in obstacle_list:
 
