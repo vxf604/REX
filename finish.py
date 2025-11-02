@@ -578,12 +578,7 @@ def motor_control(
         # hvis én af siderne/foran er for tæt, så kør ikke frem
         if front < block_front:
             motor_control._await_clear = True
-            if left < right:
-                return ("rotate", -FRONT_NUDGE), "follow_path"  # drej lidt mod højre
-            elif right < left:
-                return ("rotate", FRONT_NUDGE), "follow_path"  # drej lidt mod venstre
-            else:
-                return ("rotate", FRONT_NUDGE), "follow_path"
+            return ("rotate", -FRONT_NUDGE), "follow_path"  # drej lidt mod højre
 
         # Selvom front er klar, kør ikke hvis en side er farligt tæt
         if left < SIDE_SAFE and right >= SIDE_SAFE:
