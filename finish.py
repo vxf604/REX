@@ -493,7 +493,6 @@ def motor_control(
         return ("rotate", fi), next_state
 
     if state == "forward":
-        front = read_front_cm(arlo)
         if d < 40:
             return ("rotate", fi), "finish_driving"
 
