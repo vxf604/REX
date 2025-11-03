@@ -342,7 +342,7 @@ def distance(p1, p2):
 
 
 def in_collision(point, obstacles, robot_radius=15):
-    obstacle_radius = 18
+    obstacle_radius = 30
     x, y = point
     for obstacle in obstacles:
         map_x, map_y = obstacle.x, obstacle.y
