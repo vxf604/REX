@@ -247,14 +247,8 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
     return detectedLandmarks, detectedDists, detectedAngles
 
 
-# tune these if needed
-ANGLE_SIGN = 1.0  # flip to -1.0 if left/right looks mirrored
-ANGLE_BIAS = 0.0  # small bias in radians if you find a constant offset
-
-
 def calcutePos(est_pose, dist_cm, angle_rad):
-    # world bearing = robot heading + camera bearing (+ small bias)
-    phi = est_pose.getTheta() + ANGLE_SIGN * angle_rad + ANGLE_BIAS  # radians
+    phi = est_pose.getTheta() * angle_rad
 
     wx = est_pose.getX() + dist_cm * math.cos(phi)
     wy = est_pose.getY() + dist_cm * math.sin(phi)
@@ -412,43 +406,6 @@ def buildRRT(est_pose, obstacle_list, goal, delta_q=40):
     return path, G
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def motor_control(
     state, est_pose, targets, seen2Landmarks, seen4Landmarks, obstacle_list, arlo
 ):
@@ -524,11 +481,6 @@ def motor_control(
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
-
-
-
-
-
         printer.show_path_image(landmarks, obstacle_list, est_pose, target, G, path)
 
         waypoint = path[motor_control.next_index]
@@ -546,23 +498,8 @@ def motor_control(
         if abs(fi) > 4.0:
             return ("rotate", fi), "follow_path"
 
-        step = min(40.0, d)  # cm
+        step = min(40.0, d)
         return ("forward", step), "follow_path"
-
-        return (None, None), "reached_target"
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
