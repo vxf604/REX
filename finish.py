@@ -197,6 +197,8 @@ def apply_motion_from_cmd(particles, cmd):
         apply_sample_motion_model(particles, math.radians(val), 0)
     elif kind == "forward":
         apply_sample_motion_model(particles, 0, val)
+    elif kind == "backward":
+        apply_sample_motion_model(particles, 0, -val)
 
 
 def sign(x):
@@ -332,6 +334,10 @@ def execute_cmd(arlo, cmd):
     elif movement == "forward":
         arlo.drive_forward_meter(val / 100.0)
         print(f" Driving forward {val} cm")
+        time.sleep(0.5)
+    elif movement == "backward":  
+        arlo.drive_forward_meter(-val / 100.0)  
+        print(f" Driving backward {val} cm")
         time.sleep(0.5)
     elif movement == "stop":
         arlo.stop()
@@ -482,7 +488,9 @@ def motor_control(
         motor_control._wp_avoid_hits = 0
     if not hasattr(motor_control, "_wp_index_at_hit"):
         motor_control._wp_index_at_hit = None
-
+    # >>> add this line <<<
+    if not hasattr(motor_control, "_avoid_phase"):   # 0=normal,1=turn-out,2=forward,3=turn-back
+        motor_control._avoid_phase = 0
     # no targets left
     if not targets:
         return ("stop", None), "reached_target"
@@ -522,6 +530,11 @@ def motor_control(
         CLEAR_STEP = 30.0
         CLEAR_DIST = 25.0
         SKIP_AFTER_HITS = 2
+        
+        DETOUR_TURN_DEG = 85.0
+        DETOUR_FWD_CM   = 35.0
+        CRIT_FRONT_CM   = 12.0
+        CRIT_SIDE_CM    = 10.0
 
         # plan
         need_plan = motor_control.path is None or motor_control.next_index >= (
@@ -562,36 +575,34 @@ def motor_control(
             motor_control._wp_index_at_hit = None
             return (None, 0), "reached_target"
 
-        # sensors
+        # sensorer
         front = read_front_cm(arlo)
-        left = read_left_cm(arlo)
+        left  = read_left_cm(arlo)
         right = read_right_cm(arlo)
 
         FRONT_ENTER = min(d, STEP_CM) + MARGIN
-        FRONT_EXIT = FRONT_ENTER + FRONT_PAD
+        FRONT_EXIT  = FRONT_ENTER + FRONT_PAD
 
         # enter avoidance?
-        enter_avoid = (
-            (front < FRONT_ENTER) or (left < SIDE_ENTER) or (right < SIDE_ENTER)
-        )
+        enter_avoid = ((front < FRONT_ENTER) or (left < SIDE_ENTER) or (right < SIDE_ENTER))
         if enter_avoid and not motor_control._in_avoid:
             motor_control._in_avoid = True
             motor_control._did_clear_forward = False
             motor_control._avoid_enter_xy = (est_pose.getX(), est_pose.getY())
-            if motor_control._wp_index_at_hit == i:
-                motor_control._wp_avoid_hits += 1
-            else:
-                motor_control._wp_avoid_hits = 1
-                motor_control._wp_index_at_hit = i
+            motor_control._avoid_phase = 0          # (hvis du bruger faser)
             if left < right:
                 motor_control._avoid_dir = +1
             elif right < left:
                 motor_control._avoid_dir = -1
             else:
                 motor_control._avoid_dir = +1
-            print(
-                f"[avoid] ENTER wp={i} hits={motor_control._wp_avoid_hits} dir={motor_control._avoid_dir}"
-            )
+            print(f"[avoid] ENTER wp={i} hits={motor_control._wp_avoid_hits} dir={motor_control._avoid_dir}")
+
+        # >>> INDSÆT SIKKERHEDS-BREMSE HER <<<
+        if motor_control._in_avoid:
+            # Hård sikkerhedsgrænse (brug de konstanter du definerede øverst)
+            if front < CRIT_FRONT_CM or left < CRIT_SIDE_CM or right < CRIT_SIDE_CM:
+                return ("backward", 8.0), "follow_path"
 
         # avoidance mode
         if motor_control._in_avoid:
