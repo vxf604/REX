@@ -248,21 +248,21 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
 
 
 def calcutePos(est_pose, dist_cm, angle_rad):
-    phi = est_pose.getTheta() * angle_rad
+    phi = est_pose.getTheta() + angle_rad
 
     wx = est_pose.getX() + dist_cm * math.cos(phi)
     wy = est_pose.getY() + dist_cm * math.sin(phi)
     return wx, wy
 
 
-def get_unique_obstacles(obstacles_list, objectIDs, dists, angles, landmarkIDs):
+def get_unique_obstacles(obstacle_list, objectIDs, dists, angles, landmarkIDs):
     uniqueIDs = set(objectIDs)
-    obstaclesListIDs = [o.ID for o in obstacles_list]
+    obstacleListIDs = [o.ID for o in obstacle_list]
 
     for uid in uniqueIDs:
         indices = [i for i, id in enumerate(objectIDs) if id == uid]
         closest_id = min(indices, key=lambda i: dists[i])
-        if uid not in landmarkIDs and uid not in obstaclesListIDs:
+        if uid not in landmarkIDs and uid not in obstacleListIDs:
             id = objectIDs[closest_id]
             angle = angles[closest_id]
             dist = dists[closest_id]
@@ -271,9 +271,9 @@ def get_unique_obstacles(obstacles_list, objectIDs, dists, angles, landmarkIDs):
             )
             x, y = calcutePos(est_pose, dist, angle)
             obstacle = Landmark(x, y, CBLACK, id, 10, 10)
-            obstacles_list.append(obstacle)
-            obstaclesListIDs.append(id)
-    return obstacles_list
+            obstacle_list.append(obstacle)
+            obstacleListIDs.append(id)
+    return obstacle_list
 
 
 def angle_to_target(est_pose, target):
@@ -503,9 +503,10 @@ def motor_control(
             targets.pop(0)
             obstacle_list.clear()
             motor_control.path = None
+            motor_control.G = None
             motor_control.next_index = 1
 
-            return ("rotate", 20), "searching"
+            return ("rotate", 180), "fullSearch"
         return ("stop", None), "reached_target"
 
 
@@ -561,12 +562,13 @@ try:
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-            objectIDs, dists, angles = get_unique_landmarks(
-                objectIDs, dists, angles, landmarkIDs
-            )
             obstacle_list = get_unique_obstacles(
                 obstacle_list, objectIDs, dists, angles, landmarkIDs
             )
+            objectIDs, dists, angles = get_unique_landmarks(
+                objectIDs, dists, angles, landmarkIDs
+            )
+
             for i in range(len(objectIDs)):
                 print(
                     "Object ID = ",
