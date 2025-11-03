@@ -572,10 +572,10 @@ def motor_control(
         right_mm = arlo.read_right_ping_sensor()
 
         # thresholds (tune):
-        CLOSE_F_MM = 300  # start avoidance if closer than this in front
-        CLOSE_S_MM = 80  # start avoidance if closer than this on a side
-        CLEAR_F_MM = 150  # stop spinning only if front >= this
-        CLEAR_S_MM = 120  # stop spinning only if sides >= this
+        CLOSE_F_MM = 180  # start avoidance if closer than this in front
+        CLOSE_S_MM = 120  # start avoidance if closer than this on a side
+        CLEAR_F_MM = 240  # stop spinning only if front >= this
+        CLEAR_S_MM = 160  # stop spinning only if sides >= this
 
         # need to react?
         if (front_mm < CLOSE_F_MM) or (left_mm < CLOSE_S_MM) or (right_mm < CLOSE_S_MM):
