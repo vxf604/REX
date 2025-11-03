@@ -247,70 +247,39 @@ def get_unique_landmarks(objectIDs, dists, angles, landmarkIDs):
     return detectedLandmarks, detectedDists, detectedAngles
 
 
-
-
-
+# tune these if needed
+ANGLE_SIGN = 1.0  # flip to -1.0 if left/right looks mirrored
+ANGLE_BIAS = 0.0  # small bias in radians if you find a constant offset
 
 
 def calcutePos(est_pose, dist_cm, angle_rad):
-    phi = est_pose.getTheta() + angle_rad
-
+    # world bearing = robot heading + camera bearing (+ small bias)
+    phi = est_pose.getTheta() + ANGLE_SIGN * angle_rad + ANGLE_BIAS  # radians
 
     wx = est_pose.getX() + dist_cm * math.cos(phi)
     wy = est_pose.getY() + dist_cm * math.sin(phi)
     return wx, wy
 
 
-def get_unique_obstacles(obstacle_list, objectIDs, dists, angles, landmarkIDs):
+def get_unique_obstacles(obstacles_list, objectIDs, dists, angles, landmarkIDs):
     uniqueIDs = set(objectIDs)
-    obstaclesListIDs = [o.ID for o in obstacle_list]
-
-    # simple smoothing + optional replan trigger
-    ALPHA = 0.4  # weight for new measurement (0..1)
-    REPLAN_SHIFT_CM = 25.0  # if an obstacle jumps this much, force RRT rebuild
-    rrt_needs_replan = False
+    obstaclesListIDs = [o.ID for o in obstacles_list]
 
     for uid in uniqueIDs:
-        # pick the closest detection for this uid
         indices = [i for i, id in enumerate(objectIDs) if id == uid]
         closest_id = min(indices, key=lambda i: dists[i])
-
-        if uid in landmarkIDs:
-            continue  # skip known landmarks
-
-        id = int(objectIDs[closest_id])
-        angle = float(angles[closest_id])
-        dist = float(dists[closest_id])
-
-        print(
-            f"obstacle id: {id}, dist: {dist}, est pose: {est_pose.getX()}, {est_pose.getY()}"
-        )
-        x, y = calcutePos(est_pose, dist, angle)
-
-        if id not in obstaclesListIDs:
-            # new obstacle
+        if uid not in landmarkIDs and uid not in obstaclesListIDs:
+            id = objectIDs[closest_id]
+            angle = angles[closest_id]
+            dist = dists[closest_id]
+            print(
+                f"obstacle id: {id}, dist: {dist}, est pose: {est_pose.getX()}, {est_pose.getY()}"
+            )
+            x, y = calcutePos(est_pose, dist, angle)
             obstacle = Landmark(x, y, CBLACK, id, 10, 10)
-            obstacle_list.append(obstacle)
+            obstacles_list.append(obstacle)
             obstaclesListIDs.append(id)
-        else:
-            # update existing obstacle (smoothly)
-            for o in obstacle_list:
-                if o.ID == id:
-                    dx, dy = x - o.x, y - o.y
-                    jump = math.hypot(dx, dy)
-                    # EMA/lerp update
-                    o.x = (1.0 - ALPHA) * o.x + ALPHA * x
-                    o.y = (1.0 - ALPHA) * o.y + ALPHA * y
-                    if jump > REPLAN_SHIFT_CM:
-                        rrt_needs_replan = True
-                    break
-
-    # if a stored obstacle moved a lot, nuke current plan so it’s rebuilt
-    if rrt_needs_replan:
-        motor_control.path = None
-        motor_control.next_index = 1
-
-    return obstacle_list
+    return obstacles_list
 
 
 def angle_to_target(est_pose, target):
@@ -443,6 +412,43 @@ def buildRRT(est_pose, obstacle_list, goal, delta_q=40):
     return path, G
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def motor_control(
     state, est_pose, targets, seen2Landmarks, seen4Landmarks, obstacle_list, arlo
 ):
@@ -518,6 +524,11 @@ def motor_control(
         if not path or len(path) < 2:
             return ("rotate", 20.0), "follow_path"
 
+
+
+
+
+
         printer.show_path_image(landmarks, obstacle_list, est_pose, target, G, path)
 
         waypoint = path[motor_control.next_index]
@@ -539,6 +550,19 @@ def motor_control(
         return ("forward", step), "follow_path"
 
         return (None, None), "reached_target"
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     if state == "finish_driving":
         return ("forward", d), "reached_target"
