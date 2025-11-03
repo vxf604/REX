@@ -463,8 +463,8 @@ def read_right_cm(arlo):
         return 9999.0
 
 
-
 TURN_SEC_PER_DEG = 0.712 / 90.0
+
 
 def motor_control(
     state, est_pose, targets, seen2Landmarks, seen4Landmarks, obstacle_list, arlo
@@ -565,30 +565,62 @@ def motor_control(
         if abs(fi) > ALIGN_DEG:
             return ("rotate", fi), "follow_path"
 
-        # simpel sensor-gate
-        front = read_front_cm(arlo)
-        if front < min(d, STEP_CM) + MARGIN:
-        left = read_left_cm(arlo)
-        right = read_right_cm(arlo)
+        # --- reactive spin until front + both sides are clear ---
+        # raw mm since go_diff/rotate timing is calibrated in place
+        front_mm = arlo.read_front_ping_sensor()
+        left_mm = arlo.read_left_ping_sensor()
+        right_mm = arlo.read_right_ping_sensor()
 
-        block_dist = min(d, STEP_CM) + MARGIN
+        # thresholds (tune):
+        CLOSE_F_MM = 300  # start avoidance if closer than this in front
+        CLOSE_S_MM = 80  # start avoidance if closer than this on a side
+        CLEAR_F_MM = 150  # stop spinning only if front >= this
+        CLEAR_S_MM = 120  # stop spinning only if sides >= this
 
-        # hvis én af siderne/foran er for tæt, så kør ikke frem
-        if min(front, left, right) < block_dist:
-            # prøv næste waypoint i stedet for at køre ind i noget
-            if i + 1 < len(path):
-                motor_control.next_index = i + 1
-                return (None, 0), "follow_path"
+        # need to react?
+        if (front_mm < CLOSE_F_MM) or (left_mm < CLOSE_S_MM) or (right_mm < CLOSE_S_MM):
+            print(f"[react] F={front_mm} L={left_mm} R={right_mm} -> spin until clear")
+
+            # choose direction: obstacle on right -> turn left, obstacle on left -> turn right
+            dir_sign = +1 if right_mm < left_mm else -1 if left_mm < right_mm else +1
+
+            # start turning in place
+            leftSpeed, rightSpeed = 68, 64
+            if dir_sign > 0:
+                arlo.go_diff(leftSpeed, rightSpeed, 1, 0)  # left turn
             else:
-                return ("rotate", 20.0), "follow_path"
-                # hvis der ikke er et næste waypoint, lav en lille undvigelse væk fra den tætteste side
-                # (drejesignalet kan evt. vendes hvis jeres robot roterer omvendt)
-                if left < right:
-                    return ("rotate", 12.0), "follow_path"  # drej lidt mod højre
-                elif right < left:
-                    return ("rotate", -12.0), "follow_path"  # drej lidt mod venstre
-                else:
-                    return ("rotate", 12.0), "follow_path"
+                arlo.go_diff(leftSpeed, rightSpeed, 0, 1)  # right turn
+
+            start = time.time()
+            MAX_SPIN_S = 2.5  # failsafe
+
+            while True:
+                front_mm = arlo.read_front_ping_sensor()
+                left_mm = arlo.read_left_ping_sensor()
+                right_mm = arlo.read_right_ping_sensor()
+
+                all_clear = (
+                    (front_mm >= CLEAR_F_MM)
+                    and (left_mm >= CLEAR_S_MM)
+                    and (right_mm >= CLEAR_S_MM)
+                )
+                if all_clear:
+                    break
+
+                if time.time() - start > MAX_SPIN_S:
+                    print("[react] max spin timeout hit")
+                    break
+
+                time.sleep(0.01)
+
+            arlo.stop()
+            elapsed = time.time() - start
+            angle_deg = dir_sign * (elapsed / TURN_SEC_PER_DEG)
+            print(f"[react] spun {elapsed:.3f}s -> angle {angle_deg:.1f}°")
+
+            # tell PF about the rotation that already happened; do NOT rotate again
+            return ("rotate_applied", angle_deg), "follow_path"
+        # --- end reactive spin ---
 
         # tæt på mellem-waypoint? hop videre uden at køre
         if d < 5.0 and not last:
