@@ -51,10 +51,10 @@ CBLACK = (0, 0, 0)
 
 # Landmarks.
 # The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
-L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=1, borderWidth_x=30, borderWidth_y=30)
-L2 = Landmark(x=0.0, y=300.0, color=CGREEN, ID=2, borderWidth_x=30, borderWidth_y=-30)
-L3 = Landmark(x=400.0, y=0.0, color=CYELLOW, ID=3, borderWidth_x=-30, borderWidth_y=30)
-L4 = Landmark(x=400.0, y=300.0, color=CBLUE, ID=4, borderWidth_x=-30, borderWidth_y=-30)
+L1 = Landmark(x=0.0, y=0.0, color=CRED, ID=1, borderWidth_x=20, borderWidth_y=20)
+L2 = Landmark(x=0.0, y=300.0, color=CGREEN, ID=2, borderWidth_x=20, borderWidth_y=-20)
+L3 = Landmark(x=400.0, y=0.0, color=CYELLOW, ID=3, borderWidth_x=-20, borderWidth_y=20)
+L4 = Landmark(x=400.0, y=300.0, color=CBLUE, ID=4, borderWidth_x=-20, borderWidth_y=-20)
 
 landmarks = [L1, L2, L3, L4]
 
@@ -438,17 +438,11 @@ def motor_control(
     fi = angle_to_target(est_pose, target_pos)
     d = distance_to_target(est_pose, target_pos)
 
-    bearing = math.degrees(
-        math.atan2(target_pos[1] - est_pose.getY(), target_pos[0] - est_pose.getX())
-    )
     heading = math.degrees(est_pose.getTheta())
-    fi = angle_to_target(est_pose, target_pos)  # your function
-    print(f"bearing={bearing:.1f}°, heading={heading:.1f}°, fi={fi:.1f}°")
+    fi = angle_to_target(est_pose, target_pos)
     align_ok = 4
 
     if state == "rotating":
-        # step = max(8.0, min(abs(fi), 35.0))
-        # turn = step if fi >= 0 else -step
         next_state = "forward" if abs(fi) < align_ok else "rotating"
         return ("rotate", fi), next_state
 
@@ -525,7 +519,6 @@ try:
 
         WIN_World = "World view"
 
-        #
         cv2.namedWindow(WIN_World, cv2.WINDOW_NORMAL)
 
         cv2.resizeWindow(WIN_World, 520, 520)
@@ -553,10 +546,8 @@ try:
 
     print("Opening and initializing camera")
     if isRunningOnArlo():
-        # cam = camera.Camera(0, robottype='arlo', useCaptureThread=True)
         cam = camera.Camera(0, robottype="arlo", useCaptureThread=False)
     else:
-        # cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=True)
         cam = camera.Camera(0, robottype="macbookpro", useCaptureThread=False)
 
     landmarks_seen = set()
@@ -570,14 +561,11 @@ try:
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-            obstacle_list = get_unique_obstacles(
-                obstacle_list, objectIDs, dists, angles, landmarkIDs
-            )
-            for obstacle in obstacle_list:
-
-                print(f"Obstacle {obstacle.ID}: x: {obstacle.x}, y: {obstacle.y}, ")
             objectIDs, dists, angles = get_unique_landmarks(
                 objectIDs, dists, angles, landmarkIDs
+            )
+            obstacle_list = get_unique_obstacles(
+                obstacle_list, objectIDs, dists, angles, landmarkIDs
             )
             for i in range(len(objectIDs)):
                 print(
@@ -682,10 +670,7 @@ try:
 
 
 finally:
-    # Make sure to clean up even if an exception occurred
 
-    # Close all windows
     cv2.destroyAllWindows()
 
-    # Clean-up capture thread
     cam.terminateCaptureThread()
